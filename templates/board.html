@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Board</title>
+    <!-- Link to the custom stylesheet for a nice design -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='board-style.css') }}">
+    <!-- Load Tailwind CSS from CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Define custom font family */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-200 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="container bg-white shadow-2xl rounded-xl p-8 max-w-full lg:max-w-4xl w-full flex flex-col items-center border border-gray-200">
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-8 text-center leading-tight">
+            ✍️ Digital Board Notes ✍️
+        </h1>
+
+        <!-- Message display area for user feedback -->
+        <div id="messageBox" class="p-3 text-sm rounded-lg mb-6 w-full text-center hidden"></div>
+
+        <!-- The editable table -->
+        <div class="overflow-x-auto w-full mb-8">
+            <table id="editableTable" class="min-w-full bg-white border border-gray-300 rounded-lg shadow-inner">
+                <thead>
+                    <tr>
+                        {% for col_idx in range(table_data[0] | length) %}
+                        <th class="py-3 px-4 bg-gray-100 font-semibold text-gray-700 uppercase tracking-wider text-left border-b border-gray-300">Col {{ col_idx + 1 }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row_idx, row in enumerate(table_data) %}
+                    <tr>
+                        {% for col_idx, cell_value in enumerate(row) %}
+                        <td contenteditable="true"
+                            data-row-index="{{ row_idx }}"
+                            data-col-index="{{ col_idx }}"
+                            class="py-3 px-4 border-b border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-md transition duration-150 ease-in-out hover:bg-gray-50">
+                            {{ cell_value }}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Save Button -->
+        <button id="saveButton" class="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-75">
+            Save Table
+        </button>
+    </div>
+
+    <!-- Link to the JavaScript file -->
+    <script src="{{ url_for('static', filename='board-script.js') }}"></script>
+</body>
+</html>
