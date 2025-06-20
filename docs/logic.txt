@@ -1,0 +1,3 @@
+when user entere the url 
+it check if the user is logged in 
+if yes then show the dashbouard wtih logout option

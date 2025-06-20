@@ -1,0 +1,17 @@
+createa bootstrap page that include
+header
+menu
+placeholder for mainbody
+footer
+
+header =rcPro Connect
+sub header , date and time in india, uae, sydney, londom and newyork
+menu = show menu, mycv,chat,jobsites, recruiders
+body (this flask so placehodler for flask bock)
+
+standard foother
+social media connection,
+contact us
+about us
+location and more
+
