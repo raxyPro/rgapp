@@ -40,6 +40,7 @@ def init_db():
 DATABASE = r'C:\Users\Hp\My Drive\Z-DataFiles\rcPro.accdb'
 
 # Register database functions with the Flask app
+#This decorator ensures that the teardown_db function will be called automatically at the very end of a request, right before the application context is removed.
 @app.teardown_appcontext
 def teardown_db(exception):
     close_db()
@@ -62,6 +63,7 @@ def login_required(view):
 
 
 # --- Global Context Processor ---
+# this injects variables into all templates - great feature for common data like current year
 @app.context_processor
 def inject_current_year():
     """Injects the current year into all templates."""
@@ -115,12 +117,13 @@ def login():
 @login_required
 def dashboard():
     """Displays the user dashboard."""
+    print(session['user_id'])
     db = get_db()
     user = db.execute(
-        'SELECT email FROM vemp WHERE id = ?', (session['user_id'],)
+        'SELECT email,fullname FROM vemp WHERE code = ?', (session['user_id'],)
     ).fetchone()
     # Extract name from email if needed, or just display the email
-    user_name = user[0].split('@')[0] if user else 'User'
+    user_name = user[1]
     return render_template('dashboard.html', user_name=user_name)
 
 @app.route('/logout')

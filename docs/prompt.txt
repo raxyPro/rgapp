@@ -15,3 +15,11 @@ contact us
 about us
 location and more
 
+
+#generating a flask app that exhibit most concept
+
+generate a flask application with sqllite database that exhibit following functions
+1. provide login, logout, forget password, change password 
+2. ability for user to add blog
+3. lsit blog for logged in user
+3. for writing blog generate a godo HTML Editor with rich tet formating feature
