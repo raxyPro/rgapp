@@ -1,7 +1,7 @@
 # app.py
 import os
 import pyodbc
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import uuid
 
 from flask import Flask, render_template, request, redirect, url_for, session, g, flash
@@ -116,6 +116,7 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    from model import tasks
     """Displays the user dashboard."""
     print(session['user_id'])
     db = get_db()
@@ -124,7 +125,21 @@ def dashboard():
     ).fetchone()
     # Extract name from email if needed, or just display the email
     user_name = user[1]
-    return render_template('dashboard.html', user_name=user_name)
+
+
+    # Fetch tasks for the current user
+    user_tasks = tasks.query.filter_by(user_id="john_doe").order_by(tasks.due_date.asc()).all()
+
+    # Add a 'due_soon' flag for styling
+    for task in user_tasks:
+        if task.due_date:
+            days_left = (task.due_date - date.today()).days
+            task.due_soon = (days_left >= 0 and days_left <= 3) and task.status != 'Completed'
+        else:
+            task.due_soon = False
+
+    return render_template('dashboard.html', user_name="john_doe", tasks=user_tasks)
+
 
 @app.route('/logout')
 def logout():
