@@ -17,15 +17,23 @@ app.secret_key = os.urandom(24) # Generates a random 24-byte key
 app.permanent_session_lifetime = timedelta(days=1) # Session valid for 1 day
 # Define the database file path (MS Access .accdb)
 DATABASE = r'C:\Users\Hp\My Drive\Z-DataFiles\rcPro.accdb'
-
-
-
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Avoids a warning
 # Create SQLAlchemy instance
 db = SQLAlchemy(app)
 
-class task(db.Model):
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    # Add a backref/relationship if you haven't already, e.g.:
+    tasks = db.relationship('Task', backref='owner', lazy=True)
+
+    def __repr__(self):
+        return f'<User {self.username}>'
+
+class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Link to the user
     name = db.Column(db.String(200), nullable=False)
@@ -47,7 +55,7 @@ def get_db():
         g.db = pyodbc.connect(conn_str)
     return g.db
 
-def close_db(e=None):
+def close_db():
     """Closes the database connection."""
     db = g.pop('db', None)
     if db is not None:
@@ -62,7 +70,7 @@ DATABASE = r'C:\Users\Hp\My Drive\Z-DataFiles\rcPro.accdb'
 # Register database functions with the Flask app
 #This decorator ensures that the teardown_db function will be called automatically at the very end of a request, right before the application context is removed.
 @app.teardown_appcontext
-def teardown_db(exception):
+def teardown_db(_):
     close_db()
 
 
@@ -143,19 +151,19 @@ def dashboard():
         'SELECT email,fullname FROM vemp WHERE code = ?', (session['user_id'],)
     ).fetchone()
     # Extract name from email if needed, or just display the email
-    user_name = user[1]
+    # user_name = user[1]
 
 
     # Fetch tasks for the current user
-    user_tasks = task.query.filter_by(user_id="john_doe").order_by(task.due_date.asc()).all()
+    user_tasks = Task.query.filter_by(user_id=1).order_by(Task.due_date.asc()).all()
 
     # Add a 'due_soon' flag for styling
-    for task in user_tasks:
-        if task.due_date:
-            days_left = (task.due_date - date.today()).days
-            task.due_soon = (days_left >= 0 and days_left <= 3) and task.status != 'Completed'
+    for t in user_tasks:
+        if t.due_date:
+            days_left = (t.due_date - date.today()).days
+            t.due_soon = (days_left >= 0 and days_left <= 3) and t.status != 'Completed'
         else:
-            task.due_soon = False
+            t.due_soon = False
 
     return render_template('dashboard.html', user_name="john_doe", tasks=user_tasks)
 
@@ -264,7 +272,89 @@ def set_pin(token):
 
     return render_template('set_pin.html', token=token)
 
+@app.route('/add_task', methods=['GET', 'POST'])
+@login_required
+def add_task():
+    if request.method == 'POST':
+        task_name = request.form.get('task_name')
+        due_date_str = request.form.get('due_date')
+        description = request.form.get('description')
 
+        due_date = None
+        if due_date_str:
+            try:
+                due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid date format. Please use YYYY-MM-DD.', 'danger')
+                return render_template('add_edit_task.html', title='Add Task')
+
+        if not task_name:
+            flash('Task name cannot be empty!', 'danger')
+        else:
+            new_task = Task(name=task_name, description=description, due_date=due_date, user_id=1)
+            db.session.add(new_task)
+            db.session.commit()
+            flash('Task added successfully!', 'success')
+            return redirect(url_for('dashboard'))
+    return render_template('add_edit_task.html', title='Add Task')
+
+@app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
+@login_required
+def edit_task(task_id):
+    task = Task.query.get_or_404(task_id)
+
+    # Ensure the logged-in user owns this task
+    if task.user_id != 1:
+        flash('You are not authorized to edit this task.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        task.name = request.form.get('task_name')
+        due_date_str = request.form.get('due_date')
+        task.description = request.form.get('description')
+        task.status = request.form.get('status')
+
+        if due_date_str:
+            try:
+                task.due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                flash('Invalid date format. Please use YYYY-MM-DD.', 'danger')
+                return render_template('add_edit_task.html', title='Edit Task', task=task)
+        else:
+            task.due_date = None # Allow clearing the due date
+
+        if not task.name:
+            flash('Task name cannot be empty!', 'danger')
+        else:
+            db.session.commit()
+            flash('Task updated successfully!', 'success')
+            return redirect(url_for('dashboard'))
+
+    return render_template('add_edit_task.html', title='Edit Task', task=task)
+
+@app.route('/mark_task_complete/<int:task_id>')
+@login_required
+def mark_task_complete(task_id):
+    task = task.query.get_or_404(task_id)
+    if task.user_id != 1:
+        flash('You are not authorized to modify this task.', 'danger')
+    else:
+        task.status = 'Completed'
+        db.session.commit()
+        flash('Task marked as complete!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/delete_task/<int:task_id>')
+@login_required
+def delete_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    if task.user_id != 1:
+        flash('You are not authorized to delete this task.', 'danger')
+    else:
+        db.session.delete(task)
+        db.session.commit()
+        flash('Task deleted successfully!', 'success')
+    return redirect(url_for('dashboard'))
 
 # For demo purposes, let's create a dummy user upon first run if no users exist
 @app.before_request

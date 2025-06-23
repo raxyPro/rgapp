@@ -1,0 +1,18 @@
+my_flask_app/
+├── __init__.py         # Application factory, main app setup, db init
+├── models.py           # SQLAlchemy models (User, Task)
+├── auth/               # Blueprint for authentication features
+│   ├── __init__.py     # Auth Blueprint definition
+│   └── routes.py       # Auth routes (login, logout, forgot_pin, set_pin)
+├── tasks/              # Blueprint for task management features
+│   ├── __init__.py     # Tasks Blueprint definition
+│   └── routes.py       # Tasks routes (dashboard, add, edit, delete, complete)
+├── templates/
+│   ├── layout.html
+│   ├── login.html
+│   ├── dashboard.html
+│   ├── add_edit_task.html
+│   ├── forgot_pin.html
+│   ├── set_pin.html
+│   └── message.html
+└── run.py  
