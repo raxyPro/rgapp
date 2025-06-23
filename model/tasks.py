@@ -1,13 +1,13 @@
 # models.py (or integrated into your main app.py)
-import pystock_conf as pc
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from flask import Flask
 
-engine = pc.GetSQALCon()
-db = SQLAlchemy()
-db.engine = engine
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
+db = SQLAlchemy(app)
+db.init_app(app)
 
-class Task(db.Model):
+class task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Link to the user
     name = db.Column(db.String(200), nullable=False)
@@ -18,3 +18,7 @@ class Task(db.Model):
 
     def __repr__(self):
         return f'<Task {self.name}>'
+
+# To use Task.query, import Task directly in your other files:
+# from model.tasks import Task
+    

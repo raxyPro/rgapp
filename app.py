@@ -3,6 +3,7 @@ import os
 import pyodbc
 from datetime import date, datetime, timedelta
 import uuid
+from flask_sqlalchemy import SQLAlchemy
 
 from flask import Flask, render_template, request, redirect, url_for, session, g, flash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16,6 +17,25 @@ app.secret_key = os.urandom(24) # Generates a random 24-byte key
 app.permanent_session_lifetime = timedelta(days=1) # Session valid for 1 day
 # Define the database file path (MS Access .accdb)
 DATABASE = r'C:\Users\Hp\My Drive\Z-DataFiles\rcPro.accdb'
+
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Avoids a warning
+# Create SQLAlchemy instance
+db = SQLAlchemy(app)
+
+class task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Link to the user
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    due_date = db.Column(db.Date)
+    status = db.Column(db.String(50), default='Pending') # e.g., 'Pending', 'Completed'
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    def __repr__(self):
+        return f'<Task {self.name}>'
 
 def get_db():
     """Establishes a database connection or returns the existing one."""
@@ -116,7 +136,6 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    from model import tasks
     """Displays the user dashboard."""
     print(session['user_id'])
     db = get_db()
@@ -128,7 +147,7 @@ def dashboard():
 
 
     # Fetch tasks for the current user
-    user_tasks = tasks.query.filter_by(user_id="john_doe").order_by(tasks.due_date.asc()).all()
+    user_tasks = task.query.filter_by(user_id="john_doe").order_by(task.due_date.asc()).all()
 
     # Add a 'due_soon' flag for styling
     for task in user_tasks:
