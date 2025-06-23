@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Session Cookie Test</title>
+</head>
+<body>
+    <h1>Session Cookie Test</h1>
+    <button onclick="setSessionCookie()">Set Session Cookie</button>
+    <button onclick="checkSessionCookie()">Check Session Cookie</button>
+    <p id="cookie-status"></p>
+
+    {% for key, value in (headers or {}).items() %}
+    {{ key }} : {{ value }}
+    {% endfor %}
+    <!--
+    <h2>Request Variables</h2>
+    <h3>Args (GET parameters)</h3>
+    <pre>{{ (args or {}) | tojson(indent=2) }}</pre>
+
+    <h3>Form (POST parameters)</h3>
+    <pre>{{ form | tojson(indent=2) }}</pre>
+
+    <h3>Cookies</h3>
+    <pre>{{ cookies | tojson(indent=2) }}</pre>
+
+    <h3>Headers</h3>
+    <pre>{{ headers | tojson(indent=2) }}</pre>
+
+    <h3>Files</h3>
+    <pre>{{ files | tojson(indent=2) }}</pre>
+-->
+    <script>
+        function setSessionCookie() {
+            document.cookie = "sessionTest=active; path=/";
+            document.getElementById('cookie-status').innerText = "Session cookie set.";
+        }
+        function checkSessionCookie() {
+            const cookies = document.cookie.split(';').map(c => c.trim());
+            const found = cookies.find(c => c.startsWith('sessionTest='));
+            if (found) {
+                document.getElementById('cookie-status').innerText = "Session cookie is present.";
+            } else {
+                document.getElementById('cookie-status').innerText = "Session cookie not found.";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # my_flask_app/models.py
 
-from . import db # Import the db instance from the main app package
+from .. import db # Import the db instance from the main app package
 from datetime import datetime
 
 class User(db.Model):

@@ -3,7 +3,7 @@ import os
 import pyodbc # Still needed for MS Access connection
 from datetime import timedelta, datetime # Keep datetime for general use
 
-from flask import Flask, g, session, flash, redirect, url_for
+from flask import Flask, g, session, flash, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash # Used for initial user creation
 
