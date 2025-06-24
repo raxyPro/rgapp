@@ -12,7 +12,7 @@ def login_required(view):
   def wrapped_view(**kwargs):
     if 'user_code' not in session:
       flash("Please log in to access this page.", 'info')
-      return redirect(url_for('login'))
+      return redirect(url_for('auth.login'))
     return view(**kwargs)
   return wrapped_view
 
@@ -40,7 +40,7 @@ def add_task():
       db.session.add(new_task)
       db.session.commit()
       flash('Task added successfully!', 'success')
-      return redirect(url_for('dashboard'))
+      return redirect(url_for('auth.dashboard'))
 
   return render_template('add_edit_task.html', title='Add Task')
 
@@ -74,7 +74,7 @@ def edit_task(task_id):
     else:
       db.session.commit()
       flash('Task updated successfully!', 'success')
-      return redirect(url_for('dashboard'))
+      return redirect(url_for('auth.dashboard'))
 
   return render_template('add_edit_task.html', title='Edit Task', task=task)
 
