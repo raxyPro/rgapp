@@ -1,0 +1,32 @@
+name (one record, oneline )
+email (one record, oneline )
+li-url((one record, oneline ))
+mobile(one record, oneline )
+headline(one record, oneline )
+skill headline(one record, oneline )
+Summary(one record, multiple line)
+Key Skills (one to may)
+    skill (oneline)
+    exp in years(oneline)
+role-looking-for (multiple)
+    roles name(oneline)
+experiece (one to many)
+    organization (oneline)
+    from date (oneline)
+    to date (date field)
+    role (oneline)
+    key achievements (multiple lines)
+    remark (multile lines)
+education(one to many)
+    1. title (oneline)
+    2. instititue(oneline)
+    3. from date(date)
+    4. to date(date)
+    5. remark (multile lines)
+certificate(one to many)
+    1. title
+    2. instititue
+    3. year
+    4. link
+    5. remark (multile lines)
+

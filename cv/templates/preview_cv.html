@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CV Preview</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 20px; }
+    h1, h2 { color: #2c3e50; }
+    .section { margin-bottom: 30px; }
+    ul { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>{{ cv.name }}</h1>
+  <p><strong>Email:</strong> {{ cv.email }} | <strong>Mobile:</strong> {{ cv.mobile }}</p>
+  <p><strong>Headline:</strong> {{ cv.headline }}</p>
+
+  <div class="section">
+    <h2>Summary</h2>
+    <p>{{ cv.summary }}</p>
+  </div>
+
+  <div class="section">
+    <h2>Key Skills</h2>
+    <ul>
+      {% for skill in cv.skills %}
+        <li>{{ skill }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Roles Looking For</h2>
+    <ul>
+      {% for role in cv.roles %}
+        <li>{{ role }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Experience</h2>
+    {% for exp in cv.experiences %}
+      <div>
+        <strong>{{ exp.role }} at {{ exp.org }}</strong> ({{ exp.from }} - {{ exp.to }})<br>
+        <em>Achievements:</em> {{ exp.achievements }}<br>
+        <em>Remark:</em> {{ exp.remark }}
+      </div>
+      <hr>
+    {% endfor %}
+  </div>
+
+  <div class="section">
+    <h2>Education</h2>
+    {% for ed in cv.education %}
+      <div>
+        <strong>{{ ed.title }}</strong>, {{ ed.institute }} ({{ ed.from }} - {{ ed.to }})<br>
+        <em>Remark:</em> {{ ed.remark }}
+      </div>
+      <hr>
+    {% endfor %}
+  </div>
+
+  <a href="/">← Back to Editor</a>
+</body>
+</html>

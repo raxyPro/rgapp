@@ -32,3 +32,15 @@ class Task(db.Model):
 
     def __repr__(self):
         return f'<Task {self.name}>'
+
+class Profcv(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    pf_typ = db.Column(db.String(200))
+    pf_name = db.Column(db.Text)
+    pf_data = db.Column(db.Text)
+    
+
+    def __repr__(self):
+        return f'<Profcv {self.name}>'
+

@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import uuid
-from models import db, Vemp
+from .models import db, Vemp
 from datetime import date
 
 auth_bp = Blueprint('auth', __name__)
@@ -24,6 +24,10 @@ def index():
 # --- Dashboard ---
 @auth_bp.route('/dashboard')
 def dashboard():
+
+    #this is temporary
+    return redirect(url_for('prof.profiles'))
+
     """Displays the user dashboard."""
     user_code = session.get('user_code')
     user = Vemp.query.filter_by(code=user_code).first()
@@ -32,7 +36,7 @@ def dashboard():
         return redirect(url_for('auth.logout'))
 
     # Fetch tasks for the current user
-    from models import Task  # Import here to avoid circular import
+    from .models import Task  # Import here to avoid circular import
 
     user_tasks = Task.query.filter_by(user_code=user_code).order_by(Task.due_date.asc()).all()
     for t in user_tasks:

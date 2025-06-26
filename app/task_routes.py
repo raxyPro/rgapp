@@ -1,7 +1,7 @@
 # task_routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, date
-from models import db, Task
+from .models import db, Task
 
 task_bp = Blueprint('task', __name__)
 
@@ -90,7 +90,7 @@ def mark_task_complete(task_id):
     db.session.commit()
     flash('Task marked as complete!', 'success')
 
-  return redirect(url_for('dashboard'))
+  return redirect(url_for('auth.dashboard'))
 
 
 @task_bp.route('/delete_task/<int:task_id>')
@@ -104,4 +104,4 @@ def delete_task(task_id):
     db.session.commit()
     flash('Task deleted successfully!', 'success')
 
-  return redirect(url_for('dashboard'))
+  return redirect(url_for('auth.dashboard'))

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit CV</title>
+  <style>
+    #editor { height: 500px; width: 100%; border: 1px solid #ccc; }
+    .btn { padding: 10px; margin-top: 10px; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ext-beautify.min.js"></script>
+</head>
+<body>
+  <h2>Edit CV (XML)</h2>
+
+  <form method="POST" action="/save" onsubmit="syncData()">
+    <div id="editor">{{ cv_data|e }}</div>
+    <textarea id="cv_data" name="cv_data" style="display:none;"></textarea>
+    <br>
+    <button type="submit" class="btn">Save</button>
+    <button type="button" onclick="beautifyXML()" class="btn">Beautify</button>
+    <a href="/view" class="btn">View Rendered CV</a>
+    <a href="/preview" class="btn">Preview CV</a>
+
+  </form>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <p style="color:{{ 'red' if category == 'error' else 'green' }}">{{ msg }}</p>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/chrome");
+    editor.session.setMode("ace/mode/xml");
+
+    function syncData() {
+      document.getElementById("cv_data").value = editor.getValue();
+    }
+
+    function beautifyXML() {
+      ace.require("ace/ext/beautify").beautify(editor.session);
+    }
+  </script>
+</body>
+</html>
