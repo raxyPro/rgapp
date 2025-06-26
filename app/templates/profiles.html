@@ -4,17 +4,7 @@
 
 {% block content %}
 <div class="container mx-auto p-4 md:p-8">
-    <!--
-    <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
-        <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Welcome, {{ user_name }}!</h2>
-        <p class="text-lg text-gray-600">You are successfully logged in to your personalized dashboard.</p>
-        <div class="mt-8">
-            <a href="{{ url_for('auth.logout') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300">
-                Logout
-            </a>
-        </div>
-    </div>
-    -->
+
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8">
         <div class="flex justify-between items-center mb-6 border-b pb-4">
@@ -26,6 +16,7 @@
                 Add New Profile
             </a>
         </div>
+        
 
         {% if Profs %}
         <div class="overflow-x-auto">
@@ -35,12 +26,12 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for pf in profs %}
-                    <tr class="{% if task.status == 'Completed' %}bg-green-50{% elif task.due_soon %}bg-yellow-50{% endif %}">
+                    {% for pf in Profs %}
+                    <tr class="bg-white"></tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pf.id }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pf.pf_typ }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pf.pf_name }}</td>
@@ -51,7 +42,7 @@
             </table>
         </div>
         {% else %}
-        <p class="text-center text-gray-500 py-8">No tasks found. Click "Add New Task" to get started!</p>
+        <p class="text-center text-gray-500 py-8">No Profiles found. Click "Add New Profile" to get started!</p>
         {% endif %}
 
         </div>

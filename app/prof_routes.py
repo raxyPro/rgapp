@@ -23,6 +23,8 @@ def profiles():
         return redirect(url_for('auth.logout'))
 
     user_profiles = Profcv.query.filter_by(user_id=user_id).order_by(Profcv.id.asc()).all()
+    for t in user_profiles:
+        print(t.id,t.pf_typ, t.pf_name)
     print(f"User Profiles: {user_profiles}")
     return render_template('profiles.html', user_name=user.fullname or user.email, Profs=user_profiles)
 
