@@ -11,9 +11,9 @@ from .prof_routes import prof_bp
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = os.urandom(24).hex()
+    #app.secret_key = os.urandom(24).hex()
+    app.secret_key = '4c912ab54d99be8e1f3848f3d61f4f6d9aef827c64a8cddbbf96a80a3545d911'
     app.permanent_session_lifetime = timedelta(days=1)
-
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -41,6 +41,8 @@ def create_app():
         return {'current_year': datetime.now().year}
 
     @app.before_request
+    def make_session_permanent():
+        session.permanent = True
     def check_for_users():
         if Vemp.query.count() == 0:
             print("No users found. Creating a default user: user@example.com with PIN 1234")

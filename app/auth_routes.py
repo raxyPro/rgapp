@@ -67,6 +67,7 @@ def login():
         if error is None:
             session.clear()
             session.permanent = True
+            session['user_id'] = user.user_id
             session['user_code'] = user.code
             session['user_email'] = user.email
             session['user_name'] = user.fullname 
@@ -84,7 +85,6 @@ def logout():
     session.clear()
     flash("You have been logged out.", 'info')
     return redirect(url_for('auth.login'))
-
 
 # --- Forgot PIN ---
 @auth_bp.route('/forgot_pin', methods=('GET', 'POST'))

@@ -9,6 +9,7 @@ class Vemp(db.Model):
 
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     code = db.Column(db.String(20), nullable=True)
+    user_id = db.Column(db.Integer, nullable=False)
     fullname = db.Column(db.String(100), nullable=True)
     status = db.Column(db.String(50), nullable=True)
     cvxml = db.Column(db.Text, nullable=True)
@@ -40,7 +41,5 @@ class Profcv(db.Model):
     pf_name = db.Column(db.Text)
     pf_data = db.Column(db.Text)
     
-
     def __repr__(self):
-        return f'<Profcv {self.name}>'
-
+        return f'<Profcv {self.pf_name}>'
