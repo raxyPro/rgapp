@@ -6,7 +6,6 @@ from .models import db, Task
 task_bp = Blueprint('task', __name__)
 
 from functools import wraps
-
 def login_required(view):
   @wraps(view)
   def wrapped_view(**kwargs):

@@ -26,7 +26,7 @@ def index():
 def dashboard():
 
     #this is temporary
-    return redirect(url_for('prof.profiles'))
+    #return redirect(url_for('prof.profiles'))
 
     """Displays the user dashboard."""
     user_code = session.get('user_code')

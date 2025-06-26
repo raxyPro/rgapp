@@ -40,6 +40,8 @@ class Profcv(db.Model):
     pf_typ = db.Column(db.String(200))
     pf_name = db.Column(db.Text)
     pf_data = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     
     def __repr__(self):
         return f'<Profcv {self.pf_name}>'

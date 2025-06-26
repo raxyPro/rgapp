@@ -15,12 +15,12 @@ db = SQLAlchemy(app)
 
 # SQLAlchemy models
 class UserCV(db.Model):
-    __tablename__ = 'user_cv'
+    __tablename__ = 'profcv'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, unique=True)
-    name = db.Column(db.String(255))
-    email = db.Column(db.String(255))
-    cv_data = db.Column(db.Text)
+    pf_typ = db.Column(db.String(255))
+    pf_name = db.Column(db.String(255))
+    pf_data = db.Column(db.Text)
 
 class Vemp(db.Model):
     __bind_key__ = 'rcmain'
@@ -43,11 +43,11 @@ def edit_cv():
     vemp = Vemp.query.filter_by(user_id=user_id).first()
 
     if not user_cv:
-        user_cv = UserCV(user_id=user_id, cv_data="<cv></cv>", name=vemp.fullname if vemp else "", email=vemp.email if vemp else "")
+        user_cv = UserCV(user_id=user_id, pf_data="<cv></cv>", name=vemp.fullname if vemp else "", email=vemp.email if vemp else "")
         db.session.add(user_cv)
         db.session.commit()
 
-    return render_template("edit_cv.html", cv_data=user_cv.cv_data)
+    return render_template("edit_cv.html", cv_data=user_cv.pf_data)
 
 
 @app.route('/save', methods=['POST'])
