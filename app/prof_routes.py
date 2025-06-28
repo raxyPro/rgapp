@@ -93,10 +93,8 @@ def edit_prof(prof_id):
         profile.pf_name = pf_name
         profile.pf_data = pf_data
         profile.updated_at = datetime.now()
+        # No need to add profile to session again; just commit
         db.session.commit()
         flash("Profile updated successfully.", "success")
         return redirect(url_for('prof.profiles'))
-    print(profiles)
-    return render_template('add_edit_prof.html', PageAction="Edit Profile",profile=profile)
-
-    
+    return render_template('add_edit_prof.html', PageAction="Edit Profile", profile=profile, cv_data=profile.pf_data)
