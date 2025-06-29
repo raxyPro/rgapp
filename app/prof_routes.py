@@ -10,6 +10,8 @@ from datetime import date
 prof_bp = Blueprint('prof', __name__)
 
 from functools import wraps
+import os
+from flask import current_app
 def login_required(view):
   @wraps(view)
   def wrapped_view(**kwargs):
@@ -68,7 +70,22 @@ def add_prof():
         db.session.commit()
         flash("Profile added successfully.", "success")
         return redirect(url_for('prof.profiles'))
-    profile = Profcv(pf_typ="", pf_name="", pf_data="")
+    # this is follow if add request
+    pf_typ = request.args.get('type')
+    if pf_typ not in ['icard', 'cvp1', 'cvp2']:
+        flash("Invalid profile type.", "danger")
+        return redirect(url_for('prof.profiles'))
+    
+    blank_xml_path = os.path.join(current_app.root_path, 'templates', f'xml.{pf_typ}.blank.xml')
+    try:
+        with open(blank_xml_path, 'r', encoding='utf-8') as f:
+            blank_xml_content = f.read()
+    except Exception as e:
+        flash(f"Could not load {blank_xml_path} template.", "danger")
+        blank_xml_content = ""
+
+    profile = Profcv(pf_typ="icard", pf_name="", pf_data=blank_xml_content)
+    
     return render_template('add_edit_prof.html', PageAction="Add Profile", profile=profile)
 
 

@@ -17,16 +17,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ext-beautify.min.js"></script>
 
 <h2>{{ PageAction }}</h2>
-<form method="post" action="{% if PageAction == 'Edit Profile' %}/edit_prof{% else %}/add_prof{% endif %}" onsubmit="syncData()"></form>
-{{profile.pf_typ if profile else 'this is add module'}}
+<form method="post" action="{% if PageAction == 'Edit Profile' %}/edit_prof{% else %}/add_prof{% endif %}" onsubmit="syncData()">
+    {{profile.pf_name}}
+    {{profile.pf_typ if profile else 'this is add module'}}
     <div class="mb-4 flex items-center">
         <label for="type" class="block text-sm font-medium text-gray-700 mb-1 mr-4 w-32">Type</label>
-        <select id="type" name="pf_typ" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
-            <option value="Sel" {% if profile.pf_typ=="" %}selected{% endif %} >Profile Type</option>
-            <option value="ICard" {% if profile.pf_typ=="ICard" %}selected{% endif %}>Intro Card</option>
-            <option value="CVP1" {% if profile.pf_typ=="CVP1" %}selected{% endif %}>CV Card</option>
-            <option value="CVP2" {% if profile.pf_typ=="CVP2" %}selected{% endif %}>CV Doc</option>
-        </select>
+        <div id="type_display" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100">
+            {% if profile.pf_typ == "icard" %}
+            Intro Card
+            {% elif profile.pf_typ == "cvp1" %}
+            One Page CV
+            {% elif profile.pf_typ == "cvp2" %}
+            Two Page CV
+            {% endif %}
+        </div>
+        <input type="hidden" id="pf_typ" name="pf_typ" value="{{ profile.pf_typ }}">
     </div>
     <div class="mb-4 flex items-center">
         <label for="profile_name" class="block text-sm font-medium text-gray-700 mb-1 mr-4 w-32">Profile Name</label>
@@ -42,7 +47,7 @@
 
     </div>
     <div class="flex flex-wrap gap-2 mt-4">
-        <button type="submit"
+        <button type="submit" 
             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
             Save
         </button>
