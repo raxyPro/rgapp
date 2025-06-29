@@ -17,13 +17,24 @@ def index():
     print("hi")
     print("Session variables:", dict(session))
     if 'user_code' in session:
-        return redirect(url_for('auth.dashboard'))
+        return redirect(url_for('auth.start'))
     return redirect(url_for('auth.login'))
 
 
+@auth_bp.route('/start')
+def start():
+    """Redirects to dashboard if logged in, otherwise to login page."""
+    print("hi")
+    print("Session variables:", dict(session))
+    if 'user_code' in session:
+        return redirect(url_for('prof.profiles'))
+        #return redirect(url_for('autho.dashboard'))
+
+    return redirect(url_for('auth.login'))
+
 # --- Dashboard ---
 @auth_bp.route('/dashboard')
-def dashboard():
+def dashboard():    
 
     #this is temporary
     #return redirect(url_for('prof.profiles'))
@@ -52,7 +63,7 @@ def dashboard():
 @auth_bp.route('/login', methods=('GET', 'POST'))
 def login():
     if 'user_code' in session:
-        return redirect(url_for('auth.dashboard'))
+        return redirect(url_for('auth.start'))
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip()

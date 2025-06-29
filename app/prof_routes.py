@@ -53,7 +53,9 @@ def add_prof():
         if not pf_typ or not pf_name or not pf_data:
             flash(f"All fields are required.{user_id} {pf_typ} {pf_name} {pf_data}", "danger")
             return redirect(url_for('prof.add_prof'))
-
+        if pf_typ=="Sel":
+            flash("Please select a valid profile type.", "danger")
+            return redirect(url_for('prof.add_prof'))
         new_profile = Profcv(
             user_id=user_id,
             pf_typ=pf_typ,
@@ -66,8 +68,8 @@ def add_prof():
         db.session.commit()
         flash("Profile added successfully.", "success")
         return redirect(url_for('prof.profiles'))
-
-    return render_template('add_edit_prof.html', PageAction="Add Profile", cv_data="")
+    profile = Profcv(pf_typ="", pf_name="", pf_data="")
+    return render_template('add_edit_prof.html', PageAction="Add Profile", profile=profile)
 
 
 
