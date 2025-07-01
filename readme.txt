@@ -57,3 +57,13 @@ pip install flask flask-mysqldb
 ALTER TABLE `vemp` ADD COLUMN user_id INT;
 UPDATE `vemp` SET user_id = id where id>0
 CREATE UNIQUE INDEX idx_user_cv_user_id ON `vemp` (user_id);
+
+
+01-Jul-25
+
+onprofile no add edit on main page show the profiles in table or show the combobox for profiles
+once the option are selected then show the provide preview -> no special editor
+
+there are options
+edit-> sub option are save or cancel
+
