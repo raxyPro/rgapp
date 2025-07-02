@@ -1,69 +1,100 @@
-{% extends 'layout.html' %}
-
-{% block title %}rcPro Connect - Profiles{% endblock %}
-
+{% extends "layout.html" %}
 {% block content %}
-<div class="container mx-auto p-4 md:p-8">
 
+{% set is_view = pageaction is none or pageaction == 'view' %}
+{% set is_edit = pageaction == 'edit' %}
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8">
-        <div class="flex justify-between items-center mb-6 border-b pb-4">
-            <h3 class="text-3xl font-bold text-gray-900">Your Profiles</h3>
-            <div>
-                <form action="{{ url_for('prof.add_prof') }}" method="get" class="flex items-center space-x-2">
-                    <label for="profileType" class="sr-only">Profile Type</label>
-                    <select id="profileType" name="type" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
-                        <option value="" disabled selected>Select profile type</option>
-                        <option value="icard">New Intro Card</option>
-                        <option value="cvp1">One Page CV</option>
-                        <option value="cvp2">Two Page CV</option>
-                    </select>
-                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
-                        Add
-                    </button>
-                </form>
+<link rel="stylesheet" href="{{ url_for('static', filename='icard.css') }}">
+
+<div class="container mx-auto px-4 py-6">
+
+    <!-- Toggle buttons -->
+    <div class="flex justify-end space-x-2 mb-6">
+        <a href="{{ url_for('prof.profiles', pageaction='view') }}"
+            class="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 {% if is_view %}opacity-50{% endif %}">
+            View
+        </a>
+        <a href="{{ url_for('prof.profiles', pageaction='edit') }}"
+            class="px-4 py-2 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 {% if is_edit %}opacity-50{% endif %}">
+            Edit
+        </a>
+    </div>
+
+    <!-- VIEW MODE -->
+    {% if is_view %}
+
+    <div id="view_mode">
+        <div class="card-container">
+            <div class="d-flex justify-content-between align-items-center mb-3"
+                style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>{{ icard_dict.name }}</h2>
+                    <p class="text-secondary">{{ icard_dict.Role }}</p>
+                    <p class="text-secondary" style="margin-left: -2px;">{{ icard_dict.organization }}</p>
+                </div>
+                <div class="card-header text-end">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="RayGrow Logo"
+                        style="height: 50px; margin-bottom: 5px;">
+
+                    <div class="tagline">We Connect and Deliver</div>
+                </div>
             </div>
-        </div>
-        
 
-        {% if Profs %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for pf in Profs %}
-                    <tr class="bg-white"></tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pf.id }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {% if pf.pf_typ == 'ICard' %}
-                                Intro Card
-                            {% elif pf.pf_typ == 'CVP1' %}
-                                One Page CV
-                            {% elif pf.pf_typ == 'CVP2' %}
-                                Two Page CV
-                            {% else %}
-                                {{ pf.pf_typ }}
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ pf.pf_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><a href="{{ url_for('prof.edit_prof', prof_id=pf.id) }}">Edit</a></td>
-                    </tr>
+            <div class="contact mb-4">
+                <p><strong>M:</strong> {{ icard_dict.mobile }}&nbsp;&nbsp;
+                    <strong>T:</strong> {{ icard_dict.Telephone }}
+                </p>
+                <p><strong>E:</strong>
+                    <a href="mailto:{{ icard_dict.email }}">{{ icard_dict.email }}</a>
+                </p>
+            </div>
+
+            {% if icard_dict.Services %}
+            <div class="mb-2" style="line-height:1.5;">
+                <p class="mb-1">
+                    <span class="category">Services</span>:
+                </p>
+                <ul>
+                    {% for service in icard_dict.Services %}
+                    <li>{{ service }}</li>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        {% else %}
-        <p class="text-center text-gray-500 py-8">No Profiles found. Add a profile to get started!</p>
-        {% endif %}
+                </ul>
+            </div>
+            {% endif %}
 
+            {% if icard_dict.website %}
+            <div class="text-center mt-4" style="text-align: center;">
+                <small class="text-secondary">{{ icard_dict.website }}</small>
+            </div>
+            {% endif %}
         </div>
+    </div>
+        {{icard_dict}}
+
+    {% endif %}
+
+    <!-- EDIT MODE -->
+    {% if is_edit %}
+    <div id="edit_mode">
+        <form id="frm_prof" action="{{ url_for('prof.save_prof') }}" method="post">
+            <label for="xmlData" class="block text-sm font-medium text-gray-700 mb-2">Edit XML</label>
+            <textarea id="xmlData" name="xmlData" rows="20" cols="50"
+                class="w-full border border-gray-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                style="width:90%; height:90%;">{{ pf_data }}</textarea>
+
+            <div class="mt-4 flex justify-end space-x-2">
+                <button type="submit"
+                    class="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    Save XML
+                </button>
+                <a href="{{ url_for('prof.profiles', pageaction='view') }}"
+                    class="px-4 py-2 rounded-md bg-gray-300 text-gray-800 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

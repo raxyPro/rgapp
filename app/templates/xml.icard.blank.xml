@@ -1,11 +1,11 @@
 <vCard>
      <name>Rajat Sharma</name>
-     <name>Agile Project Manager</name>
+     <Role>Agile Project Manager</Role>
      <email>rajat.sharma@raygrowcs.com</email>
      <organization>RayGrow Connsulting</organization>
-     <organization>www.raygrowcs.com</organization>
-     <mobile></mobile>
-     <Telephone></Telephone>
+     <website>www.raygrowcs.com</website>
+     <mobile>+918138926888</mobile>
+     <Telephone>+911202668998</Telephone>
      <Services>
     <Service>Project Management: Planning, Resourcing, Execution</Service>
     <Service>Team Management: Building, Leading, and Motivating Teams</Service>

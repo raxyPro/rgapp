@@ -23,11 +23,13 @@ def login_required(view):
 
 
 
-# --- Profiles ---
 @prof_bp.route('/profiles')
 @login_required
 def profiles():
     """Displays the profile management."""
+
+    pageaction = request.args.get('pageaction', 'view')
+    
     user_code = session.get('user_code')
     user_id = session.get('user_id')
     print(f"User Code: {user_code}, User ID: {user_id}")
@@ -36,84 +38,74 @@ def profiles():
         flash("User not found.", "danger")
         return redirect(url_for('auth.logout'))
 
-    user_profiles = Profcv.query.filter_by(user_id=user_id).order_by(Profcv.id.asc()).all()
-    for t in user_profiles:
-        print(t.id,t.pf_typ, t.pf_name)
-    print(f"User Profiles: {user_profiles}")
-    return render_template('profiles.html', user_name=user.fullname or user.email, Profs=user_profiles)
-
-@prof_bp.route('/add_prof', methods=['GET', 'POST'])
-@login_required
-def add_prof():
-    """Adds a new profile."""
-    if request.method == 'POST':
-        pf_typ = request.form.get('pf_typ')
-        pf_name = request.form.get('pf_name')
-        pf_data = request.form.get('pf_data')
-        user_id = session.get('user_id')
-        print(f"Adding profile for User ID: {user_id}, Type: {pf_typ}, Name: {pf_name}")
-        if not pf_typ or not pf_name or not pf_data:
-            flash(f"All fields are required.{user_id} {pf_typ} {pf_name} {pf_data}", "danger")
-            return redirect(url_for('prof.add_prof'))
-        if pf_typ=="Sel":
-            flash("Please select a valid profile type.", "danger")
-            return redirect(url_for('prof.add_prof'))
-        new_profile = Profcv(
-            user_id=user_id,
-            pf_typ=pf_typ,
-            pf_name=pf_name,
-            pf_data=pf_data,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        db.session.add(new_profile)
+    user_profiles = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').order_by(Profcv.id.asc()).all()
+    if not user_profiles:
+        # Create default profiles if none exist
+        today = datetime.now()
+        default_profiles = [
+            Profcv(user_id=user_id, pf_typ='icard', pf_name='Intro Card', pf_data='', created_at=today, updated_at=today),
+            #Profcv(user_id=user_id, pf_typ='cvp1', pf_name='Summary CV', pf_data='', created_at=today, updated_at=today),
+            #Profcv(user_id=user_id, pf_typ='cvp2', pf_name='Detail CV', pf_data='', created_at=today, updated_at=today),
+        ]
+        db.session.add_all(default_profiles)
         db.session.commit()
-        flash("Profile added successfully.", "success")
-        return redirect(url_for('prof.profiles'))
-    # this is follow if add request
-    pf_typ = request.args.get('type')
-    if pf_typ not in ['icard', 'cvp1', 'cvp2']:
-        flash("Invalid profile type.", "danger")
-        return redirect(url_for('prof.profiles'))
+        user_profiles = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').order_by(Profcv.id.asc()).all()
     
-    blank_xml_path = os.path.join(current_app.root_path, 'templates', f'xml.{pf_typ}.blank.xml')
-    try:
-        with open(blank_xml_path, 'r', encoding='utf-8') as f:
-            blank_xml_content = f.read()
-    except Exception as e:
-        flash(f"Could not load {blank_xml_path} template.", "danger")
-        blank_xml_content = ""
+    # Example: Parse the pf_data XML of the first profile (if exists)
+    import xml.etree.ElementTree as ET
+    preview_profile=False 
+    icard_data = None
+    pf_data=user_profiles[0].pf_data
+    if user_profiles and user_profiles[0].pf_data:
+        try:
+            icard_data = ET.fromstring(user_profiles[0].pf_data)
+            icard_dict = {child.tag: child.text for child in icard_data}
+            # Extract Services as a list from icard_data XML
+            services_elem = icard_data.find('Services')
+            services_list = []
+            if services_elem is not None:
+                for service in services_elem.findall('Service'):
+                    services_list.append(service.text)
+            icard_dict['Services'] = services_list
+            preview_profile=True
+        except Exception as e:
+            icard_data = None
+            flash("No Preview - Could not parse profile XML data.", "warning")
+    print(icard_data)
+    return render_template(
+        'profiles.html',
+        user_name=user.fullname,
+        pf_view=preview_profile,
+        pf_data=pf_data,
+        icard_dict=icard_dict if preview_profile else None,
+        pageaction=pageaction,
+        user_profiles=user_profiles,
+        user_code=user_code,
+        user_id=user_id
+    )
 
-    profile = Profcv(pf_typ="icard", pf_name="", pf_data=blank_xml_content)
-    
-    return render_template('add_edit_prof.html', PageAction="Add Profile", profile=profile)
-
-
-
-@prof_bp.route('/edit_prof/<int:prof_id>', methods=['GET', 'POST'])
+@prof_bp.route('/save_prof', methods=['GET', 'POST'])
 @login_required
-def edit_prof(prof_id):
-    """Edits an existing profile."""
-    user_id = session.get('user_id')
-    profile = Profcv.query.filter_by(id=prof_id, user_id=user_id).first()
-    if not profile:
-        flash("Profile not found or access denied.", "danger")
-        return redirect(url_for('prof.profiles'))
-
+def save_prof():
     if request.method == 'POST':
-        pf_typ = request.form.get('pf_typ')
-        pf_name = request.form.get('pf_name')
-        pf_data = request.form.get('pf_data')
-        if not pf_typ or not pf_name or not pf_data:
-            flash("All fields are required.", "danger")
-            return redirect(url_for('prof.edit_prof', prof_id=prof_id))
+        prof_id = 1 #request.form.get('id')
+        xml_data = request.form.get('xmlData')
+        print(xml_data)
+        if not prof_id or not xml_data:
+            flash("Missing profile ID or data.", "danger")
+            return redirect(url_for('prof.profiles'))
 
-        profile.pf_typ = pf_typ
-        profile.pf_name = pf_name
-        profile.pf_data = pf_data
+        profile = Profcv.query.filter_by(id=prof_id, user_id=session.get('user_id')).first()
+        if not profile:
+            flash("Profile not found.", "danger")
+            return redirect(url_for('prof.profiles'))
+
+        profile.pf_data = xml_data
         profile.updated_at = datetime.now()
-        # No need to add profile to session again; just commit
         db.session.commit()
         flash("Profile updated successfully.", "success")
         return redirect(url_for('prof.profiles'))
-    return render_template('add_edit_prof.html', PageAction="Edit Profile", profile=profile, cv_data=profile.pf_data)
+
+    return redirect(url_for('prof.profiles'))
+    pass
+
