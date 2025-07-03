@@ -19,12 +19,13 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging for debugging
-    app.config['MAIL_SERVER']='smtp.gmail.com'
-    app.config['MAIL_PORT'] = 465
-    app.config['MAIL_USERNAME'] = 'yourId@gmail.com'
-    app.config['MAIL_PASSWORD'] = '*****'
-    app.config['MAIL_USE_TLS'] = False
-    app.config['MAIL_USE_SSL'] = True
+
+    app.config['MAIL_SERVER'] = 'mail.rcpro.in'
+    app.config['MAIL_PORT'] = 587
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = 'connect@rcpro.in'
+    app.config['MAIL_PASSWORD'] = 'HostingMail00$'
+    app.config['MAIL_DEFAULT_SENDER'] = ('rcPro Connect', 'connect@rcpro.in')
     mail = Mail(app)
 
     SESSION_PERMANENT = True
