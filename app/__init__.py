@@ -3,11 +3,13 @@ import os
 # Persist session for a day
 from datetime import datetime, timedelta
 from flask import Flask, session, flash, redirect, url_for
+from flask_mail import Mail
 from werkzeug.security import generate_password_hash
 from .models import db, Vemp
 from .auth_routes import auth_bp
 from .task_routes import task_bp
 from .prof_routes import prof_bp
+from .admin_routes import admin_bp
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +18,14 @@ def create_app():
     app.permanent_session_lifetime = timedelta(days=1)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging for debugging
+    app.config['MAIL_SERVER']='smtp.gmail.com'
+    app.config['MAIL_PORT'] = 465
+    app.config['MAIL_USERNAME'] = 'yourId@gmail.com'
+    app.config['MAIL_PASSWORD'] = '*****'
+    app.config['MAIL_USE_TLS'] = False
+    app.config['MAIL_USE_SSL'] = True
+    mail = Mail(app)
 
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
@@ -56,5 +66,6 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(task_bp)
     app.register_blueprint(prof_bp)
+    app.register_blueprint(admin_bp)
 
     return app
