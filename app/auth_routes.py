@@ -82,6 +82,8 @@ def login():
             session['user_code'] = user.code
             session['user_email'] = user.email
             session['user_name'] = user.fullname 
+            session['user_role'] = user.user_role
+            print("hi",user.user_role)
             #flash(f"Welcome back, {user.fullname or user.email}!", 'success')
             return redirect(url_for('auth.dashboard'))
         else:

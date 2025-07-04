@@ -9,7 +9,11 @@ from .models import db, Vemp
 from .auth_routes import auth_bp
 from .task_routes import task_bp
 from .prof_routes import prof_bp
+
 #from .admin_routes import admin_bp
+
+# to test the chat app
+
 
 def create_app():
     app = Flask(__name__)
@@ -62,5 +66,8 @@ def create_app():
     app.register_blueprint(task_bp)
     app.register_blueprint(prof_bp)
     #app.register_blueprint(admin_bp)
+    
+    
+
 
     return app

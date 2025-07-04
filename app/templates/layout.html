@@ -46,14 +46,15 @@
     <nav class="space-x-6 text-sm text-gray-600 font-medium">
       <a href="{{ url_for('auth.dashboard') }}"  class="hover:text-indigo-600">Home</a>
       <a href="{{ url_for('prof.profiles') }}"  class="hover:text-indigo-600">Profiles</a>
-      <a href="#" onclick="loadSection('jobs')" class="hover:text-indigo-600">Jobs</a>
+      <a href="#" onclick="loadSection('jobs')" class="hover:text-indigo-600">Connects</a>
       <a href="{{ url_for('auth.dashboard') }}"  class="hover:text-indigo-600">Chat</a>
     </nav>
     <div class="flex items-center space-x-3">
       <img src="https://i.pravatar.cc/48?img=32" class="w-10 h-10 rounded-full" />
       <div class="text-sm text-gray-800">
-        <div class="font-semibold">Shyam Pal Chauhan</div>
-        <div class="text-xs text-indigo-500">Agile Coach</div>
+        
+        <div class="font-semibold">{{ session['user_name'] }}</div>
+        <div class="text-xs text-indigo-500">{{ session['user_role'] }}</div>
       </div>
       <a href="{{ url_for('auth.logout') }}" class="ml-4 bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">Logout</a>
     </div>
