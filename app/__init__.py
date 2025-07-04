@@ -9,7 +9,7 @@ from .models import db, Vemp
 from .auth_routes import auth_bp
 from .task_routes import task_bp
 from .prof_routes import prof_bp
-from .admin_routes import admin_bp
+#from .admin_routes import admin_bp
 
 def create_app():
     app = Flask(__name__)
@@ -20,13 +20,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging for debugging
 
-    app.config['MAIL_SERVER'] = 'mail.rcpro.in'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = 'connect@rcpro.in'
-    app.config['MAIL_PASSWORD'] = 'HostingMail00$'
-    app.config['MAIL_DEFAULT_SENDER'] = ('rcPro Connect', 'connect@rcpro.in')
-    mail = Mail(app)
+
 
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
@@ -67,6 +61,6 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(task_bp)
     app.register_blueprint(prof_bp)
-    app.register_blueprint(admin_bp)
+    #app.register_blueprint(admin_bp)
 
     return app

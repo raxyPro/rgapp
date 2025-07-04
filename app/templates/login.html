@@ -1,47 +1,74 @@
-
-{% extends 'layout.html' %}
-
-{% block title %}Login{% endblock %}
-
-{% block content %}
-<div class="flex items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg border border-gray-200">
-        <div class="text-center">
-            <h2 class="mt-6 text-3xl font-extrabold text-gray-900 rounded-md">
-                Log in to your account
-            </h2>
-        </div>
-        <form class="mt-8 space-y-6" method="POST">
-            <div class="rounded-md shadow-sm -space-y-px">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to rcPro Connect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #e0f2f7;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen items-center justify-center p-6">
+    <div class="flex flex-col lg:flex-row w-full max-w-5xl bg-transparent rounded-lg shadow-none">
+        <!-- Login Block -->
+        <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md text-center flex flex-col justify-center mx-auto lg:mx-0">
+            <h1 class="text-4xl font-extrabold text-indigo-700 mb-2">rcPro Connect</h1>
+            <p class="text-lg text-gray-600 mb-8">Your Professional Connection Hub</p>
+            <form class="space-y-6" method="POST">
                 <div>
                     <label for="email" class="sr-only">Email address</label>
-                    <input id="email" name="email" type="email" autocomplete="email" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                           placeholder="Email address">
+                    <input type="email" id="email" name="email" placeholder="Username" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                           aria-label="Email address">
                 </div>
                 <div>
                     <label for="pin" class="sr-only">4-digit PIN</label>
-                    <input id="pin" name="pin" type="password" maxlength="4" pattern="[0-9]{4}" title="Please enter a 4-digit number" required
-                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                           placeholder="4-digit PIN">
+       <input id="pin" name="pin" type="password" maxlength="4" pattern="[0-9]{4}" title="Please enter a 4-digit number" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                           placeholder="4-digit PIN">                           
                 </div>
-            </div>
-
-            <div class="flex items-center justify-between">
+                      <div class="flex items-center justify-between">
                 <div class="text-sm">
                     <a href="{{ url_for('auth.forgot_pin') }}" class="font-medium text-indigo-600 hover:text-indigo-500 transition duration-300">
                         Forgot/Set PIN?
                     </a>
                 </div>
             </div>
-
-            <div>
                 <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 shadow-md">
-                    Sign in
+                        class="w-full bg-indigo-600 text-white py-3 rounded-lg text-xl font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300">
+                    Log In
                 </button>
-            </div>
-        </form>
+            </form>
+            <p class="mt-6 text-sm text-gray-500">
+                Don't have an account? <a href="#" class="text-indigo-600 hover:underline">Sign Up</a>
+            </p>
+        </div>
+        <!-- Info Block -->
+        <div class="mt-8 lg:mt-0 lg:ml-8 flex flex-col justify-center w-full max-w-2xl text-center bg-white p-6 rounded-lg shadow border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Empowering Businesses & Professionals</h2>
+            <ul class="space-y-3 text-base text-gray-700">
+                <li>
+                    <span class="font-semibold text-indigo-600">Connect. Collaborate. Grow.</span> Your gateway to professional excellence.
+                </li>
+                <li>
+                    <span class="font-semibold text-indigo-600">Smart Networking.</span> Find your next opportunity, faster.
+                </li>
+                <li>
+                    <span class="font-semibold text-indigo-600">Knowledge Shared.</span> Learn from the best, share your expertise.
+                </li>
+                <li>
+                    <span class="font-semibold text-indigo-600">Community Built.</span> Engage with peers, shape your future.
+                </li>
+            </ul>
+        </div>
     </div>
-</div>
-{% endblock %}
+    <footer class="mt-16 text-sm text-gray-500">
+        &copy; 2025 rcPro Connect. All rights reserved.
+    </footer>
+</body>
+</html>
+
