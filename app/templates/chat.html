@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+
+{% block title %}rcPro Chat{% endblock %}
+
+{% block content %}
+
+<div class="container mx-auto p-4 md:p-8">
+    <!--
+    <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-gray-200 mb-8">
+        <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Welcome, {{ user_name }}!</h2>
+        <p class="text-lg text-gray-600">You are successfully logged in to your personalized dashboard.</p>
+        <div class="mt-8">
+            <a href="{{ url_for('auth.logout') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300">
+                Logout
+            </a>
+        </div>
+    </div>
+    -->
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h3 class="text-3xl font-bold text-gray-900">Your Tasks</h3>
+            <a href="{{ url_for('task.add_task') }}"
+                class="inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                    fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd"
+                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                Chat with rcPro
+            </a>
+        </div>
+
+        {{message}}
+
+    </div>
+</div>
+    {% endblock %}

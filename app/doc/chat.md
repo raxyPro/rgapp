@@ -1,3 +1,4 @@
+
 CREATE TABLE `chat_topic` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL,
@@ -28,3 +29,9 @@ CREATE TABLE `chat_message` (
   FOREIGN KEY (`topic_id`) REFERENCES `chat_topic`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`sender_id`) REFERENCES `vemp`(`ID`) ON DELETE CASCADE
 );
+
+for each users there are list of topic that he/she can participate
+
+chat use cases
+when user load chat application
+all the topic that user participate goes to front end and topic is displayed
