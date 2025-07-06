@@ -21,7 +21,7 @@ def login_required(view):
 def profiles():
     """Displays the profile management."""
 
-    pageaction = request.args.get('pageaction', 'view')
+    pageaction = request.args.get('pageaction', 'view_prof')
     user_code = session.get('user_code')
     user_id = session.get('user_id')
     print(f"User Code: {user_code}, User ID: {user_id}")
