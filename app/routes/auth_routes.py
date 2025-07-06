@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import uuid
-from .models import db, Vemp
+from ..models import db, Vemp
 from datetime import date
 
 auth_bp = Blueprint('auth', __name__)
@@ -25,7 +25,7 @@ def index():
 def sample_transaction():
     try:
         # Start a transaction using ChatManager class
-        from .models import ChatManager, Vemp  # Import ChatManager and Vemp from your models
+        from ..models import ChatManager, Vemp  # Import ChatManager and Vemp from your models
         manager = ChatManager(db)
 
         # Fetch two valid user IDs from the Vemp table
@@ -85,7 +85,7 @@ def dashboard():
         return redirect(url_for('auth.logout'))
 
     # Fetch tasks for the current user
-    from .models import Task  # Import here to avoid circular import
+    from ..models import Task  # Import here to avoid circular import
 
     user_tasks = Task.query.filter_by(user_code=user_code).order_by(Task.due_date.asc()).all()
     for t in user_tasks:

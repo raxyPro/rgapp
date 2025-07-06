@@ -1,35 +1,26 @@
-# auth_routes.py
-
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
-import uuid
-from .models import db, Vemp,Profcv
-from datetime import date
+from datetime import datetime
+from .models import db, Vemp, Profcv
 
-prof_bp = Blueprint('prof', __name__)
+bp_prof = Blueprint('prof', __name__)
 
 from functools import wraps
-import os
-from flask import current_app
+
 def login_required(view):
-  @wraps(view)
-  def wrapped_view(**kwargs):
-    if 'user_code' not in session:
-      flash("Please log in to access this page.", 'info')
-      return redirect(url_for('auth.login'))
-    return view(**kwargs)
-  return wrapped_view
+    @wraps(view)
+    def wrapped_view(**kwargs):
+        if 'user_code' not in session:
+            flash("Please log in to access this page.", 'info')
+            return redirect(url_for('auth.login'))
+        return view(**kwargs)
+    return wrapped_view
 
-
-
-@prof_bp.route('/profiles')
+@bp_prof.route('/profiles')
 @login_required
 def profiles():
     """Displays the profile management."""
 
     pageaction = request.args.get('pageaction', 'view')
-    
     user_code = session.get('user_code')
     user_id = session.get('user_id')
     print(f"User Code: {user_code}, User ID: {user_id}")
@@ -43,35 +34,16 @@ def profiles():
         # Create default profiles if none exist
         today = datetime.now()
         default_profiles = [
-            Profcv(user_id=user_id, pf_typ='icard', pf_name='Intro Card', pf_data='', created_at=today, updated_at=today),
-            #Profcv(user_id=user_id, pf_typ='cvp1', pf_name='Summary CV', pf_data='', created_at=today, updated_at=today),
-            #Profcv(user_id=user_id, pf_typ='cvp2', pf_name='Detail CV', pf_data='', created_at=today, updated_at=today),
+            Profcv(user_id=user_id, pf_typ='icard', pf_name='Intro Card', pf_data='{}', created_at=today, updated_at=today),
         ]
         db.session.add_all(default_profiles)
         db.session.commit()
         user_profiles = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').order_by(Profcv.id.asc()).all()
     
-    # Example: Parse the pf_data XML of the first profile (if exists)
-    import xml.etree.ElementTree as ET
-    preview_profile=False 
-    icard_data = None
-    pf_data=user_profiles[0].pf_data
-    if user_profiles and user_profiles[0].pf_data:
-        try:
-            icard_data = ET.fromstring(user_profiles[0].pf_data)
-            icard_dict = {child.tag: child.text for child in icard_data}
-            # Extract Services as a list from icard_data XML
-            services_elem = icard_data.find('Services')
-            services_list = []
-            if services_elem is not None:
-                for service in services_elem.findall('Service'):
-                    services_list.append(service.text)
-            icard_dict['Services'] = services_list
-            preview_profile=True
-        except Exception as e:
-            icard_data = None
-            flash("No Preview - Could not parse profile XML data.", "warning")
-    print(icard_data)
+    intro_card_data_in_db = user_profiles[0].pf_data
+    jason_data = getICDatav1(intro_card_data_in_db)
+    
+    
     return render_template(
         'profiles.html',
         user_name=user.fullname,
@@ -84,11 +56,11 @@ def profiles():
         user_id=user_id
     )
 
-@prof_bp.route('/save_prof', methods=['GET', 'POST'])
+@bp_prof.route('/save_prof', methods=['GET', 'POST'])
 @login_required
 def save_prof():
     if request.method == 'POST':
-        prof_id = 1 #request.form.get('id')
+        prof_id = 1  # request.form.get('id')
         xml_data = request.form.get('xmlData')
         print(xml_data)
         if not prof_id or not xml_data:
@@ -107,5 +79,3 @@ def save_prof():
         return redirect(url_for('prof.profiles'))
 
     return redirect(url_for('prof.profiles'))
-    pass
-

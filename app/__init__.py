@@ -6,8 +6,8 @@ from flask import Flask, session, flash, redirect, url_for
 from flask_mail import Mail
 from werkzeug.security import generate_password_hash
 from .models import db, Vemp
-from .auth_routes import auth_bp
-from .task_routes import task_bp
+from .routes.auth_routes import auth_bp
+from .routes.task_routes import task_bp
 from .prof_routes import prof_bp
 
 #from .admin_routes import admin_bp

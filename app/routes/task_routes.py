@@ -1,7 +1,7 @@
 # task_routes.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from datetime import datetime, date
-from .models import db, Task
+from ..models import db, Task
 
 task_bp = Blueprint('task', __name__)
 
