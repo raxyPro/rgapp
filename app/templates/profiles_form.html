@@ -1,0 +1,102 @@
+
+<form method="post" action="{{ url_for('prof.save_prof') }}" class="space-y-6">
+
+    <!-- Two-column layout for standard fields -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <div class="flex items-center gap-3">
+        <label for="pf_name" class="w-32 text-right">Name</label>
+        <input type="text" id="pf_name" name="pf_name" value="{{ icard_dict.name|default('') }}"
+            class="flex-1 border rounded px-3 py-2" required>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_email" class="w-32 text-right">Email</label>
+        <input type="email" id="pf_email" name="pf_email" value="{{ icard_dict.email|default('') }}"
+            class="flex-1 border rounded px-3 py-2" required>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_mobile" class="w-32 text-right">Mobile</label>
+        <input type="text" id="pf_mobile" name="pf_mobile" value="{{ icard_dict.mobile|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_telephone" class="w-32 text-right">Telephone</label>
+        <input type="text" id="pf_telephone" name="pf_telephone" value="{{ icard_dict.telephone|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_title" class="w-32 text-right">Role/Title</label>
+        <input type="text" id="pf_title" name="pf_title" value="{{ icard_dict.role|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_company" class="w-32 text-right">Organization</label>
+        <input type="text" id="pf_company" name="pf_company" value="{{ icard_dict.organization|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="md:col-span-2 flex items-center gap-3">
+        <label for="pf_website" class="w-32 text-right">Website</label>
+        <input type="text" id="pf_website" name="pf_website" value="{{ icard_dict.website|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+</div>
+    <!-- Skills Section -->
+    <div>
+        <label class="block font-medium mb-2">Skills</label>
+        <div id="skills-list" class="space-y-2">
+            {% if icard_dict.skills %}
+                {% for skill in icard_dict.skills %}
+                    <div class="flex items-center gap-2">
+                        <input type="text" name="skills[]" value="{{ skill }}" class="form-input flex-1 border rounded px-3 py-2">
+                        <button type="button" class="remove-skill text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex items-center gap-2">
+                    <input type="text" name="skills[]" class="form-input flex-1 border rounded px-3 py-2">
+                    <button type="button" class="remove-skill text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" id="add-skill" class="mt-2 text-sm bg-blue-500 text-white px-3 py-1 rounded">+ Add Skill</button>
+    </div>
+
+    <!-- Services Section -->
+    <div>
+        <label class="block font-medium mb-2">Services</label>
+        <div id="services-list" class="space-y-2">
+            {% if icard_dict.services %}
+                {% for service in icard_dict.services %}
+                    <div class="flex items-center gap-2">
+                        <input type="text" name="services[]" value="{{ service }}" class="form-input flex-1 border rounded px-3 py-2">
+                        <button type="button" class="remove-service text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex items-center gap-2">
+                    <input type="text" name="services[]" class="form-input flex-1 border rounded px-3 py-2">
+                    <button type="button" class="remove-service text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" id="add-service" class="mt-2 text-sm bg-blue-500 text-white px-3 py-1 rounded">+ Add Service</button>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex flex-wrap gap-2 mt-6">
+        <button type="submit"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-300">
+            Save
+        </button>
+        <a href="/profile"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 transition duration-300">
+            Cancel
+        </a>
+    </div>
+</form>
