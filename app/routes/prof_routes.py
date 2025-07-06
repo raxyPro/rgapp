@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint,  jsonify,render_template, request, redirect, url_for, session, flash
 from datetime import datetime
-from ..models import db, Vemp, Profcv
+import json
 
+from ..models import db, Vemp, Profcv
 
 prof_bp = Blueprint('prof', __name__)
 
@@ -64,26 +65,76 @@ def profiles():
         user_profiles=user_profiles,
         icard_dict=icard_dict)
 
-@prof_bp.route('/save_prof', methods=['GET', 'POST'])
+
+
+@prof_bp.route('/save_prof', methods=['POST'])
 @login_required
 def save_prof():
-    if request.method == 'POST':
-        prof_id = 1  # request.form.get('id')
-        xml_data = request.form.get('xmlData')
-        print(xml_data)
-        if not prof_id or not xml_data:
-            flash("Missing profile ID or data.", "danger")
-            return redirect(url_for('prof.profiles'))
+    section = request.args.get('section')
+    user_id = session.get('user_id')
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
-        profile = Profcv.query.filter_by(id=prof_id, user_id=session.get('user_id')).first()
+    try:
+        # Get profile
+        profile = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').first()
         if not profile:
-            flash("Profile not found.", "danger")
-            return redirect(url_for('prof.profiles'))
+            msg = "Profile not found."
+            if is_ajax:
+                return jsonify({'status': 'error', 'message': msg}), 404
+            flash(msg, "danger")
+            return redirect(url_for('prof.profiles', pageaction='edit_prof'))
 
-        profile.pf_data = xml_data
+        # Load or initialize data
+        try:
+            data = json.loads(profile.pf_data) if profile.pf_data else {}
+        except json.JSONDecodeError:
+            data = {}
+
+        # Update based on section
+        if section == 'basic':
+            data.update({
+                'name': request.form.get('pf_name', ''),
+                'email': request.form.get('pf_email', ''),
+                'mobile': request.form.get('pf_mobile', ''),
+                'telephone': request.form.get('pf_telephone', ''),
+                'role': request.form.get('pf_title', ''),
+                'organization': request.form.get('pf_company', ''),
+                'website': request.form.get('pf_website', '')
+            })
+
+        elif section == 'skills':
+            skills = request.form.getlist('skills[]')
+            data['skills'] = [s.strip() for s in skills if s.strip()]
+
+        elif section == 'services':
+            services = request.form.getlist('services[]')
+            data['services'] = [s.strip() for s in services if s.strip()]
+
+        else:
+            msg = "Invalid section provided."
+            if is_ajax:
+                return jsonify({'status': 'error', 'message': msg}), 400
+            flash(msg, "danger")
+            return redirect(url_for('prof.profiles', pageaction='edit_prof'))
+
+        # Save to DB
+        profile.pf_data = json.dumps(data, indent=2)
         profile.updated_at = datetime.now()
         db.session.commit()
-        flash("Profile updated successfully.", "success")
-        return redirect(url_for('prof.profiles'))
 
-    return redirect(url_for('prof.profiles'))
+        msg = f"{section.capitalize()} saved successfully."
+        if is_ajax:
+            return jsonify({'status': 'success', 'message': msg})
+        flash(msg, "success")
+
+    except Exception as e:
+        db.session.rollback()
+        err_msg = f"Error saving {section}: {str(e)}"
+        if is_ajax:
+            return jsonify({'status': 'error', 'message': err_msg}), 500
+        flash(err_msg, "danger")
+
+    return redirect(url_for('prof.profiles', pageaction='edit_prof'))
+
+
+

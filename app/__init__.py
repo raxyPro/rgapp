@@ -6,9 +6,11 @@ from flask import Flask, session, flash, redirect, url_for
 from flask_mail import Mail
 from werkzeug.security import generate_password_hash
 from .models import db, Vemp
+#routes
 from .routes.auth_routes import auth_bp
 from .routes.task_routes import task_bp
 from .routes.prof_routes import prof_bp
+from .routes.chat_routes import chat_bp
 
 #from .admin_routes import admin_bp
 
@@ -65,9 +67,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(task_bp)
     app.register_blueprint(prof_bp)
+    app.register_blueprint(chat_bp)
     #app.register_blueprint(admin_bp)
     
-    
-
 
     return app
