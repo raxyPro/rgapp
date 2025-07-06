@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from datetime import datetime
-from .models import db, Vemp, Profcv
+from ..models import db, Vemp, Profcv
 
-bp_prof = Blueprint('prof', __name__)
+
+prof_bp = Blueprint('prof', __name__)
 
 from functools import wraps
 
@@ -15,7 +16,7 @@ def login_required(view):
         return view(**kwargs)
     return wrapped_view
 
-@bp_prof.route('/profiles')
+@prof_bp.route('/profiles')
 @login_required
 def profiles():
     """Displays the profile management."""
@@ -43,26 +44,27 @@ def profiles():
     import json
 
     intro_card_data_in_db = user_profiles[0].pf_data
+    print(intro_card_data_in_db)
 
     try:
         icard_dict = json.loads(intro_card_data_in_db)
     except (json.JSONDecodeError, TypeError):
         flash("Profile data is corrupted or not valid JSON.", "danger")
-        return redirect(url_for('prof.profiles'))
+        icard_dict = {"error": "profile is currepted"}
+        #return redirect(url_for('prof.profiles', pageaction='error'))
 
     # You may need to define or update pf_view, pf_data, preview_profile as per your logic
     preview_profile = None
-    pf_data = intro_card_data_in_db
+    pf_data = icard_dict
 
     return render_template(
         'profiles.html',
-        pageaction=pageaction
+        pageaction=pageaction,
         user_name=user.fullname,
-        pf_data=pf_data,
         user_profiles=user_profiles,
         icard_dict=icard_dict)
 
-@bp_prof.route('/save_prof', methods=['GET', 'POST'])
+@prof_bp.route('/save_prof', methods=['GET', 'POST'])
 @login_required
 def save_prof():
     if request.method == 'POST':

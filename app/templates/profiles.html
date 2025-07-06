@@ -1,8 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
 
-{% set is_view = pageaction is none or pageaction == 'view' %}
-{% set is_edit = pageaction == 'edit' %}
+{% set is_view = pageaction == '' or pageaction == 'view_prof' %}
+{% set is_edit = pageaction == 'edit_prof' %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='icard.css') }}">
 
 <link rel="stylesheet" href="{{ url_for('static', filename='icard.css') }}">
 
@@ -10,18 +12,18 @@
 
     <!-- Toggle buttons -->
     <div class="flex justify-end space-x-2 mb-6">
-        <a href="{{ url_for('prof.profiles', pageaction='view') }}"
+        <a href="{{ url_for('prof.profiles', pageaction='view_prof') }}"
             class="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 {% if is_view %}opacity-50{% endif %}">
             View
         </a>
-        <a href="{{ url_for('prof.profiles', pageaction='edit') }}"
+        <a href="{{ url_for('prof.profiles', pageaction='edit_prof') }}"
             class="px-4 py-2 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 {% if is_edit %}opacity-50{% endif %}">
             Edit
         </a>
     </div>
-
+    Page Action {{pageaction}}
     <!-- VIEW MODE -->
-    {% if is_view %}
+    {% if pageaction=="" or pageaction=="view_prof" %}
 
     <div id="view_mode">
         <div class="card-container">
@@ -47,31 +49,39 @@
                 </p>
             </div>
 
-            {% if icard_dict.skills %}
             <div class="mb-2" style="line-height:1.5;">
                 <p class="mb-1">
                     <span class="category">Skills</span>:
                 </p>
+                {% if icard_dict.skills %}
                 <ul>
                     {% for skill in icard_dict.skills %}
                     <li>{{ skill }}</li>
                     {% endfor %}
                 </ul>
+                {% else %}
+                <ul>
+                    <li class="text-secondary">No skills listed</li>
+                </ul>
+                {% endif %}
             </div>
-            {% endif %}
 
-            {% if icard_dict.services %}
             <div class="mb-2" style="line-height:1.5;">
                 <p class="mb-1">
                     <span class="category">Services</span>:
                 </p>
+                {% if icard_dict.services %}
                 <ul>
                     {% for service in icard_dict.services %}
                     <li>{{ service }}</li>
                     {% endfor %}
                 </ul>
+                {% else %}
+                <ul>
+                    <li class="text-secondary">No services listed</li>
+                </ul>
+                {% endif %}
             </div>
-            {% endif %}
 
             {% if icard_dict.website %}
             <div class="text-center mt-4" style="text-align: center;">
@@ -80,89 +90,151 @@
             {% endif %}
         </div>
     </div>
-    {{ icard_dict }}
-
-    {% if is_edit %}
-    <div id="edit_mode">
-
-
-        <form method="post" action="{{ url_for('prof.save_prof') }}">
-            <div class="mb-4">
-                <label for="pf_name" class="form-label">Name</label>
-                <input type="text" id="pf_name" name="pf_name" value="{{ profile.pf_name|default('') }}"
-                    class="form-input" required>
-            </div>
-            <div class="mb-4">
-                <label for="pf_email" class="form-label">Email</label>
-                <input type="email" id="pf_email" name="pf_email" value="{{ profile.pf_email|default('') }}"
-                    class="form-input" required>
-            </div>
-            <div class="mb-4">
-                <label for="pf_title" class="form-label">Title</label>
-                <input type="text" id="pf_title" name="pf_title" value="{{ profile.pf_title|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_company" class="form-label">Company</label>
-                <input type="text" id="pf_company" name="pf_company" value="{{ profile.pf_company|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_mobile" class="form-label">Mobile</label>
-                <input type="text" id="pf_mobile" name="pf_mobile" value="{{ profile.pf_mobile|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_email2" class="form-label">Alternate Email</label>
-                <input type="email" id="pf_email2" name="pf_email2" value="{{ profile.pf_email2|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_skill1" class="form-label">Top Skill 1</label>
-                <input type="text" id="pf_skill1" name="pf_skill1" value="{{ profile.pf_skill1|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_skill2" class="form-label">Top Skill 2</label>
-                <input type="text" id="pf_skill2" name="pf_skill2" value="{{ profile.pf_skill2|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_skill3" class="form-label">Top Skill 3</label>
-                <input type="text" id="pf_skill3" name="pf_skill3" value="{{ profile.pf_skill3|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_service1" class="form-label">Top Service 1</label>
-                <input type="text" id="pf_service1" name="pf_service1" value="{{ profile.pf_service1|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_service2" class="form-label">Top Service 2</label>
-                <input type="text" id="pf_service2" name="pf_service2" value="{{ profile.pf_service2|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="mb-4">
-                <label for="pf_service3" class="form-label">Top Service 3</label>
-                <input type="text" id="pf_service3" name="pf_service3" value="{{ profile.pf_service3|default('') }}"
-                    class="form-input">
-            </div>
-            <div class="flex flex-wrap gap-2 mt-4">
-                <button type="submit"
-                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
-                    Save
-                </button>
-                <a href="/profile"
-                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-300">
-                    Cancel
-                </a>
-            </div>
-        </form>
-
-    </div>
-
 
     {% endif %}
+
+    {% if pageaction=="edit_prof" %}
+    <div id="edit_mode">
+<form method="post" action="{{ url_for('prof.save_prof') }}" class="space-y-6">
+
+    <!-- Two-column layout for standard fields -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    <div class="flex items-center gap-3">
+        <label for="pf_name" class="w-32 text-right">Name</label>
+        <input type="text" id="pf_name" name="pf_name" value="{{ icard_dict.name|default('') }}"
+            class="flex-1 border rounded px-3 py-2" required>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_email" class="w-32 text-right">Email</label>
+        <input type="email" id="pf_email" name="pf_email" value="{{ icard_dict.email|default('') }}"
+            class="flex-1 border rounded px-3 py-2" required>
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_mobile" class="w-32 text-right">Mobile</label>
+        <input type="text" id="pf_mobile" name="pf_mobile" value="{{ icard_dict.mobile|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_telephone" class="w-32 text-right">Telephone</label>
+        <input type="text" id="pf_telephone" name="pf_telephone" value="{{ icard_dict.telephone|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_title" class="w-32 text-right">Role/Title</label>
+        <input type="text" id="pf_title" name="pf_title" value="{{ icard_dict.role|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-3">
+        <label for="pf_company" class="w-32 text-right">Organization</label>
+        <input type="text" id="pf_company" name="pf_company" value="{{ icard_dict.organization|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+
+    <div class="md:col-span-2 flex items-center gap-3">
+        <label for="pf_website" class="w-32 text-right">Website</label>
+        <input type="text" id="pf_website" name="pf_website" value="{{ icard_dict.website|default('') }}"
+            class="flex-1 border rounded px-3 py-2">
+    </div>
+</div>
+    <!-- Skills Section -->
+    <div>
+        <label class="block font-medium mb-2">Skills</label>
+        <div id="skills-list" class="space-y-2">
+            {% if icard_dict.skills %}
+                {% for skill in icard_dict.skills %}
+                    <div class="flex items-center gap-2">
+                        <input type="text" name="skills[]" value="{{ skill }}" class="form-input flex-1 border rounded px-3 py-2">
+                        <button type="button" class="remove-skill text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex items-center gap-2">
+                    <input type="text" name="skills[]" class="form-input flex-1 border rounded px-3 py-2">
+                    <button type="button" class="remove-skill text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" id="add-skill" class="mt-2 text-sm bg-blue-500 text-white px-3 py-1 rounded">+ Add Skill</button>
+    </div>
+
+    <!-- Services Section -->
+    <div>
+        <label class="block font-medium mb-2">Services</label>
+        <div id="services-list" class="space-y-2">
+            {% if icard_dict.services %}
+                {% for service in icard_dict.services %}
+                    <div class="flex items-center gap-2">
+                        <input type="text" name="services[]" value="{{ service }}" class="form-input flex-1 border rounded px-3 py-2">
+                        <button type="button" class="remove-service text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex items-center gap-2">
+                    <input type="text" name="services[]" class="form-input flex-1 border rounded px-3 py-2">
+                    <button type="button" class="remove-service text-red-600 text-lg font-bold" title="Remove">&times;</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" id="add-service" class="mt-2 text-sm bg-blue-500 text-white px-3 py-1 rounded">+ Add Service</button>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="flex flex-wrap gap-2 mt-6">
+        <button type="submit"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-300">
+            Save
+        </button>
+        <a href="/profile"
+            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 transition duration-300">
+            Cancel
+        </a>
+    </div>
+</form>
+
+
+    </div>
+    {% endif %}
+
+        <script>
+            // Add Skill
+            document.getElementById('add-skill').addEventListener('click', function () {
+                const skillsList = document.getElementById('skills-list');
+                const div = document.createElement('div');
+                div.className = "flex items-center mb-2";
+                div.innerHTML = `<input type="text" name="skills" class="form-input flex-1 mr-2">
+                    <button type="button" class="remove-skill bg-red-500 text-white px-2 py-1 rounded">Remove</button>`;
+                skillsList.appendChild(div);
+            });
+            // Remove Skill
+            document.getElementById('skills-list').addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-skill')) {
+                    e.target.parentElement.remove();
+                }
+            });
+            // Add Service
+            document.getElementById('add-service').addEventListener('click', function () {
+                const servicesList = document.getElementById('services-list');
+                const div = document.createElement('div');
+                div.className = "flex items-center mb-2";
+                div.innerHTML = `<input type="text" name="services" class="form-input flex-1 mr-2">
+                    <button type="button" class="remove-service bg-red-500 text-white px-2 py-1 rounded">Remove</button>`;
+                servicesList.appendChild(div);
+            });
+            // Remove Service
+            document.getElementById('services-list').addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-service')) {
+                    e.target.parentElement.remove();
+                }
+            });
+        </script>
+
+    </div>
 
 </div>
 {% endblock %}

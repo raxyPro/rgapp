@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash
 from .models import db, Vemp
 from .routes.auth_routes import auth_bp
 from .routes.task_routes import task_bp
-from .prof_routes import prof_bp
+from .routes.prof_routes import prof_bp
 
 #from .admin_routes import admin_bp
 
@@ -22,7 +22,7 @@ def create_app():
     app.permanent_session_lifetime = timedelta(days=1)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ECHO'] = True  # Enable SQL query logging for debugging
+    app.config['SQLALCHEMY_ECHO'] = False  # Enable SQL query logging for debugging
 
 
 

@@ -1,4 +1,4 @@
-from models import db, ChatManager, Vemp
+from app.models import db, ChatManager, Vemp
 manager = ChatManager(db)
 creator_id = 1
 user_id_2 = 2
