@@ -29,33 +29,44 @@
                 style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h2>{{ icard_dict.name }}</h2>
-                    <p class="text-secondary">{{ icard_dict.Role }}</p>
+                    <p class="text-secondary">{{ icard_dict.role }}</p>
                     <p class="text-secondary" style="margin-left: -2px;">{{ icard_dict.organization }}</p>
                 </div>
                 <div class="card-header text-end">
                     <img src="{{ url_for('static', filename='logo.png') }}" alt="RayGrow Logo"
                         style="height: 50px; margin-bottom: 5px;">
-
                     <div class="tagline">We Connect and Deliver</div>
                 </div>
             </div>
 
             <div class="contact mb-4">
                 <p><strong>M:</strong> {{ icard_dict.mobile }}&nbsp;&nbsp;
-                    <strong>T:</strong> {{ icard_dict.Telephone }}
                 </p>
                 <p><strong>E:</strong>
                     <a href="mailto:{{ icard_dict.email }}">{{ icard_dict.email }}</a>
                 </p>
             </div>
 
-            {% if icard_dict.Services %}
+            {% if icard_dict.skills %}
+            <div class="mb-2" style="line-height:1.5;">
+                <p class="mb-1">
+                    <span class="category">Skills</span>:
+                </p>
+                <ul>
+                    {% for skill in icard_dict.skills %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if icard_dict.services %}
             <div class="mb-2" style="line-height:1.5;">
                 <p class="mb-1">
                     <span class="category">Services</span>:
                 </p>
                 <ul>
-                    {% for service in icard_dict.Services %}
+                    {% for service in icard_dict.services %}
                     <li>{{ service }}</li>
                     {% endfor %}
                 </ul>
@@ -69,11 +80,7 @@
             {% endif %}
         </div>
     </div>
-    {{icard_dict}}
-
-    {% endif %}
-
-    <!-- EDIT MODE -->
+    {{ icard_dict }}
 
     {% if is_edit %}
     <div id="edit_mode">

@@ -40,21 +40,27 @@ def profiles():
         db.session.commit()
         user_profiles = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').order_by(Profcv.id.asc()).all()
     
+    import json
+
     intro_card_data_in_db = user_profiles[0].pf_data
-    jason_data = getICDatav1(intro_card_data_in_db)
-    
-    
+
+    try:
+        icard_dict = json.loads(intro_card_data_in_db)
+    except (json.JSONDecodeError, TypeError):
+        flash("Profile data is corrupted or not valid JSON.", "danger")
+        return redirect(url_for('prof.profiles'))
+
+    # You may need to define or update pf_view, pf_data, preview_profile as per your logic
+    preview_profile = None
+    pf_data = intro_card_data_in_db
+
     return render_template(
         'profiles.html',
+        pageaction=pageaction
         user_name=user.fullname,
-        pf_view=preview_profile,
         pf_data=pf_data,
-        icard_dict=icard_dict if preview_profile else None,
-        pageaction=pageaction,
         user_profiles=user_profiles,
-        user_code=user_code,
-        user_id=user_id
-    )
+        icard_dict=icard_dict)
 
 @bp_prof.route('/save_prof', methods=['GET', 'POST'])
 @login_required
