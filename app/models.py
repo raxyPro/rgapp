@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import date, datetime
 
 db = SQLAlchemy()
 
@@ -70,7 +70,22 @@ class ChatTopicUser(db.Model):
     topic = db.relationship('ChatTopic', back_populates='users')
     user = db.relationship('Vemp')
 
+class TaskManager:
+    def __init__(self, db_session):
+        self.db = db_session
 
+    def get_tasks_by_user(self,  user_id: int):
+        user_code = Vemp.query.filter_by(user_id=user_id).first().code
+        user_tasks = Task.query.filter_by(user_code=user_code).order_by(Task.due_date.asc()).all()
+        
+        for t in user_tasks:
+            if t.due_date:
+                days_left = (t.due_date - date.today()).days
+                t.due_soon = (0 <= days_left <= 3) and t.status != 'Completed'
+            else:
+                t.due_soon = False
+        return user_tasks
+    
 class ChatMessage(db.Model):
     __tablename__ = 'chat_message'
 
@@ -105,3 +120,14 @@ class ChatManager:
         self.db.session.add(msg)
         self.db.session.commit()
         return msg
+    def get_chats_by_user(self, user_id: int):
+        return (
+            self.db.query(ChatTopic)
+            .join(ChatTopicUser)
+            .filter(ChatTopicUser.user_id == user_id)
+            .options(
+                db.joinedload(ChatTopic.messages).joinedload(ChatMessage.sender),
+                db.joinedload(ChatTopic.users)  # You define ChatTopic.users as backref
+            )
+            .all()
+        )

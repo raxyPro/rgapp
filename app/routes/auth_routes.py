@@ -9,6 +9,15 @@ from datetime import date
 
 auth_bp = Blueprint('auth', __name__)
 
+from functools import wraps
+def login_required(view):
+  @wraps(view)
+  def wrapped_view(**kwargs):
+    if 'user_code' not in session:
+      flash("Please log in to access this page.", 'info')
+      return redirect(url_for('auth.login'))
+    return view(**kwargs)
+  return wrapped_view
 
 # --- Index ---
 @auth_bp.route('/')
@@ -29,37 +38,26 @@ def start():
     print("hi")
     print("Session variables:", dict(session))
     if 'user_code' in session:
-        return redirect(url_for('prof.profiles'))
-        #return redirect(url_for('autho.dashboard'))
+        #return redirect(url_for('prof.profiles'))
+        return redirect(url_for('auth.dashboard'))
 
     return redirect(url_for('auth.login'))
 
 # --- Dashboard ---
 @auth_bp.route('/dashboard')
+@login_required
 def dashboard():    
-
-    #this is temporary
-    #return redirect(url_for('prof.profiles'))
-
-    """Displays the user dashboard."""
-    user_code = session.get('user_code')
-    user = Vemp.query.filter_by(code=user_code).first()
-    if not user:
-        flash("User not found.", "danger")
-        return redirect(url_for('auth.logout'))
-
     # Fetch tasks for the current user
-    from ..models import Task  # Import here to avoid circular import
-
-    user_tasks = Task.query.filter_by(user_code=user_code).order_by(Task.due_date.asc()).all()
-    for t in user_tasks:
-        if t.due_date:
-            days_left = (t.due_date - date.today()).days
-            t.due_soon = (0 <= days_left <= 3) and t.status != 'Completed'
-        else:
-            t.due_soon = False
-
-    return render_template('dashboard.html', user_name=user.fullname or user.email, tasks=user_tasks)
+    from ..models import TaskManager  # Import here to avoid circular import
+    from ..models import ChatManager  # Chatmanager 
+    user_id=session.get('user_id')
+    tm = TaskManager(db.session)
+    user_tasks = tm.get_tasks_by_user(user_id)
+    #user_chats=ChatManager._get_chat_by_user(user_id)
+    cm  = ChatManager(db.session)
+    user_chats = cm.get_chats_by_user(user_id)
+    print(user_tasks,user_chats)
+    return render_template('dashboard.html', tasks=user_tasks,chats=user_chats)
 
 # --- Login ---
 @auth_bp.route('/login', methods=('GET', 'POST'))
