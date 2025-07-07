@@ -1,0 +1,2 @@
+07-Jul-25
+with chat.html i am moving towards a fully DIV Component that works wtih javascript and is independent module can be called any where to load into a dashboard kind of page and serve full functionality

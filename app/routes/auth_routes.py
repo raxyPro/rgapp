@@ -21,43 +21,7 @@ def index():
     return redirect(url_for('auth.login'))
 
 # --- Sample Transaction Route ---
-@auth_bp.route('/chat')
-def sample_transaction():
-    try:
-        # Start a transaction using ChatManager class
-        from ..models import ChatManager, Vemp  # Import ChatManager and Vemp from your models
-        manager = ChatManager(db)
 
-        # Fetch two valid user IDs from the Vemp table
-        users = Vemp.query.limit(2).all()
-        if len(users) < 2:
-            raise Exception("Not enough users in the database to create a chat topic.")
-
-        creator_id = users[0].ID  # Use actual column name for primary key
-        user_id_2 = users[1].ID
-
-        # Create topic
-        topic = manager.create_topic("Rampal", creator_id)
-        print("Created Topic:", topic.name)
-
-        # Add users to topic
-        manager.add_user_to_topic(topic.id, creator_id)
-        manager.add_user_to_topic(topic.id, user_id_2)
-        print(f"Added users {creator_id} and {user_id_2} to topic {topic.name}")
-
-        # Send message
-        message = manager.send_message(topic.id, creator_id, "Welcome to the team chat!")
-        print("Sent Message:", message.message)
-
-        db.session.commit()
-        flash(f"Chat transaction successful: Topic '{topic.name}' created and message sent.", "success")
-
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Transaction failed: {str(e)}", "danger")
-
-    return render_template('chat.html', message="Sample transaction attempted.")
 
 @auth_bp.route('/start')
 def start():

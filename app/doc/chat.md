@@ -35,3 +35,14 @@ for each users there are list of topic that he/she can participate
 chat use cases
 when user load chat application
 all the topic that user participate goes to front end and topic is displayed
+
+Prompt 07-Jul-25
+
+great now build chat application 
+
+when a user loads the chat first time , all teh chats are loaded and sent to HTML 
+all the topic and messages will be displayed in one window
+
+so give me a flask route code consider there is flask sqlalchmey defition as Vemp, ChatTopic,ChatTopicUser,ChatMessage
+
+also give me a html (div only ) to load and display the chats in div. each topic is displayed as card in dev and once a user press on the card the chat is active and user can post a new message
