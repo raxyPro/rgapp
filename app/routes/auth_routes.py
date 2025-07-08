@@ -13,7 +13,7 @@ from functools import wraps
 def login_required(view):
   @wraps(view)
   def wrapped_view(**kwargs):
-    if 'user_code' not in session:
+    if 'vcpid' not in session:
       flash("Please log in to access this page.", 'info')
       return redirect(url_for('auth.login'))
     return view(**kwargs)
@@ -25,7 +25,7 @@ def index():
     """Redirects to dashboard if logged in, otherwise to login page."""
     print("hi")
     print("Session variables:", dict(session))
-    if 'user_code' in session:
+    if 'vcpid' in session:
         return redirect(url_for('auth.start'))
     return redirect(url_for('auth.login'))
 
@@ -37,7 +37,7 @@ def start():
     """Redirects to dashboard if logged in, otherwise to login page."""
     print("hi")
     print("Session variables:", dict(session))
-    if 'user_code' in session:
+    if 'user_id' in session:
         #return redirect(url_for('prof.profiles'))
         return redirect(url_for('auth.dashboard'))
 
@@ -50,19 +50,20 @@ def dashboard():
     # Fetch tasks for the current user
     from ..models import TaskManager  # Import here to avoid circular import
     from ..models import ChatManager  # Chatmanager 
-    user_id=session.get('user_id')
+    vcpid=session.get('vcpid')
     tm = TaskManager(db.session)
-    user_tasks = tm.get_tasks_by_user(user_id)
+    user_tasks = tm.get_tasks_by_user(vcpid)
     #user_chats=ChatManager._get_chat_by_user(user_id)
     cm  = ChatManager(db.session)
-    user_chats = cm.get_chats_by_user(user_id)
-    print(user_tasks,user_chats)
-    return render_template('dashboard.html', tasks=user_tasks,chats=user_chats)
+    user_chats = cm.get_chats_by_user(vcpid)
+    print(user_chats)
+    return render_template('dashboard.html',  chats=user_chats)
+    #return user_chats
 
 # --- Login ---
 @auth_bp.route('/login', methods=('GET', 'POST'))
 def login():
-    if 'user_code' in session:
+    if 'user_id' in session:
         return redirect(url_for('auth.start'))
 
     if request.method == 'POST':
@@ -79,12 +80,11 @@ def login():
             session.clear()
             session.permanent = True
             session['user_id'] = user.user_id
-            session['user_code'] = user.code
+            session['vcpid'] = user.vcpid
             session['user_email'] = user.email
             session['user_name'] = user.fullname 
             session['user_role'] = user.user_role
             print("hi",user.user_role)
-            #flash(f"Welcome back, {user.fullname or user.email}!", 'success')
             return redirect(url_for('auth.dashboard'))
         else:
             flash(error, 'danger')

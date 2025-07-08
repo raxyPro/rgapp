@@ -9,7 +9,7 @@ from functools import wraps
 def login_required(view):
   @wraps(view)
   def wrapped_view(**kwargs):
-    if 'user_code' not in session:
+    if 'vcpid' not in session:
       flash("Please log in to access this page.", 'info')
       return redirect(url_for('auth.login'))
     return view(**kwargs)

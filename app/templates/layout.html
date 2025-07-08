@@ -46,8 +46,9 @@
     <nav class="space-x-6 text-sm text-gray-600 font-medium">
       <a href="{{ url_for('auth.dashboard') }}"  class="hover:text-indigo-600">Home</a>
       <a href="{{ url_for('prof.profiles') }}"  class="hover:text-indigo-600">Profiles</a>
-      <a href="#" onclick="loadSection('jobs')" class="hover:text-indigo-600">Connects</a>
-      <a href="{{ url_for('chat.chat_home') }}"  class="hover:text-indigo-600">Chat</a>
+      <a href="{{ url_for('cnts.cntshome') }}" class="hover:text-indigo-600">Connects</a>
+      
+      
     </nav>
     <div class="flex items-center space-x-3">
       <img src="https://i.pravatar.cc/48?img=32" class="w-10 h-10 rounded-full" />

@@ -5,11 +5,13 @@
 {% block content %}
 
 <!-- show chats-->
+{{chats }}
 
-    {% if tasks %}
-        {% include "chat.html" %}
-    {% endif %}
 
+
+{% if chats %}
+    {% include "chat.html" %}
+{% endif %}
 
 <!-- show tasks-->
 <!--
@@ -20,6 +22,6 @@
     {% endif %}
 
 </div>
--->>
+-->
 
 {% endblock %}

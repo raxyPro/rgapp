@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}rcPro Connects{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+  {% for contact in contacts %}
+    <div class="bg-white shadow rounded-lg p-4 border border-gray-200">
+      <h2 class="text-xl font-semibold">{{ contact.public_name }}</h2>
+      <p class="text-sm text-gray-600">{{ contact.public_title }}</p>
+      <p class="text-sm text-gray-500 italic">{{ contact.location }}</p>
+      <div class="mt-3">
+        <button 
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
+          onclick="addToChat('{{ contact.vcpid }}')"
+        >
+          Add to Chat
+        </button>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+  function addToChat(vcpid) {
+    alert('Add to chat with: ' + vcpid);
+    // You can implement the actual POST logic here using fetch or redirect
+  }
+</script>
+
+{% endblock %}

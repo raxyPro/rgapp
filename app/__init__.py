@@ -11,6 +11,7 @@ from .routes.auth_routes import auth_bp
 from .routes.task_routes import task_bp
 from .routes.prof_routes import prof_bp
 from .routes.chat_routes import chat_bp
+from .routes.cnts_routes import cnts_bp
 
 #from .admin_routes import admin_bp
 
@@ -25,8 +26,6 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://rax:512@localhost/rcmain'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = False  # Enable SQL query logging for debugging
-
-
 
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)
@@ -68,6 +67,7 @@ def create_app():
     app.register_blueprint(task_bp)
     app.register_blueprint(prof_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(cnts_bp)
     #app.register_blueprint(admin_bp)
     
 
