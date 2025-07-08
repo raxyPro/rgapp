@@ -37,13 +37,13 @@ class Task(db.Model):
 
 class Profcv(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)
+    vcpid = db.Column(db.String(6), nullable=False)
     pf_typ = db.Column(db.String(200))
     pf_name = db.Column(db.Text)
     pf_data = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
+    status = db.Column(db.String(50), default='Active')
     def __repr__(self):
         return f'<Profcv {self.pf_name}>'
 
@@ -152,7 +152,7 @@ class ChatManager:
             # Determine topic display name
             if len(topic.users) == 2:
                 # One-to-one chat: show the other person's name (not the current user)
-                other_user = next((u for u in topic.users if u.id != vcpid), None)
+                other_user = next((u for u in topic.users if u.vcpid != vcpid), None)
                 display_name = other_user.fullname if other_user else topic.name
             else:
                 # Group topic: show actual topic name

@@ -40,7 +40,10 @@ def sendMessage():
         )
         db.session.add(new_message)
         db.session.commit()
-        return jsonify({'success': True})
+        vcpid=session.get('vcpid')
+        fullname= Vemp.query.filter_by(ID=vcpid).first().fullname if vcpid else "Unknown User"
+        return jsonify({"success": True,"sender": fullname,"sent_at": datetime.now().strftime("%Y-%m-%d %H:%M")
+})
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500

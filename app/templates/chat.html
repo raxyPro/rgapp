@@ -4,7 +4,6 @@
     {% for topic in chats %}
       <div class="chat-card bg-white rounded shadow mb-2 p-4 cursor-pointer" onclick="activateChat({{ topic.id }})">
         <h3 class="font-bold text-lg">{{ topic.name }}</h3>
-        <p class="text-sm text-gray-600 text-sm italic">Participants: {{ topic.users | join(', ') }}</p>
         <p class="text-sm text-gray-500 mt-1">
           {{ topic.messages[-1].message if topic.messages else "No messages yet" }}
         </p>
@@ -14,6 +13,7 @@
 
   <!-- Right panel: Chat messages -->
   <div class="w-full md:w-2/3 flex flex-col p-4" style="height: calc(100vh - 100px);">
+    <div id="chat-header" class="text-sm text-gray-600 mb-2"></div>
 
     <div id="chat-box" class="flex-1 overflow-y-auto bg-white rounded shadow p-4">
       <!-- Messages will be loaded dynamically here -->
@@ -29,40 +29,70 @@
 
 <script>
   const allTopics = {{ chats | tojson }};
+  let currentTopic = null;
 
   function activateChat(topicId) {
-    const topic = allTopics.find(t => t.id === topicId);
+    currentTopic = allTopics.find(t => t.id === topicId);
     const chatBox = document.getElementById("chat-box");
+    const header = document.getElementById("chat-header");
     const input = document.getElementById("active-topic-id");
 
     input.value = topicId;
 
-    chatBox.innerHTML = topic.messages.length > 0
-      ? topic.messages.map(msg => `
-        <div class="mb-2">
-          <span class="font-bold">${msg.sender}</span>: ${msg.message}
-          <div class="text-xs text-gray-500">${msg.sent_at}</div>
-        </div>
-      `).join('')
+    const participants = currentTopic.users ? currentTopic.users.join(', ') : "Participants not found";
+    const count = currentTopic.messages.length;
+    const topicLabel = currentTopic.users.length === 2 ? "Personal Chat" : currentTopic.name;
+    header.innerHTML = `<strong>${topicLabel}</strong><br><span class="text-sm text-gray-600">Participants:</span> ${participants} &nbsp; <span class="text-gray-400">(${count} message${count !== 1 ? 's' : ''})</span>`;
+
+
+    renderMessages();
+  }
+
+  function renderMessages() {
+    const chatBox = document.getElementById("chat-box");
+    if (!currentTopic) return;
+
+    chatBox.innerHTML = currentTopic.messages.length > 0
+      ? currentTopic.messages.map(msg => `
+          <div class="mb-2">
+            <span class="font-bold">${msg.sender}</span>: ${msg.message}
+            <div class="text-xs text-gray-500">${msg.sent_at}</div>
+          </div>
+        `).join('')
       : `<div class="text-gray-500 italic">No messages yet</div>`;
+
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
   function sendMessage() {
     const topicId = document.getElementById("active-topic-id").value;
     const input = document.getElementById("chat-input");
     const message = input.value.trim();
-    if (!message) return;
+    if (!message || !topicId) return;
 
     fetch('/send_message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ topic_id: topicId, message: message })
-    }).then(resp => resp.json()).then(data => {
+    })
+    .then(resp => resp.json())
+    .then(data => {
       if (data.success) {
-        location.reload(); // Optional: better to reload just messages later
+        // Append new message to currentTopic and refresh UI
+        currentTopic.messages.push({
+          sender: data.sender,
+          message: message,
+          sent_at: data.sent_at
+        });
+        renderMessages();
+        input.value = '';
+      } else {
+        alert("❌ Failed to send message");
       }
+    })
+    .catch(err => {
+      console.error("Error:", err);
+      alert("An error occurred while sending message.");
     });
-
-    input.value = '';
   }
 </script>

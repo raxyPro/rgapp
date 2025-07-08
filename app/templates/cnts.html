@@ -4,29 +4,80 @@
 
 {% block content %}
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-  {% for contact in contacts %}
-    <div class="bg-white shadow rounded-lg p-4 border border-gray-200">
-      <h2 class="text-xl font-semibold">{{ contact.public_name }}</h2>
-      <p class="text-sm text-gray-600">{{ contact.public_title }}</p>
-      <p class="text-sm text-gray-500 italic">{{ contact.location }}</p>
-      <div class="mt-3">
-        <button 
-          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
-          onclick="addToChat('{{ contact.vcpid }}')"
-        >
-          Add to Chat
-        </button>
+<div class="p-4">
+  <div class="bg-white rounded shadow border">
+    <div class="divide-y">
+      {% for contact in contacts %}
+      <div class="flex justify-between items-center px-4 py-2 hover:bg-gray-50">
+        <div>
+          <div class="font-semibold text-sm">{{ contact.public_name }}</div>
+          <div class="text-xs text-gray-600">{{ contact.public_title }}</div>
+          <div class="text-xs text-gray-400 italic">{{ contact.location }}</div>
+        </div>
+        <div id="chat-btn-{{ contact.vcpid }}">
+          {% if contact.chat_topics %}
+          <div class="relative group">
+            <button class="text-blue-500 hover:text-blue-600 transition" title="Chat Topics">💬</button>            
+            <div class="absolute hidden group-hover:block bg-white shadow text-xs p-2 rounded border mt-1 z-10">
+              {% for topic in contact.chat_topics %}
+              <div>{{ topic }}</div>
+              {% endfor %}
+            </div>
+          </div>
+          {% else %}
+          <button class="text-gray-400 hover:text-blue-500 transition" onclick="addToChat('{{ contact.vcpid }}')"
+            data-vcpid="{{ contact.vcpid }}" title="Start chat">💬</button>
+          {% endif %}
+        </div>
+
       </div>
+      {% endfor %}
     </div>
-  {% endfor %}
+  </div>
 </div>
 
 <script>
-  function addToChat(vcpid) {
-    alert('Add to chat with: ' + vcpid);
-    // You can implement the actual POST logic here using fetch or redirect
-  }
+
+function addToChat(vcpid) {
+  if (!vcpid) return;
+
+  fetch('/create_chat_topic', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ vcpid: vcpid })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+
+      const container = document.getElementById(`chat-btn-${vcpid}`);
+      if (container) {
+        // Replace with new chat icon and dummy topic list
+        container.innerHTML = `
+          <div class="relative group">
+            <button 
+              class="text-blue-500 hover:text-blue-600 transition" 
+              title="Chat started"
+            >💬</button>
+            <div class="absolute hidden group-hover:block bg-white shadow text-xs p-2 rounded border mt-1 z-10">
+              <div>${data.topic_name || 'New Topic'}</div>
+            </div>
+          </div>
+        `;
+      }
+    } else {
+      alert("❌ " + (data.message || "Failed to create chat."));
+    }
+  })
+  .catch(err => {
+    console.error("Chat creation error:", err);
+    alert("An error occurred.");
+  });
+}
+
 </script>
 
 {% endblock %}
