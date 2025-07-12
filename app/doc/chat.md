@@ -1,3 +1,12 @@
+08-Jul-25
+next make chat work good
+show topic on left, message on right 
+ability send message
+ability to reply message
+on load show all messages since all undread message (from all topic)
+
+improve cnts
+
 
 CREATE TABLE `chat_topic` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -46,3 +55,4 @@ all the topic and messages will be displayed in one window
 so give me a flask route code consider there is flask sqlalchmey defition as Vemp, ChatTopic,ChatTopicUser,ChatMessage
 
 also give me a html (div only ) to load and display the chats in div. each topic is displayed as card in dev and once a user press on the card the chat is active and user can post a new message
+

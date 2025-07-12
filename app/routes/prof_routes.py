@@ -23,24 +23,24 @@ def profiles():
     """Displays the profile management."""
 
     pageaction = request.args.get('pageaction', 'view_prof')
-    user_code = session.get('user_code')
+    vcpid = session.get('vcpid')
     user_id = session.get('user_id')
-    print(f"User Code: {user_code}, User ID: {user_id}")
-    user = Vemp.query.filter_by(code=user_code).first()
+    print(f"vcpid : {vcpid}, User ID: {user_id}")
+    user = Vemp.query.filter_by(vcpid=vcpid).first()
     if not user:
         flash("User not found.", "danger")
         return redirect(url_for('auth.logout'))
 
-    user_profiles = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').order_by(Profcv.id.asc()).all()
+    user_profiles = Profcv.query.filter_by(vcpid=vcpid, pf_typ='icard').order_by(Profcv.id.asc()).all()
     if not user_profiles:
         # Create default profiles if none exist
         today = datetime.now()
         default_profiles = [
-            Profcv(user_id=user_id, pf_typ='icard', pf_name='Intro Card', pf_data='{}', created_at=today, updated_at=today),
+            Profcv(vcpid=vcpid, pf_typ='icard', pf_name='Intro Card', pf_data='{}', created_at=today, updated_at=today),
         ]
         db.session.add_all(default_profiles)
         db.session.commit()
-        user_profiles = Profcv.query.filter_by(user_id=user_id, pf_typ='icard').order_by(Profcv.id.asc()).all()
+        user_profiles = Profcv.query.filter_by(vcpid=vcpid, pf_typ='icard').order_by(Profcv.id.asc()).all()
     
     import json
 
@@ -64,8 +64,6 @@ def profiles():
         user_name=user.fullname,
         user_profiles=user_profiles,
         icard_dict=icard_dict)
-
-
 
 @prof_bp.route('/save_prof', methods=['POST'])
 @login_required
