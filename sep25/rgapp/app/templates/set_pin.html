@@ -1,0 +1,39 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Set Your PIN{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-lg border border-gray-200">
+        <div class="text-center">
+            <h2 class="mt-6 text-3xl font-extrabold text-gray-900 rounded-md">
+                Set Your New 4-digit PIN
+            </h2>
+        </div>
+        <form class="mt-8 space-y-6" method="POST">
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="new_pin" class="sr-only">New 4-digit PIN</label>
+                    <input id="new_pin" name="new_pin" type="password" maxlength="4" pattern="[0-9]{4}" title="Please enter a 4-digit number" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                           placeholder="New 4-digit PIN">
+                </div>
+                <div>
+                    <label for="confirm_pin" class="sr-only">Confirm 4-digit PIN</label>
+                    <input id="confirm_pin" name="confirm_pin" type="password" maxlength="4" pattern="[0-9]{4}" title="Please confirm your 4-digit number" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                           placeholder="Confirm 4-digit PIN">
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 shadow-md">
+                    Set PIN
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

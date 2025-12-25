@@ -1,0 +1,17 @@
+<vCard>
+     <name>Rajat Sharma</name>
+     <Role>Agile Project Manager</Role>
+     <email>rajat.sharma@raygrowcs.com</email>
+     <organization>RayGrow Connsulting</organization>
+     <website>www.raygrowcs.com</website>
+     <mobile>+918138926888</mobile>
+     <Telephone>+911202668998</Telephone>
+     <Services>
+    <Service>Project Management: Planning, Resourcing, Execution</Service>
+    <Service>Team Management: Building, Leading, and Motivating Teams</Service>
+    <Service>Program Management: Coordinating Multiple Projects and Stakeholders</Service>
+    <Service>Agile Coaching: Guiding Teams in Agile Principles and Practices</Service>
+    <Service>Agile Setup: Implementing Agile Frameworks and Processes</Service>
+    <Service>Software Development: Designing, Coding, and Delivering Applications</Service>
+    </Services>
+</vCard>

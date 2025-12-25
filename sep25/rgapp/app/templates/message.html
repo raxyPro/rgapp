@@ -1,0 +1,16 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Message{% endblock %}
+
+{% block content %}
+<div class="text-center p-8 bg-white rounded-xl shadow-lg border border-gray-200">
+    <h2 class="text-3xl font-extrabold text-gray-900 mb-4">Information</h2>
+    <p class="text-lg text-gray-600">{{ message }}</p>
+    <div class="mt-8">
+        <a href="{{ url_for('login') }}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">
+            Go to Login
+        </a>
+    </div>
+</div>
+{% endblock %}

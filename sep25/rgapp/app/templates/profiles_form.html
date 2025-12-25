@@ -1,0 +1,133 @@
+<!-- Basic Info Section -->
+<div id="basic" class="mb-6">
+    <form id="basic-form" method="post" action="{{ url_for('prof.save_prof', section='basic') }}" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for field in [
+                ('pf_name', 'Name', icard_dict.name),
+                ('pf_email', 'Email', icard_dict.email),
+                ('pf_mobile', 'Mobile', icard_dict.mobile),
+                ('pf_telephone', 'Telephone', icard_dict.telephone),
+                ('pf_title', 'Role/Title', icard_dict.role),
+                ('pf_company', 'Organization', icard_dict.organization)
+            ] %}
+            <div class="flex items-center gap-3">
+                <label for="{{ field[0] }}" class="w-32 text-right">{{ field[1] }}</label>
+                <input type="{{ 'email' if 'email' in field[0] else 'text' }}" id="{{ field[0] }}" name="{{ field[0] }}"
+                       value="{{ field[2]|default('') }}" class="flex-1 border rounded px-3 py-2"
+                       {% if field[0] in ['pf_name', 'pf_email'] %}required{% endif %}>
+            </div>
+            {% endfor %}
+            <div class="md:col-span-2 flex items-center gap-3">
+                <label for="pf_website" class="w-32 text-right">Website</label>
+                <input type="text" id="pf_website" name="pf_website" value="{{ icard_dict.website|default('') }}"
+                       class="flex-1 border rounded px-3 py-2">
+            </div>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+            <button type="submit"
+                class="py-1 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-300">
+                Save Basic
+            </button>
+            <span id="basic-status" class="text-green-600 text-sm"></span>
+        </div>
+    </form>
+</div>
+
+<!-- Skills Section -->
+<div id="skills" class="mb-6">
+    <form id="skills-form" method="post" action="{{ url_for('prof.save_prof', section='skills') }}">
+        <label class="block font-medium mb-2">Skills</label>
+        <div id="skills-list" class="space-y-2">
+            {% for skill in icard_dict.skills or [''] %}
+            <div class="flex items-center gap-2">
+                <input type="text" name="skills[]" value="{{ skill }}" class="form-input flex-1 border rounded px-3 py-2">
+                <button type="button" class="remove-skill text-red-600 text-lg font-bold" title="Remove">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+            <button type="button" id="add-skill" class="text-sm bg-blue-500 text-white px-3 py-1 rounded">+ Add Skill</button>
+            <button type="submit"
+                class="py-1 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-300">
+                Save Skills
+            </button>
+            <span id="skills-status" class="text-green-600 text-sm"></span>
+        </div>
+    </form>
+</div>
+
+<!-- Services Section -->
+<div id="services" class="mb-6">
+    <form id="services-form" method="post" action="{{ url_for('prof.save_prof', section='services') }}">
+        <label class="block font-medium mb-2">Services</label>
+        <div id="services-list" class="space-y-2">
+            {% for service in icard_dict.services or [''] %}
+            <div class="flex items-center gap-2">
+                <input type="text" name="services[]" value="{{ service }}" class="form-input flex-1 border rounded px-3 py-2">
+                <button type="button" class="remove-service text-red-600 text-lg font-bold" title="Remove">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+            <button type="button" id="add-service" class="text-sm bg-blue-500 text-white px-3 py-1 rounded">+ Add Service</button>
+            <button type="submit"
+                class="py-1 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-300">
+                Save Services
+            </button>
+            <span id="services-status" class="text-green-600 text-sm"></span>
+        </div>
+    </form>
+</div>
+<script>
+    function addInput(buttonId, listId, name) {
+        document.getElementById(buttonId).addEventListener('click', function () {
+            const list = document.getElementById(listId);
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-2";
+            div.innerHTML = `<input type="text" name="${name}[]" class="form-input flex-1 border rounded px-3 py-2">
+                <button type="button" class="remove-${name} text-red-600 text-lg font-bold" title="Remove">&times;</button>`;
+            list.appendChild(div);
+        });
+    }
+
+    function removeInput(listId, className) {
+        document.getElementById(listId).addEventListener('click', function (e) {
+            if (e.target.classList.contains(className)) {
+                e.target.parentElement.remove();
+            }
+        });
+    }
+
+    function ajaxSave(formId, statusId) {
+        const form = document.getElementById(formId);
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(() => {
+                    document.getElementById(statusId).textContent = "Saved!";
+                    setTimeout(() => { document.getElementById(statusId).textContent = ""; }, 2000);
+                })
+                .catch(() => {
+                    document.getElementById(statusId).textContent = "Error!";
+                    setTimeout(() => { document.getElementById(statusId).textContent = ""; }, 2000);
+                });
+        });
+    }
+
+    // Initialize actions
+    addInput('add-skill', 'skills-list', 'skills');
+    removeInput('skills-list', 'remove-skill');
+    ajaxSave('skills-form', 'skills-status');
+
+    addInput('add-service', 'services-list', 'services');
+    removeInput('services-list', 'remove-service');
+    ajaxSave('services-form', 'services-status');
+
+    ajaxSave('basic-form', 'basic-status');
+</script>

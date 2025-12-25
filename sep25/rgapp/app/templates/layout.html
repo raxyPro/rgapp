@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}My App{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .message-sent {
+      align-self: flex-end;
+      margin-left: auto;
+      background-color: #e0f2f7;
+      color: #004d40;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      max-width: 75%;
+    }
+    .message-received {
+      align-self: flex-start;
+      margin-right: auto;
+      background-color: #ffffff;
+      color: #374151;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      max-width: 75%;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex-grow: 1;
+      padding-top: 5rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+  <header class="bg-white shadow fixed top-0 left-0 right-0 z-10 flex justify-between items-center px-6 py-3">
+    <div class="text-xl font-bold text-indigo-700">rcPro Connect</div>
+    <nav class="space-x-6 text-sm text-gray-600 font-medium">
+      <a href="{{ url_for('auth.dashboard') }}"  class="hover:text-indigo-600">Home</a>
+      <a href="{{ url_for('prof.profiles') }}"  class="hover:text-indigo-600">Profiles</a>
+      <a href="{{ url_for('cnts.cntshome') }}" class="hover:text-indigo-600">Connects</a>
+      
+      
+    </nav>
+    <div class="flex items-center space-x-3">
+      <img src="https://i.pravatar.cc/48?img=32" class="w-10 h-10 rounded-full" />
+      <div class="text-sm text-gray-800">
+        
+        <div class="font-semibold">{{ session['user_name'] }}</div>
+        <div class="text-xs text-indigo-500">{{ session['user_role'] }}</div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="ml-4 bg-red-500 text-white px-3 py-1 rounded-md text-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50">Logout</a>
+    </div>
+  </header>
+
+ 
+  <main class="flex">
+    <aside class="w-1/5 bg-white border-r overflow-y-auto">
+      <div class="p-4 font-bold text-indigo-600 border-b">{% block left_top %}{% endblock %}</div>
+      <div class="p-4">{% block left_bottom %}{% endblock %}</div>
+    </aside>
+
+    <div class="w-3/5 flex flex-col border-x bg-white">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div class="mb-4">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }} rounded-md shadow-sm" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <aside class="w-1/5 bg-white overflow-y-auto">
+      <div class="p-4 border-b font-bold text-indigo-600">{% block right_top %}{% endblock %}</div>
+      <div class="p-4">{% block right_bottom %}{% endblock %}</div>
+    </aside>
+  </main>
+
+  <footer class="bg-gray-200 text-gray-600 text-center py-3 text-sm">
+    &copy; 2025 rcPro Connect. All rights reserved.
+  </footer>
+
+  <script>
+    // All existing JavaScript remains unchanged
+  </script>
+</body>
+</html>

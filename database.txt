@@ -1,0 +1,102 @@
+CREATE TABLE rb_user (
+  user_id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+  email              VARCHAR(320)     NOT NULL,
+  password_hash      VARCHAR(255)     NOT NULL,
+
+  status             ENUM('pending','active','blocked','deleted') NOT NULL DEFAULT 'pending',
+
+  requested_at       DATETIME(6)      NOT NULL DEFAULT CURRENT_TIMESTAMP(6), -- signup time
+  approved_at        DATETIME(6)      NULL,
+  approved_by        BIGINT UNSIGNED  NULL,
+
+  blocked_at         DATETIME(6)      NULL,
+  blocked_by         BIGINT UNSIGNED  NULL,
+
+  deleted_at         DATETIME(6)      NULL,
+  deleted_by         BIGINT UNSIGNED  NULL,
+
+  last_login_at      DATETIME(6)      NULL,
+
+  created_at         DATETIME(6)      NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  updated_at         DATETIME(6)      NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+                      ON UPDATE CURRENT_TIMESTAMP(6),
+
+  PRIMARY KEY (user_id),
+  UNIQUE KEY uq_rb_user_email (email),
+  KEY idx_rb_user_status (status),
+  KEY idx_rb_user_requested (requested_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE rb_user_profile (
+  user_id       BIGINT UNSIGNED NOT NULL,
+
+  rgDisplay     VARCHAR(200)     NOT NULL,   -- quick display label (e.g., "Ramu Singh | Noida")
+  full_name     VARCHAR(200)     NULL,
+  display_name  VARCHAR(120)     NULL,
+
+  rgData        JSON             NULL,       -- flexible extras (skills, links, bio, etc.)
+
+  updated_at    DATETIME(6)      NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
+                 ON UPDATE CURRENT_TIMESTAMP(6),
+
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_rb_profile_user FOREIGN KEY (user_id)
+    REFERENCES rb_user(user_id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT chk_rb_profile_rgData_json CHECK (rgData IS NULL OR JSON_VALID(rgData)),
+  KEY idx_rb_profile_display (rgDisplay)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE rb_audit (
+  audit_id     BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id     CHAR(36)        NOT NULL,      -- UUID string from app
+
+  tblname      VARCHAR(64)     NOT NULL,      -- 'rb_user' / 'rb_user_profile'
+  row_id       BIGINT UNSIGNED NOT NULL,      -- user_id
+  audit_date   DATETIME(6)     NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+  action       ENUM('add','edit','approve','block','delete') NOT NULL,
+  actor_id     BIGINT UNSIGNED NULL,          -- admin/user performing action
+  source       ENUM('self','admin','api','import') NOT NULL DEFAULT 'api',
+
+  prev_data    JSON NULL,
+  new_data     JSON NULL,
+
+  PRIMARY KEY (audit_id),
+  KEY idx_audit_tbl_row_date (tblname, row_id, audit_date),
+  KEY idx_audit_event (event_id),
+
+  CONSTRAINT chk_audit_prev_json CHECK (prev_data IS NULL OR JSON_VALID(prev_data)),
+  CONSTRAINT chk_audit_new_json  CHECK (new_data IS NULL OR JSON_VALID(new_data))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE rb_user
+  ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0
+  AFTER status;
+ALTER TABLE rb_user ADD COLUMN invited_at DATETIME NULL;
+ALTER TABLE rb_user ADD COLUMN invited_by BIGINT NULL;
+ALTER TABLE rb_user ADD COLUMN registered_at DATETIME NULL;
+
+sample DATA
+
+UPDATE rb_user
+SET status='active',
+    approved_at=NOW(6),
+    approved_by=?   -- admin user_id
+WHERE user_id=? AND status='pending';
+
+UPDATE rb_user
+SET status='active',
+    approved_at=NOW(6),
+    approved_by=?   -- admin user_id
+WHERE user_id=? AND status='pending';
+
+SELECT u.user_id, p.rgDisplay, p.full_name, p.display_name, p.rgData
+FROM rb_user u
+JOIN rb_user_profile p ON p.user_id = u.user_id
+WHERE u.status='active'
+ORDER BY u.approved_at DESC;

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card p-4">
+      <h3 class="mb-3">Profile</h3>
+      <div class="text-muted small mb-3">Account: {{ email }}</div>
+
+      <form method="post">
+        <label class="form-label">Full Name</label>
+        <input name="full_name" class="form-control" value="{{ profile.full_name or '' }}">
+
+        <label class="form-label mt-3">Display Name</label>
+        <input name="display_name" class="form-control" value="{{ profile.display_name or '' }}">
+
+        <button class="btn btn-primary w-100 mt-4">Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
