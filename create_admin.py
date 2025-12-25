@@ -1,97 +1,135 @@
 import uuid
 from datetime import datetime
-from getpass import getpass
 
 from app import create_app
 from extensions import db
 from models import RBUser, RBUserProfile, RBAudit
 from security import hash_password
 
+# =========================
+# EDIT THESE VALUES
+# =========================
+ADMIN_EMAIL = "ramu@rcpro.in"
+ADMIN_PASSWORD = "admin123"       # must be >= 8 chars
+ADMIN_FULL_NAME = "Rampal Admin"
+ADMIN_DISPLAY_NAME = "Admin"
+
+# Deletion mode:
+# - "by_email": delete admin with ADMIN_EMAIL only
+# - "all_admins": delete ALL users where is_admin=1
+DELETE_MODE = "by_email"
+# =========================
 
 
-def create_admin():
+def delete_existing_admins():
+    """
+    Deletes existing admin user(s) depending on DELETE_MODE.
+    Also deletes related profile and audit rows for cleanliness.
+    """
+    if DELETE_MODE == "all_admins":
+        admins = RBUser.query.filter_by(is_admin=True).all()
+    else:
+        # by_email
+        admins = RBUser.query.filter_by(email=ADMIN_EMAIL.lower()).all()
+
+    if not admins:
+        print("No existing admin user found to delete.")
+        return
+
+    for u in admins:
+        print(f"Deleting existing user_id={u.user_id}, email={u.email}, is_admin={u.is_admin}")
+
+        # Delete profile first (FK cascade might do this, but safe either way)
+        RBUserProfile.query.filter_by(user_id=u.user_id).delete()
+
+        # Delete audits for that user row (optional; keeps DB tidy for dev)
+        RBAudit.query.filter_by(tblname="rb_user", row_id=u.user_id).delete()
+        RBAudit.query.filter_by(tblname="rb_user_profile", row_id=u.user_id).delete()
+
+        # Delete user
+        db.session.delete(u)
+
+    db.session.flush()
+
+
+def create_admin_always():
     app = create_app()
-
     with app.app_context():
-        print("=== RayGrow Bridge: Create Admin User ===")
+        print("===============================================")
+        print("⚠️  WARNING: This script will DELETE existing")
+        print("   admin user(s) and CREATE a NEW admin user.")
+        print("===============================================")
+        print(f"Delete mode : {DELETE_MODE}")
+        print(f"Admin email : {ADMIN_EMAIL}")
+        print("Running...\n")
 
-        email = input("Admin email: ").strip().lower()
-        if not email:
-            print("❌ Email is required")
-            return
-
-        existing = RBUser.query.filter_by(email=email).first()
-        if existing:
-            print(f"⚠️ User already exists (id={existing.user_id}, admin={existing.is_admin})")
-            return
-
-        while True:
-            password = getpass("Admin password: ")
-            confirm = getpass("Confirm password: ")
-            if password != confirm:
-                print("❌ Passwords do not match, try again")
-                continue
-            if len(password) < 8:
-                print("❌ Password must be at least 8 characters")
-                continue
-            break
-
-        full_name = input("Full name (optional): ").strip()
-        display_name = input("Display name (optional): ").strip()
+        if not ADMIN_EMAIL or "@" not in ADMIN_EMAIL:
+            raise ValueError("ADMIN_EMAIL must be set to a valid email address")
+        if not ADMIN_PASSWORD or len(ADMIN_PASSWORD) < 8:
+            raise ValueError("ADMIN_PASSWORD must be at least 8 characters")
 
         now = datetime.utcnow()
         event_id = str(uuid.uuid4())
 
-        # --- Create admin user ---
-        user = RBUser(
-            email=email,
-            password_hash=hash_password(password),
-            status="active",
-            is_admin=True,
-            invited_at=now,
-            registered_at=now,
-            created_at=now,
-            updated_at=now
-        )
-        db.session.add(user)
-        db.session.flush()  # get user_id
+        try:
+            # Start a clean transaction
+            delete_existing_admins()
 
-        # --- Create profile ---
-        profile = RBUserProfile(
-            user_id=user.user_id,
-            rgDisplay=display_name or full_name or email,
-            full_name=full_name or None,
-            display_name=display_name or None,
-            rgData={}
-        )
-        db.session.add(profile)
+            # Create fresh admin user
+            user = RBUser(
+                email=ADMIN_EMAIL.strip().lower(),
+                password_hash=hash_password(ADMIN_PASSWORD),
+                status="active",
+                is_admin=True,
+                invited_at=now,
+                registered_at=now,
+                created_at=now,
+                updated_at=now
+            )
+            db.session.add(user)
+            db.session.flush()  # gets user_id
 
-        # --- Audit record ---
-        audit = RBAudit(
-            event_id=event_id,
-            tblname="rb_user",
-            row_id=user.user_id,
-            audit_date=now,
-            action="add",
-            actor_id=user.user_id,
-            source="admin",
-            prev_data=None,
-            new_data={
-                "email": email,
-                "status": "active",
-                "is_admin": True
-            }
-        )
-        db.session.add(audit)
+            # Create/attach profile
+            profile = RBUserProfile(
+                user_id=user.user_id,
+                rgDisplay=ADMIN_DISPLAY_NAME or ADMIN_FULL_NAME or ADMIN_EMAIL,
+                full_name=ADMIN_FULL_NAME or None,
+                display_name=ADMIN_DISPLAY_NAME or None,
+                rgData={}
+            )
+            db.session.add(profile)
 
-        db.session.commit()
+            # Audit record
+            audit = RBAudit(
+                event_id=event_id,
+                tblname="rb_user",
+                row_id=user.user_id,
+                audit_date=now,
+                action="add",
+                actor_id=user.user_id,
+                source="admin",
+                prev_data=None,
+                new_data={
+                    "email": user.email,
+                    "status": user.status,
+                    "is_admin": True
+                }
+            )
+            db.session.add(audit)
 
-        print("\n✅ Admin user created successfully")
-        print(f"   User ID : {user.user_id}")
-        print(f"   Email   : {user.email}")
-        print("   Role    : ADMIN")
-        print("   Status  : ACTIVE")
+            db.session.commit()
+
+            print("✅ Admin user recreated successfully")
+            print(f"   User ID : {user.user_id}")
+            print(f"   Email   : {user.email}")
+            print("   Role    : ADMIN")
+            print("   Status  : ACTIVE")
+
+        except Exception as e:
+            db.session.rollback()
+            print("❌ Failed to recreate admin user.")
+            raise
 
 
 if __name__ == "__main__":
-    create_admin()
+    create_admin_always()

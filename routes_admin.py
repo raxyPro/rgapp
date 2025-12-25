@@ -1,3 +1,8 @@
+from tokens import generate_reset_token
+from emailer import send_reset_email
+import uuid
+from datetime import datetime
+
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
@@ -92,3 +97,41 @@ def invite():
         return redirect(url_for("admin.dashboard"))
 
     return render_template("invite.html")
+
+@admin_bp.route("/reset/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def admin_reset_password(user_id):
+    admin_user = current_user.get_user()
+
+    u = RBUser.query.get(user_id)
+    if not u or u.status in ("deleted",):
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.dashboard"))
+
+    if u.status != "active":
+        flash("Password reset can be sent only to ACTIVE users.", "warning")
+        return redirect(url_for("admin.dashboard"))
+
+    token = generate_reset_token(u.email)
+    reset_url = f"{current_app.config['APP_BASE_URL'].rstrip('/')}/reset/{token}"
+
+    # Send reset email
+    send_reset_email(u.email, reset_url)
+
+    # Audit
+    db.session.add(RBAudit(
+        event_id=str(uuid.uuid4()),
+        tblname="rb_user",
+        row_id=u.user_id,
+        audit_date=datetime.utcnow(),
+        action="edit",
+        actor_id=admin_user.user_id,
+        source="admin",
+        prev_data=None,
+        new_data={"admin_password_reset_sent": True, "to": u.email}
+    ))
+    db.session.commit()
+
+    flash(f"Reset link sent to {u.email}.", "success")
+    return redirect(url_for("admin.dashboard"))

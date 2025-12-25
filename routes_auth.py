@@ -1,3 +1,8 @@
+from tokens import generate_reset_token, verify_reset_token
+from emailer import send_reset_email
+from security import hash_password, verify_password
+from flask import current_app
+
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, current_user
@@ -143,3 +148,82 @@ def register(token):
         return redirect(url_for("auth.login"))
 
     return render_template("register.html", email=email)
+
+@auth_bp.route("/forgot", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+
+        # Always show same message to avoid leaking which emails exist
+        flash("If the email exists, a reset link has been sent.", "info")
+
+        if email:
+            u = RBUser.query.filter_by(email=email).first()
+            # Only allow reset for real active users
+            if u and u.status == "active":
+                token = generate_reset_token(email)
+                reset_url = f"{current_app.config['APP_BASE_URL'].rstrip('/')}/reset/{token}"
+                send_reset_email(email, reset_url)
+
+                db.session.add(RBAudit(
+                    event_id=str(uuid.uuid4()),
+                    tblname="rb_user",
+                    row_id=u.user_id,
+                    action="edit",
+                    actor_id=u.user_id,
+                    source="self",
+                    prev_data=None,
+                    new_data={"password_reset_requested_at": datetime.utcnow().isoformat()}
+                ))
+                db.session.commit()
+
+        return redirect(url_for("auth.login"))
+
+    return render_template("forgot_password.html")
+
+
+@auth_bp.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        payload = verify_reset_token(token)   # 30 mins default
+        email = payload["email"].strip().lower()
+    except Exception:
+        flash("Invalid or expired reset link.", "danger")
+        return redirect(url_for("auth.login"))
+
+    u = RBUser.query.filter_by(email=email).first()
+    if not u or u.status != "active":
+        flash("Reset link not valid for this account.", "warning")
+        return redirect(url_for("auth.login"))
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm", "")
+
+        if password != confirm:
+            flash("Passwords do not match.", "danger")
+            return render_template("reset_password.html", email=email)
+
+        try:
+            u.password_hash = hash_password(password)
+        except ValueError as e:
+            flash(str(e), "danger")
+            return render_template("reset_password.html", email=email)
+
+        db.session.add(u)
+        db.session.add(RBAudit(
+            event_id=str(uuid.uuid4()),
+            tblname="rb_user",
+            row_id=u.user_id,
+            action="edit",
+            actor_id=u.user_id,
+            source="self",
+            prev_data=None,
+            new_data={"password_reset_at": datetime.utcnow().isoformat()}
+        ))
+        db.session.commit()
+
+        flash("Password updated. Please login.", "success")
+        return redirect(url_for("auth.login"))
+
+    return render_template("reset_password.html", email=email)

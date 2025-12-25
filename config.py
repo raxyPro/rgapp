@@ -25,6 +25,12 @@ class Config:
         fallback=None
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Keep connections fresh to avoid stale sockets on reload/idle timeouts
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        # recycle before common MySQL wait_timeout defaults (28800s) and some host firewalls
+        "pool_recycle": 280,
+    }
 
     if not SQLALCHEMY_DATABASE_URI:
         raise RuntimeError("SQLALCHEMY_DATABASE_URI is required in app.ini")
