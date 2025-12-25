@@ -25,6 +25,9 @@ class UserLoginAdapter:
     def id(self):
         return str(self._u.user_id)
 
+    def get_id(self):
+        return str(self._u.user_id)
+
     @property
     def is_authenticated(self):
         return True

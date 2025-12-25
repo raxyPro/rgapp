@@ -57,7 +57,8 @@ def invite():
 
         u = RBUser(
             email=email,
-            password_hash=None,
+            # Some databases/tables enforce NOT NULL; keep empty string until user sets password
+            password_hash="",
             status="invited",
             is_admin=False,
             invited_at=datetime.utcnow(),
