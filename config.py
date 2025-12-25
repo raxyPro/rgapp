@@ -28,8 +28,10 @@ class Config:
     # Keep connections fresh to avoid stale sockets on reload/idle timeouts
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
-        # recycle before common MySQL wait_timeout defaults (28800s) and some host firewalls
-        "pool_recycle": 280,
+        "pool_recycle": 1800,
+        "pool_timeout": 30,
+        "pool_size": 5,
+        "max_overflow": 10,
     }
 
     if not SQLALCHEMY_DATABASE_URI:
