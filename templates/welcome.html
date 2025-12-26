@@ -16,14 +16,17 @@
             <div class="card-body">
               <h6 class="card-title mb-1">{{ m.name }}</h6>
               {% if m.description %}<div class="text-muted small mb-3">{{ m.description }}</div>{% endif %}
+              {% if m.module_key == "chat" %}
+              <a href="{{ url_for('chat.index') }}" class="btn btn-sm btn-primary">Open</a>
+              {% else %}
               <a href="#" class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true" tabindex="-1">Open</a>
+              {% endif %}
             </div>
           </div>
         </div>
       {% endfor %}
     </div>
-    <div class="text-muted small mt-2">(Module click actions will be enabled in a later release.)</div>
-  {% else %}
+      {% else %}
     <div class="text-muted">No modules assigned yet. Please contact admin.</div>
   {% endif %}
 </div>

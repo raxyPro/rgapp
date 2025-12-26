@@ -1,0 +1,33 @@
+{# modules/chat/templates/chat/new_chat.html #}
+{% extends "base.html" %}
+{% block content %}
+<h3>New chat</h3>
+
+<form method="post" action="{{ url_for('chat.create_chat') }}" style="max-width:720px">
+  <div class="mb-3">
+    <label class="form-label">Choose users</label>
+    <div style="border:1px solid #ddd;border-radius:10px;padding:10px;max-height:320px;overflow:auto">
+      {% for u in users %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="user_ids" value="{{ u.user_id }}" id="u{{u.user_id}}">
+          <label class="form-check-label" for="u{{u.user_id}}">
+            {{ u.email }}
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-text">Select 1 user for direct chat, or 2+ for a group.</div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Group name (optional)</label>
+    <input class="form-control" name="group_name" placeholder="e.g., Project Alpha">
+    <div class="form-text">Used only when you select multiple users.</div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary" type="submit">Start chat</button>
+    <a class="btn btn-secondary" href="{{ url_for('chat.index') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
