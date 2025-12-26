@@ -18,9 +18,11 @@
               {% if m.description %}<div class="text-muted small mb-3">{{ m.description }}</div>{% endif %}
               {% if m.module_key == "chat" %}
               <a href="{{ url_for('chat.index') }}" class="btn btn-sm btn-primary">Open</a>
-              {% else %}
+{% elif m.module_key == "cv" %}
+              <a href="{{ url_for('cv.home') }}" class="btn btn-sm btn-primary">Open</a>
+{% else %}
               <a href="#" class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true" tabindex="-1">Open</a>
-              {% endif %}
+{% endif %}
             </div>
           </div>
         </div>

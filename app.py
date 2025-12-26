@@ -59,6 +59,9 @@ def create_app():
     from modules.chat import register_chat_module
     register_chat_module(app)
 
+    from modules.cv import register_cv_module
+    register_cv_module(app)
+
     return app
 
 app = create_app()

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Edit vCard</h3>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.home') }}">Back</a>
+</div>
+
+<form method="post" action="{{ url_for('cv.save_vcard', cv_id=p.cv_id) }}">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Name</label>
+      <input class="form-control" name="v_name" value="{{ p.v_name }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Company</label>
+      <input class="form-control" name="v_company" value="{{ p.v_company }}">
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Email</label>
+      <input class="form-control" name="v_email" value="{{ p.v_email }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Phone</label>
+      <input class="form-control" name="v_phone" value="{{ p.v_phone }}">
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Primary Skill</label>
+      <input class="form-control" name="v_primary_skill" value="{{ p.v_primary_skill }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Organizations (one line)</label>
+      <input class="form-control" name="v_organizations" value="{{ p.v_organizations }}">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Skill Description</label>
+      <textarea class="form-control" rows="4" name="v_skill_description">{{ p.v_skill_description }}</textarea>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Achievements (one line)</label>
+      <input class="form-control" name="v_achievements" value="{{ p.v_achievements }}">
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('cv.home') }}">Cancel</a>
+    <a class="btn btn-outline-success" href="{{ url_for('cv.view_onepage', cv_id=p.cv_id) }}">Preview One-Page</a>
+  </div>
+</form>
+{% endblock %}

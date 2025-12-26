@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">CV Viewer</h3>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('home.index') }}">Home</a>
+</div>
+
+<div class="mb-2 text-muted">Owner: {{ owner.email if owner else "Unknown" }}</div>
+
+<div class="card">
+  <div class="card-body">
+    {{ p.onepage_html | safe }}
+  </div>
+</div>
+{% endblock %}

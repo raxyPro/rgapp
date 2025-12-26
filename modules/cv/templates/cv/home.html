@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">CV</h3>
+  <div class="d-flex gap-2">
+    <form method="post" action="{{ url_for('cv.new_pair') }}">
+      <button class="btn btn-primary btn-sm" type="submit">+ New CV Pair</button>
+    </form>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.shared_with_me') }}">Shared With Me</a>
+  </div>
+</div>
+
+<div class="accordion" id="cvAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingActive">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseActive" aria-expanded="true" aria-controls="collapseActive">
+        My CV (Active)
+      </button>
+    </h2>
+    <div id="collapseActive" class="accordion-collapse collapse show" aria-labelledby="headingActive" data-bs-parent="#cvAccordion">
+      <div class="accordion-body">
+        {% if not active %}
+          <div class="text-muted">No CV pairs yet. Click <b>+ New CV Pair</b>.</div>
+        {% else %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th style="width:70px;">#</th>
+                  <th>vCard Name</th>
+                  <th>One-Page CV</th>
+                  <th style="width:340px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for p in active %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ p.v_name or "(Unnamed)" }}</td>
+                  <td>{{ (p.v_name or "CV") ~ " – One Page" }}</td>
+                  <td class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('cv.edit_vcard', cv_id=p.cv_id) }}">View/Edit vCard</a>
+                    <a class="btn btn-outline-success btn-sm" href="{{ url_for('cv.view_onepage', cv_id=p.cv_id) }}">View One-Page</a>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.share', cv_id=p.cv_id) }}">Share</a>
+                    <form method="post" action="{{ url_for('cv.archive', cv_id=p.cv_id) }}">
+                      <button class="btn btn-outline-danger btn-sm" type="submit">Archive</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="headingArchived">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArchived" aria-expanded="false" aria-controls="collapseArchived">
+        My CV – Archive
+      </button>
+    </h2>
+    <div id="collapseArchived" class="accordion-collapse collapse" aria-labelledby="headingArchived" data-bs-parent="#cvAccordion">
+      <div class="accordion-body">
+        {% if not archived %}
+          <div class="text-muted">No archived CV pairs.</div>
+        {% else %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th style="width:70px;">#</th>
+                  <th>vCard Name</th>
+                  <th>One-Page CV</th>
+                  <th style="width:280px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for p in archived %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ p.v_name or "(Unnamed)" }}</td>
+                  <td>{{ (p.v_name or "CV") ~ " – One Page" }}</td>
+                  <td class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('cv.edit_vcard', cv_id=p.cv_id) }}">View</a>
+                    <a class="btn btn-outline-success btn-sm" href="{{ url_for('cv.view_onepage', cv_id=p.cv_id) }}">One-Page</a>
+                    <form method="post" action="{{ url_for('cv.unarchive', cv_id=p.cv_id) }}">
+                      <button class="btn btn-outline-secondary btn-sm" type="submit">Unarchive</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

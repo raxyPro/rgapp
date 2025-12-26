@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">One-Page CV</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('cv.edit_vcard', cv_id=p.cv_id) }}">Edit vCard</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.home') }}">Back</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    {{ p.onepage_html | safe }}
+  </div>
+</div>
+{% endblock %}

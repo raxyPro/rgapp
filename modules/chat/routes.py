@@ -137,6 +137,45 @@ def create_chat():
     db.session.commit()
     return redirect(url_for("chat.thread", thread_id=thread.thread_id))
 
+
+@chat_bp.get("/dm/<int:user_id>")
+@login_required
+@module_required("chat")
+def start_dm(user_id: int):
+    """Start or open a DM with the given user."""
+    me_id = get_current_user_id()
+    if user_id == me_id:
+        abort(400, "Cannot DM yourself")
+
+    other = RBUser.query.get_or_404(user_id)
+
+    dm_threads = (
+        db.session.query(ChatThread.thread_id)
+        .join(ChatThreadMember, ChatThreadMember.thread_id == ChatThread.thread_id)
+        .filter(ChatThreadMember.user_id.in_([me_id, other.user_id]))
+        .filter(ChatThread.thread_type == "dm")
+        .group_by(ChatThread.thread_id)
+        .having(db.func.count(db.func.distinct(ChatThreadMember.user_id)) == 2)
+        .subquery()
+    )
+
+    existing_dm = ChatThread.query.filter(
+        ChatThread.thread_id.in_(db.session.query(dm_threads.c.thread_id))
+    ).first()
+
+    if existing_dm:
+        return redirect(url_for("chat.thread", thread_id=existing_dm.thread_id))
+
+    thread = ChatThread(thread_type="dm", name=None, created_by=me_id)
+    db.session.add(thread)
+    db.session.flush()
+
+    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
+    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other.user_id, role="member"))
+    db.session.commit()
+
+    return redirect(url_for("chat.thread", thread_id=thread.thread_id))
+
 @chat_bp.get("/t/<int:thread_id>")
 @login_required
 @module_required("chat")

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Share CV</h3>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.home') }}">Back</a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="mb-2"><b>{{ p.v_name or "Unnamed" }}</b></div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <form method="post" action="{{ url_for('cv.share_public', cv_id=p.cv_id) }}">
+        <button class="btn btn-outline-primary btn-sm" type="submit">Create / Get Public Link</button>
+      </form>
+
+      {% if public_link %}
+        <span class="small text-muted align-self-center">Public link:</span>
+        <input class="form-control form-control-sm" style="max-width:520px;" value="{{ public_link }}" readonly>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Share to rgPro user</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('cv.share_user', cv_id=p.cv_id) }}">
+          <select class="form-select form-select-sm" name="target_user_id" required>
+            <option value="">Select a user…</option>
+            {% for u in users %}
+              <option value="{{ u.user_id }}">{{ u.email }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary btn-sm mt-2" type="submit">Share</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">Share via email</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('cv.share_email', cv_id=p.cv_id) }}">
+          <input class="form-control form-control-sm" name="target_email" placeholder="name@example.com" required>
+          <button class="btn btn-primary btn-sm mt-2" type="submit">Share</button>
+          <div class="small text-muted mt-2">This creates a share entry; email sending is optional/configurable.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-header">Existing shares</div>
+  <div class="card-body">
+    {% if not shares %}
+      <div class="text-muted">No shares yet.</div>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Target</th>
+              <th>Link</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for s in shares %}
+            <tr>
+              <td>
+                {% if s.is_public %}Public{% else %}Private{% endif %}
+              </td>
+              <td>
+                {% if s.target_user_id %}User #{{ s.target_user_id }}{% elif s.target_email %}{{ s.target_email }}{% else %}-{% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('cvviewer.view', token=s.share_token) }}" target="_blank">Open</a>
+              </td>
+              <td>{{ s.created_at }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
