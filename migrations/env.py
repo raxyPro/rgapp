@@ -1,75 +1,49 @@
-from __future__ import with_statement
-
-import sys
 from logging.config import fileConfig
-from pathlib import Path
-import configparser
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# -------------------------------------------------------------------
-# Alembic Config object
-# -------------------------------------------------------------------
+# this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
-# Disable alembic.ini logging config (prevents KeyError: 'formatters')
-# You can configure logging later if needed.
-# if config.config_file_name is not None:
-#     fileConfig(config.config_file_name)
+if config.config_file_name is not None:
+    import configparser
 
+    if config.config_file_name:
+        cp = configparser.ConfigParser()
+        cp.read(config.config_file_name)
+        # Only configure logging if alembic.ini contains logging sections
+        if cp.has_section("formatters"):
+            fileConfig(config.config_file_name)
 
-# -------------------------------------------------------------------
-# Make sure app modules are importable
-# Assuming:
-#   project_root/
-#     app.py
-#     config.py
-#     models.py
-#     extensions.py
-#     migrations/
-#       env.py  <-- this file
-# -------------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT))
+# Import app + SQLAlchemy metadata
+from app import create_app
+from extensions import db
 
-# Import your SQLAlchemy Base/metadata
-# If you're using Flask-SQLAlchemy, metadata is db.metadata
-from extensions import db  # noqa: E402
-from models import RBUser, RBUserProfile, RBAudit  # noqa: F401,E402  (ensure models are imported)
+app = create_app()
+
+# Make sure models are imported so metadata is complete
+import models  # noqa: F401
 
 target_metadata = db.metadata
 
-# -------------------------------------------------------------------
-# Read DATABASE URL from app.ini
-# -------------------------------------------------------------------
-APP_INI_PATH = PROJECT_ROOT / "app.ini"
-if not APP_INI_PATH.exists():
-    raise RuntimeError(f"app.ini not found at: {APP_INI_PATH}")
 
-cp = configparser.ConfigParser()
-cp.read(APP_INI_PATH)
-
-db_url = cp.get("database", "sqlalchemy_database_uri", fallback=None)
-if not db_url:
-    raise RuntimeError("Missing [database] sqlalchemy_database_uri in app.ini")
-
-# Override alembic sqlalchemy.url with app.ini value
-config.set_main_option("sqlalchemy.url", db_url)
+def get_url():
+    # Prefer Alembic ini sqlalchemy.url if user set it; fallback to app config.
+    ini_url = config.get_main_option("sqlalchemy.url")
+    if ini_url and ini_url != "driver://user:pass@localhost/dbname":
+        return ini_url
+    return app.config.get("SQLALCHEMY_DATABASE_URI")
 
 
 def run_migrations_offline():
-    """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
-
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        compare_type=True,          # detect column type changes
-        compare_server_default=True # detect default changes
     )
 
     with context.begin_transaction():
@@ -77,20 +51,17 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    """Run migrations in 'online' mode."""
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = get_url()
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            compare_type=True,
-            compare_server_default=True
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
@@ -99,4 +70,6 @@ def run_migrations_online():
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online()
+    # Ensure app context so SQLAlchemy config is available
+    with app.app_context():
+        run_migrations_online()

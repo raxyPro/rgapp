@@ -6,7 +6,8 @@ from flask import current_app
 def send_invite_email(to_email: str, invite_url: str):
     msg = EmailMessage()
     msg["Subject"] = "RayGrow Bridge Invitation"
-    msg["From"] = current_app.config["SMTP_FROM"]
+    msg["From"] = f"{current_app.config['SMTP_FROM_NAME']} <{current_app.config['SMTP_FROM']}>"
+
     msg["To"] = to_email
 
     msg.set_content(
@@ -35,7 +36,8 @@ def send_invite_email(to_email: str, invite_url: str):
 def send_reset_email(to_email: str, reset_url: str):
     msg = EmailMessage()
     msg["Subject"] = "RayGrow Bridge Password Reset"
-    msg["From"] = current_app.config["SMTP_FROM"]
+    msg["From"] = f"{current_app.config['SMTP_FROM_NAME']} <{current_app.config['SMTP_FROM']}>"
+
     msg["To"] = to_email
 
     msg.set_content(

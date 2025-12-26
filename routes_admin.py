@@ -10,7 +10,7 @@ from passlib.hash import bcrypt
 import uuid
 
 from extensions import db
-from models import RBUser, RBUserProfile, RBAudit
+from models import RBUser, RBUserProfile, RBAudit, RBModule, RBUserModule
 from tokens import generate_invite_token
 from emailer import send_invite_email
 
@@ -33,6 +33,87 @@ def admin_required(fn):
 def dashboard():
     users = RBUser.query.order_by(RBUser.created_at.desc()).all()
     return render_template("admin.html", users=users)
+
+
+@admin_bp.route("/modules/<int:user_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def user_modules(user_id):
+    admin_user = current_user.get_user()
+
+    u = RBUser.query.get(user_id)
+    if not u or u.status in ("deleted",):
+        flash("User not found.", "danger")
+        return redirect(url_for("admin.dashboard"))
+
+    modules = RBModule.query.order_by(RBModule.module_key.asc()).all()
+    existing = {
+        um.module_key: um
+        for um in RBUserModule.query.filter_by(user_id=u.user_id).all()
+    }
+
+    if request.method == "POST":
+        # Checkbox values: module_key present => granted, else revoked.
+        requested_keys = set(request.form.getlist("modules"))
+
+        changed = False
+        for m in modules:
+            has_row = m.module_key in existing
+
+            if m.module_key in requested_keys and not has_row:
+                db.session.add(
+                    RBUserModule(
+                        user_id=u.user_id,
+                        module_key=m.module_key,
+                        has_access=True,
+                        granted_by=admin_user.user_id,
+                    )
+                )
+                db.session.add(
+                    RBAudit(
+                        event_id=str(uuid.uuid4()),
+                        tblname="rb_user_module",
+                        row_id=u.user_id,
+                        action="edit",
+                        actor_id=admin_user.user_id,
+                        source="admin",
+                        prev_data=None,
+                        new_data={"module_key": m.module_key, "has_access": True},
+                    )
+                )
+                changed = True
+
+            if m.module_key not in requested_keys and has_row:
+                db.session.delete(existing[m.module_key])
+                db.session.add(
+                    RBAudit(
+                        event_id=str(uuid.uuid4()),
+                        tblname="rb_user_module",
+                        row_id=u.user_id,
+                        action="edit",
+                        actor_id=admin_user.user_id,
+                        source="admin",
+                        prev_data={"module_key": m.module_key, "has_access": True},
+                        new_data={"module_key": m.module_key, "has_access": False},
+                    )
+                )
+                changed = True
+
+        if changed:
+            db.session.commit()
+            flash("Modules updated.", "success")
+        else:
+            flash("No changes.", "info")
+
+        return redirect(url_for("admin.user_modules", user_id=u.user_id))
+
+    assigned_keys = set(existing.keys())
+    return render_template(
+        "admin_modules.html",
+        user=u,
+        modules=modules,
+        assigned_keys=assigned_keys,
+    )
 
 @admin_bp.route("/invite", methods=["GET", "POST"])
 @login_required

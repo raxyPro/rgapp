@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 import uuid
 
 from extensions import db
-from models import RBUserProfile, RBAudit
+from models import RBUserProfile, RBAudit, RBModule, RBUserModule
 
 user_bp = Blueprint("user", __name__, url_prefix="/app")
 
@@ -11,7 +11,17 @@ user_bp = Blueprint("user", __name__, url_prefix="/app")
 @login_required
 def welcome():
     u = current_user.get_user()
-    return render_template("welcome.html", user=u)
+    # Only show modules explicitly granted to the user AND globally enabled.
+    modules = (
+        RBModule.query
+        .join(RBUserModule, RBUserModule.module_key == RBModule.module_key)
+        .filter(RBUserModule.user_id == u.user_id)
+        .filter(RBUserModule.has_access == True)
+        .filter(RBModule.is_enabled == True)
+        .order_by(RBModule.module_key.asc())
+        .all()
+    )
+    return render_template("welcome.html", user=u, modules=modules)
 
 @user_bp.route("/profile", methods=["GET", "POST"])
 @login_required
