@@ -1,52 +1,97 @@
 from __future__ import annotations
 
 from datetime import datetime
-
 from extensions import db
 
 
-class RBCVPair(db.Model):
-    __tablename__ = "rb_cv_pair"
+class RBVCard(db.Model):
+    __tablename__ = "rb_vcard"
 
-    cv_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.BigInteger, nullable=False, index=True)
+    vcard_id = db.Column(db.BigInteger, primary_key=True)
+    user_id = db.Column(db.BigInteger, nullable=False, unique=True, index=True)
 
-    # vCard fields
-    v_name = db.Column(db.String(120), nullable=False, default="")
-    v_company = db.Column(db.String(120), nullable=False, default="")
-    v_email = db.Column(db.String(120), nullable=False, default="")
-    v_phone = db.Column(db.String(50), nullable=False, default="")
-    v_primary_skill = db.Column(db.String(120), nullable=False, default="")
-    v_skill_description = db.Column(db.Text, nullable=False, default="")
-    v_organizations = db.Column(db.String(255), nullable=False, default="")
-    v_achievements = db.Column(db.String(255), nullable=False, default="")
+    name = db.Column(db.String(150), nullable=False, default="")
+    email = db.Column(db.String(150), nullable=False, default="")
+    phone = db.Column(db.String(60), nullable=False, default="")
+    linkedin_url = db.Column(db.String(255), nullable=False, default="")
+    tagline = db.Column(db.String(255), nullable=False, default="")
 
-    # Generated One-Page CV (HTML)
-    onepage_html = db.Column(db.Text, nullable=False, default="")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def touch(self):
+        self.updated_at = datetime.utcnow()
+
+
+class RBVCardItem(db.Model):
+    __tablename__ = "rb_vcard_item"
+
+    item_id = db.Column(db.BigInteger, primary_key=True)
+    vcard_id = db.Column(db.BigInteger, nullable=False, index=True)
+
+    # 'skill' or 'service'
+    item_type = db.Column(db.String(20), nullable=False, index=True)
+
+    title = db.Column(db.String(150), nullable=False, default="")
+    description = db.Column(db.Text, nullable=False, default="")
+    experience = db.Column(db.Text, nullable=False, default="")  # free text (NOT years)
+
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+class RBCVFile(db.Model):
+    __tablename__ = "rb_cv_file"
+
+    cvfile_id = db.Column(db.BigInteger, primary_key=True)
+    owner_user_id = db.Column(db.BigInteger, nullable=False, index=True)
+
+    cv_name = db.Column(db.String(200), nullable=False, default="")
+
+    original_filename = db.Column(db.String(255), nullable=False, default="")
+    stored_path = db.Column(db.String(500), nullable=False, default="")
+    mime_type = db.Column(db.String(100), nullable=False, default="application/pdf")
+    size_bytes = db.Column(db.BigInteger, nullable=False, default=0)
 
     is_archived = db.Column(db.Boolean, nullable=False, default=False)
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def touch(self):
+        self.updated_at = datetime.utcnow()
 
 
-class RBCVShare(db.Model):
-    __tablename__ = "rb_cv_share"
+class RBVCardShare(db.Model):
+    __tablename__ = "rb_vcard_share"
 
-    share_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    cv_id = db.Column(db.BigInteger, nullable=False, index=True)
-
+    share_id = db.Column(db.BigInteger, primary_key=True)
+    vcard_id = db.Column(db.BigInteger, nullable=False, index=True)
     owner_user_id = db.Column(db.BigInteger, nullable=False, index=True)
 
-    # Share targets
     target_user_id = db.Column(db.BigInteger, nullable=True, index=True)
     target_email = db.Column(db.String(200), nullable=True, index=True)
 
-    # Public viewing
-    share_token = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    share_token = db.Column(db.String(64), nullable=False, unique=True)
     is_public = db.Column(db.Boolean, nullable=False, default=False)
+    is_archived = db.Column(db.Boolean, nullable=False, default=False)
 
-    # Archive the share in "Shared with me"
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
+class RBCVFileShare(db.Model):
+    __tablename__ = "rb_cvfile_share"
+
+    share_id = db.Column(db.BigInteger, primary_key=True)
+    cvfile_id = db.Column(db.BigInteger, nullable=False, index=True)
+    owner_user_id = db.Column(db.BigInteger, nullable=False, index=True)
+
+    target_user_id = db.Column(db.BigInteger, nullable=True, index=True)
+    target_email = db.Column(db.String(200), nullable=True, index=True)
+
+    share_token = db.Column(db.String(64), nullable=False, unique=True)
+    is_public = db.Column(db.Boolean, nullable=False, default=False)
     is_archived = db.Column(db.Boolean, nullable=False, default=False)
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)

@@ -1,54 +1,120 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <h3 class="mb-0">Edit vCard</h3>
-  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.home') }}">Back</a>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h3>Edit vCard</h3>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.home') }}">Back</a>
+  </div>
+
+  <form method="post" action="{{ url_for('cv.save_vcard') }}">
+    <div class="row mt-3">
+      <div class="col-md-6">
+        <label class="form-label">Name</label>
+        <input class="form-control" name="name" value="{{ vcard.name }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input class="form-control" name="email" value="{{ vcard.email }}">
+      </div>
+      <div class="col-md-6 mt-3">
+        <label class="form-label">LinkedIn profile URL</label>
+        <input class="form-control" name="linkedin_url" value="{{ vcard.linkedin_url }}">
+      </div>
+      <div class="col-md-6 mt-3">
+        <label class="form-label">Phone</label>
+        <input class="form-control" name="phone" value="{{ vcard.phone }}">
+      </div>
+      <div class="col-md-12 mt-3">
+        <label class="form-label">Tagline</label>
+        <input class="form-control" name="tagline" value="{{ vcard.tagline }}">
+      </div>
+    </div>
+
+    <hr class="my-4"/>
+
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Skills</h5>
+      <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRow('skillsBody','skill')">Add Skill</button>
+    </div>
+    <div class="table-responsive mt-2">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th style="width:20%">Skill</th>
+            <th>Description</th>
+            <th style="width:25%">Experience (text)</th>
+            <th style="width:1%"></th>
+          </tr>
+        </thead>
+        <tbody id="skillsBody">
+          {% for s in skills %}
+          <tr>
+            <td><input class="form-control" name="skill_title[]" value="{{ s.title }}"></td>
+            <td><input class="form-control" name="skill_desc[]" value="{{ s.description }}"></td>
+            <td><input class="form-control" name="skill_exp[]" value="{{ s.experience }}"></td>
+            <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="my-4"/>
+
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Services</h5>
+      <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRow('servicesBody','service')">Add Service</button>
+    </div>
+    <div class="table-responsive mt-2">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th style="width:20%">Service</th>
+            <th>Description</th>
+            <th style="width:25%">Experience (text)</th>
+            <th style="width:1%"></th>
+          </tr>
+        </thead>
+        <tbody id="servicesBody">
+          {% for s in services %}
+          <tr>
+            <td><input class="form-control" name="service_title[]" value="{{ s.title }}"></td>
+            <td><input class="form-control" name="service_desc[]" value="{{ s.description }}"></td>
+            <td><input class="form-control" name="service_exp[]" value="{{ s.experience }}"></td>
+            <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('cv.home') }}">Cancel</a>
+    </div>
+  </form>
 </div>
 
-<form method="post" action="{{ url_for('cv.save_vcard', cv_id=p.cv_id) }}">
-  <div class="row g-3">
-    <div class="col-md-6">
-      <label class="form-label">Name</label>
-      <input class="form-control" name="v_name" value="{{ p.v_name }}">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Company</label>
-      <input class="form-control" name="v_company" value="{{ p.v_company }}">
-    </div>
-
-    <div class="col-md-6">
-      <label class="form-label">Email</label>
-      <input class="form-control" name="v_email" value="{{ p.v_email }}">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Phone</label>
-      <input class="form-control" name="v_phone" value="{{ p.v_phone }}">
-    </div>
-
-    <div class="col-md-6">
-      <label class="form-label">Primary Skill</label>
-      <input class="form-control" name="v_primary_skill" value="{{ p.v_primary_skill }}">
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Organizations (one line)</label>
-      <input class="form-control" name="v_organizations" value="{{ p.v_organizations }}">
-    </div>
-
-    <div class="col-12">
-      <label class="form-label">Skill Description</label>
-      <textarea class="form-control" rows="4" name="v_skill_description">{{ p.v_skill_description }}</textarea>
-    </div>
-
-    <div class="col-12">
-      <label class="form-label">Achievements (one line)</label>
-      <input class="form-control" name="v_achievements" value="{{ p.v_achievements }}">
-    </div>
-  </div>
-
-  <div class="d-flex gap-2 mt-3">
-    <button class="btn btn-primary" type="submit">Save</button>
-    <a class="btn btn-outline-secondary" href="{{ url_for('cv.home') }}">Cancel</a>
-    <a class="btn btn-outline-success" href="{{ url_for('cv.view_onepage', cv_id=p.cv_id) }}">Preview One-Page</a>
-  </div>
-</form>
+<script>
+function addRow(tbodyId, kind){
+  const tbody = document.getElementById(tbodyId);
+  const tr = document.createElement('tr');
+  if(kind === 'skill'){
+    tr.innerHTML = `
+      <td><input class="form-control" name="skill_title[]" value=""></td>
+      <td><input class="form-control" name="skill_desc[]" value=""></td>
+      <td><input class="form-control" name="skill_exp[]" value=""></td>
+      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+  } else {
+    tr.innerHTML = `
+      <td><input class="form-control" name="service_title[]" value=""></td>
+      <td><input class="form-control" name="service_desc[]" value=""></td>
+      <td><input class="form-control" name="service_exp[]" value=""></td>
+      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+  }
+  tbody.appendChild(tr);
+}
+</script>
 {% endblock %}

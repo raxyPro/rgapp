@@ -1,103 +1,223 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <h3 class="mb-0">CV</h3>
-  <div class="d-flex gap-2">
-    <form method="post" action="{{ url_for('cv.new_pair') }}">
-      <button class="btn btn-primary btn-sm" type="submit">+ New CV Pair</button>
-    </form>
-    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.shared_with_me') }}">Shared With Me</a>
-  </div>
-</div>
+<div class="container mt-4">
+  <h2>CV Module</h2>
 
-<div class="accordion" id="cvAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingActive">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseActive" aria-expanded="true" aria-controls="collapseActive">
-        My CV (Active)
-      </button>
-    </h2>
-    <div id="collapseActive" class="accordion-collapse collapse show" aria-labelledby="headingActive" data-bs-parent="#cvAccordion">
-      <div class="accordion-body">
-        {% if not active %}
-          <div class="text-muted">No CV pairs yet. Click <b>+ New CV Pair</b>.</div>
-        {% else %}
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr>
-                  <th style="width:70px;">#</th>
-                  <th>vCard Name</th>
-                  <th>One-Page CV</th>
-                  <th style="width:340px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-              {% for p in active %}
-                <tr>
-                  <td>{{ loop.index }}</td>
-                  <td>{{ p.v_name or "(Unnamed)" }}</td>
-                  <td>{{ (p.v_name or "CV") ~ " – One Page" }}</td>
-                  <td class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('cv.edit_vcard', cv_id=p.cv_id) }}">View/Edit vCard</a>
-                    <a class="btn btn-outline-success btn-sm" href="{{ url_for('cv.view_onepage', cv_id=p.cv_id) }}">View One-Page</a>
-                    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('cv.share', cv_id=p.cv_id) }}">Share</a>
-                    <form method="post" action="{{ url_for('cv.archive', cv_id=p.cv_id) }}">
-                      <button class="btn btn-outline-danger btn-sm" type="submit">Archive</button>
-                    </form>
-                  </td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
+  <div class="accordion mt-3" id="cvAcc">
+
+    <!-- My vCard -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="hV">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cV" aria-expanded="true">
+          My vCard
+        </button>
+      </h2>
+      <div id="cV" class="accordion-collapse collapse show" data-bs-parent="#cvAcc">
+        <div class="accordion-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h4 class="mb-0">{{ vcard.name or "—" }}</h4>
+              <div class="text-muted">{{ vcard.tagline }}</div>
+              <div class="mt-2">
+                <div><strong>Email:</strong> {{ vcard.email }}</div>
+                <div><strong>Phone:</strong> {{ vcard.phone }}</div>
+                <div><strong>LinkedIn:</strong> {% if vcard.linkedin_url %}<a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>{% else %}—{% endif %}</div>
+              </div>
+            </div>
+            <div class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.edit_vcard') }}">Edit</a>
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.share_vcard') }}">Share</a>
+            </div>
           </div>
-        {% endif %}
+
+          <hr/>
+
+          <h5>Skills</h5>
+          {% if skills %}
+            <ul class="list-group mb-3">
+              {% for s in skills %}
+                <li class="list-group-item">
+                  <div class="fw-semibold">{{ s.title }}</div>
+                  <div class="text-muted small">{{ s.experience }}</div>
+                  <div>{{ s.description }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No skills added.</div>
+          {% endif %}
+
+          <h5 class="mt-3">Services</h5>
+          {% if services %}
+            <ul class="list-group">
+              {% for s in services %}
+                <li class="list-group-item">
+                  <div class="fw-semibold">{{ s.title }}</div>
+                  <div class="text-muted small">{{ s.experience }}</div>
+                  <div>{{ s.description }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No services added.</div>
+          {% endif %}
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="headingArchived">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArchived" aria-expanded="false" aria-controls="collapseArchived">
-        My CV – Archive
-      </button>
-    </h2>
-    <div id="collapseArchived" class="accordion-collapse collapse" aria-labelledby="headingArchived" data-bs-parent="#cvAccordion">
-      <div class="accordion-body">
-        {% if not archived %}
-          <div class="text-muted">No archived CV pairs.</div>
-        {% else %}
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr>
-                  <th style="width:70px;">#</th>
-                  <th>vCard Name</th>
-                  <th>One-Page CV</th>
-                  <th style="width:280px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-              {% for p in archived %}
-                <tr>
-                  <td>{{ loop.index }}</td>
-                  <td>{{ p.v_name or "(Unnamed)" }}</td>
-                  <td>{{ (p.v_name or "CV") ~ " – One Page" }}</td>
-                  <td class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('cv.edit_vcard', cv_id=p.cv_id) }}">View</a>
-                    <a class="btn btn-outline-success btn-sm" href="{{ url_for('cv.view_onepage', cv_id=p.cv_id) }}">One-Page</a>
-                    <form method="post" action="{{ url_for('cv.unarchive', cv_id=p.cv_id) }}">
-                      <button class="btn btn-outline-secondary btn-sm" type="submit">Unarchive</button>
-                    </form>
-                  </td>
-                </tr>
-              {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% endif %}
+    <!-- My CVs -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="hC">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cC">
+          My CVs
+        </button>
+      </h2>
+      <div id="cC" class="accordion-collapse collapse" data-bs-parent="#cvAcc">
+        <div class="accordion-body">
+
+          <form class="row g-2 align-items-end" method="post" action="{{ url_for('cv.cvfile_new') }}" enctype="multipart/form-data">
+            <div class="col-md-4">
+              <label class="form-label">CV Name</label>
+              <input class="form-control" name="cv_name" placeholder="e.g., Software Engineer CV" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Upload PDF</label>
+              <input class="form-control" type="file" name="pdf" accept="application/pdf" required>
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-primary w-100" type="submit">Add CV</button>
+            </div>
+          </form>
+
+          <hr/>
+
+          {% if cv_files %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>CV Name</th>
+                    <th>File</th>
+                    <th>Updated</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in cv_files %}
+                  <tr>
+                    <td>{{ c.cv_name }}</td>
+                    <td class="text-muted">{{ c.original_filename }}</td>
+                    <td class="text-muted">{{ c.updated_at.strftime("%Y-%m-%d %H:%M") if c.updated_at else "" }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.share_cvfile', cvfile_id=c.cvfile_id) }}">Share</a>
+                      <form method="post" action="{{ url_for('cv.cvfile_delete', cvfile_id=c.cvfile_id) }}" style="display:inline" onsubmit="return confirm('Delete this CV?');">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-muted">No CV PDFs uploaded yet.</div>
+          {% endif %}
+        </div>
       </div>
     </div>
+
+    <!-- vCard Shared -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="hVS">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cVS">
+          vCard Shared With Me
+        </button>
+      </h2>
+      <div id="cVS" class="accordion-collapse collapse" data-bs-parent="#cvAcc">
+        <div class="accordion-body">
+          {% if vcard_shares %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Shared Date</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in vcard_shares %}
+                    {% set v = shared_vcards.get(s.vcard_id) %}
+                    {% set o = owners.get(s.owner_user_id) %}
+                    <tr>
+                      <td>{{ (v.name if v else None) or (o.email if o else None) or ("User #" ~ s.owner_user_id) }}</td>
+                      <td class="text-muted">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
+                      <td>
+                        {% if s.is_public %}
+                          <a href="{{ url_for('vcardviewer.view', token=s.share_token) }}" target="_blank">View</a>
+                        {% else %}
+                          <span class="text-muted">Private</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-muted">No vCards shared with you yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- CV Shared -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="hCS">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cCS">
+          CV Shared With Me
+        </button>
+      </h2>
+      <div id="cCS" class="accordion-collapse collapse" data-bs-parent="#cvAcc">
+        <div class="accordion-body">
+          {% if cvfile_shares %}
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>CV</th>
+                    <th>Owner</th>
+                    <th>Shared Date</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for s in cvfile_shares %}
+                    {% set c = shared_cvfiles.get(s.cvfile_id) %}
+                    {% set o = owners.get(s.owner_user_id) %}
+                    <tr>
+                      <td>{{ c.cv_name if c else ("CV #" ~ s.cvfile_id) }}</td>
+                      <td>{{ o.email if o else ("User #" ~ s.owner_user_id) }}</td>
+                      <td class="text-muted">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
+                      <td>
+                        {% if s.is_public %}
+                          <a href="{{ url_for('cvviewer.view', token=s.share_token) }}" target="_blank">View</a>
+                        {% else %}
+                          <span class="text-muted">Private</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-muted">No CVs shared with you yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 {% endblock %}

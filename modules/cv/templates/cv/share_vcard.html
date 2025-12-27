@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center">
+    <h3>Share vCard</h3>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.home') }}">Back</a>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-body">
+      <h5 class="card-title mb-1">{{ vcard.name or "My vCard" }}</h5>
+      <div class="text-muted">{{ vcard.tagline }}</div>
+
+      <div class="mt-3">
+        <form method="post" action="{{ url_for('cv.share_vcard_public') }}">
+          <button class="btn btn-sm btn-outline-primary" type="submit">Create / Get Public Link</button>
+          {% if public_link %}
+            <div class="mt-2">
+              <label class="form-label">Public link</label>
+              <input class="form-control" value="{{ public_link }}" readonly>
+            </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Share to rgPro user</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('cv.share_vcard_user') }}">
+            <select class="form-select" name="target_user_id" required>
+              <option value="">Select a user...</option>
+              {% for u in users %}
+                <option value="{{ u.user_id }}">{{ u.email }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-primary mt-2" type="submit">Share</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Share via email</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('cv.share_vcard_email') }}">
+            <input class="form-control" name="target_email" placeholder="name@example.com" required>
+            <button class="btn btn-primary mt-2" type="submit">Share</button>
+          </form>
+          <div class="text-muted small mt-2">Creates a private share entry (email sending optional).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">Existing shares</div>
+    <div class="card-body">
+      {% if shares %}
+        <table class="table table-sm">
+          <thead><tr><th>Type</th><th>Target</th><th>Link</th><th>Created</th></tr></thead>
+          <tbody>
+          {% for s in shares %}
+            <tr>
+              <td>{{ "Public" if s.is_public else "Private" }}</td>
+              <td>
+                {% if s.target_user_id %}User #{{ s.target_user_id }}{% elif s.target_email %}{{ s.target_email }}{% else %}-{% endif %}
+              </td>
+              <td>
+                {% if s.is_public %}
+                  <a href="{{ url_for('vcardviewer.view', token=s.share_token) }}" target="_blank">Open</a>
+                {% else %}
+                  <span class="text-muted">Private</span>
+                {% endif %}
+              </td>
+              <td class="text-muted">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="text-muted">No shares yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
