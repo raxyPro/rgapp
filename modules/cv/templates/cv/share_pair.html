@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Share CV Pair</h2>
+  <div class="mb-3">
+    <div class="fw-semibold">{{ pair.v_name or "vCard" }}</div>
+    <div class="text-muted">{{ pair.op_title or pair.v_primary_skill }}</div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Share options</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('cv.share_pair_public', cv_id=pair.cv_id) }}" class="mb-2">
+            <button class="btn btn-outline-primary w-100" type="submit">Generate/Refresh Public Link</button>
+          </form>
+          <form method="post" action="{{ url_for('cv.share_pair_user', cv_id=pair.cv_id) }}" class="mb-2">
+            <label class="form-label">Share with user</label>
+            <div class="input-group">
+              <select class="form-select" name="target_user_id" required>
+                <option value="">Select user</option>
+                {% for u in users %}
+                  <option value="{{ u.user_id }}">{{ u.email }}</option>
+                {% endfor %}
+              </select>
+              <button class="btn btn-outline-secondary" type="submit">Share</button>
+            </div>
+          </form>
+          <form method="post" action="{{ url_for('cv.share_pair_email', cv_id=pair.cv_id) }}">
+            <label class="form-label">Share via email</label>
+            <div class="input-group">
+              <input class="form-control" name="target_email" placeholder="person@example.com" required>
+              <button class="btn btn-outline-secondary" type="submit">Share</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Existing shares</div>
+        <div class="card-body">
+          {% if public_link %}
+            <div class="mb-2">
+              <div class="small text-muted">Public link</div>
+              <a href="{{ public_link }}" target="_blank">{{ public_link }}</a>
+            </div>
+          {% endif %}
+          {% if shares %}
+            <ul class="list-group">
+              {% for s in shares %}
+                <li class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="fw-semibold">{{ "Public" if s.is_public else "Private" }}</div>
+                      <div class="text-muted small">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</div>
+                      <div class="small">
+                        {% if s.target_user_id %}User #{{ s.target_user_id }}{% elif s.target_email %}{{ s.target_email }}{% else %}Anyone with link{% endif %}
+                      </div>
+                    </div>
+                    {% if s.is_public %}
+                      <a href="{{ url_for('cvviewer.view_pair', token=s.share_token) }}" target="_blank">View</a>
+                    {% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted small">No shares yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@
 
   <div class="accordion mt-3" id="cvAcc">
 
-    <!-- My vCard -->
+    <!-- My vCard (inline editable) -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="hV">
         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cV" aria-expanded="true">
@@ -14,68 +14,141 @@
       </h2>
       <div id="cV" class="accordion-collapse collapse show" data-bs-parent="#cvAcc">
         <div class="accordion-body">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <h4 class="mb-0">{{ vcard.name or "—" }}</h4>
-              <div class="text-muted">{{ vcard.tagline }}</div>
-              <div class="mt-2">
-                <div><strong>Email:</strong> {{ vcard.email }}</div>
-                <div><strong>Phone:</strong> {{ vcard.phone }}</div>
-                <div><strong>LinkedIn:</strong> {% if vcard.linkedin_url %}<a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>{% else %}—{% endif %}</div>
+          <form method="post" action="{{ url_for('cv.save_vcard') }}">
+            <div class="row">
+              <div class="col-md-6 mb-2">
+                <label class="form-label">Name</label>
+                <input class="form-control" name="name" value="{{ vcard.name }}">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label">Email</label>
+                <input class="form-control" name="email" value="{{ vcard.email }}">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label">LinkedIn profile URL</label>
+                <input class="form-control" name="linkedin_url" value="{{ vcard.linkedin_url }}">
+              </div>
+              <div class="col-md-6 mb-2">
+                <label class="form-label">Phone</label>
+                <input class="form-control" name="phone" value="{{ vcard.phone }}">
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Tagline</label>
+                <input class="form-control" name="tagline" value="{{ vcard.tagline }}">
               </div>
             </div>
-            <div class="text-end">
-              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.edit_vcard') }}">Edit</a>
-              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.share_vcard') }}">Share</a>
+
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Skills</h6>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRow('skillsBody','skill')">Add Skill</button>
             </div>
-          </div>
+            <div class="table-responsive mt-2">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Skill</th>
+                    <th>Description</th>
+                    <th style="width:25%">Experience (text)</th>
+                    <th style="width:1%"></th>
+                  </tr>
+                </thead>
+                <tbody id="skillsBody">
+                  {% for s in skills %}
+                  <tr>
+                    <td><input class="form-control" name="skill_title[]" value="{{ s.title }}"></td>
+                    <td><input class="form-control" name="skill_desc[]" value="{{ s.description }}"></td>
+                    <td><input class="form-control" name="skill_exp[]" value="{{ s.experience }}"></td>
+                    <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
 
-          <hr/>
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Services</h6>
+              <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRow('servicesBody','service')">Add Service</button>
+            </div>
+            <div class="table-responsive mt-2">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th style="width:20%">Service</th>
+                    <th>Description</th>
+                    <th style="width:25%">Experience (text)</th>
+                    <th style="width:1%"></th>
+                  </tr>
+                </thead>
+                <tbody id="servicesBody">
+                  {% for s in services %}
+                  <tr>
+                    <td><input class="form-control" name="service_title[]" value="{{ s.title }}"></td>
+                    <td><input class="form-control" name="service_desc[]" value="{{ s.description }}"></td>
+                    <td><input class="form-control" name="service_exp[]" value="{{ s.experience }}"></td>
+                    <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
 
-          <h5>Skills</h5>
-          {% if skills %}
-            <ul class="list-group mb-3">
-              {% for s in skills %}
-                <li class="list-group-item">
-                  <div class="fw-semibold">{{ s.title }}</div>
-                  <div class="text-muted small">{{ s.experience }}</div>
-                  <div>{{ s.description }}</div>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="text-muted">No skills added.</div>
-          {% endif %}
-
-          <h5 class="mt-3">Services</h5>
-          {% if services %}
-            <ul class="list-group">
-              {% for s in services %}
-                <li class="list-group-item">
-                  <div class="fw-semibold">{{ s.title }}</div>
-                  <div class="text-muted small">{{ s.experience }}</div>
-                  <div>{{ s.description }}</div>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="text-muted">No services added.</div>
-          {% endif %}
+            <div class="mt-3 d-flex gap-2">
+              <button class="btn btn-primary" type="submit">Save vCard</button>
+              <a class="btn btn-outline-secondary" href="{{ url_for('cv.share_vcard') }}">Share vCard</a>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
-    <!-- My CVs -->
+    <!-- My CV (online + uploads) -->
     <div class="accordion-item">
       <h2 class="accordion-header" id="hC">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cC">
-          My CVs
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cC" aria-expanded="true">
+          My CV
         </button>
       </h2>
-      <div id="cC" class="accordion-collapse collapse" data-bs-parent="#cvAcc">
+      <div id="cC" class="accordion-collapse collapse show" data-bs-parent="#cvAcc">
         <div class="accordion-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Online CVs</h5>
+            <form method="post" action="{{ url_for('cv.pair_new') }}">
+              <button class="btn btn-primary btn-sm" type="submit">Add Online CV</button>
+            </form>
+          </div>
 
-          <form class="row g-2 align-items-end" method="post" action="{{ url_for('cv.cvfile_new') }}" enctype="multipart/form-data">
+          {% if active_pairs %}
+          <div class="table-responsive mb-4">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in active_pairs %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ p.op_title or p.v_primary_skill or p.v_name or "Online CV" }}</td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.pair_edit', cv_id=p.cv_id) }}">View/Edit</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.share_pair', cv_id=p.cv_id) }}">Share</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <div class="text-muted small mb-3">No online CVs yet. Click "Add Online CV" to start.</div>
+          {% endif %}
+
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Uploaded CVs</h5>
+          </div>
+          <form class="row g-2 align-items-end mb-3" method="post" action="{{ url_for('cv.cvfile_new') }}" enctype="multipart/form-data">
             <div class="col-md-4">
               <label class="form-label">CV Name</label>
               <input class="form-control" name="cv_name" placeholder="e.g., Software Engineer CV" required>
@@ -89,8 +162,7 @@
             </div>
           </form>
 
-          <hr/>
-
+          {% if cvfile_shares is not defined %}{% set cvfile_shares = [] %}{% endif %}
           {% if cv_files %}
             <div class="table-responsive">
               <table class="table table-sm">
@@ -120,7 +192,7 @@
               </table>
             </div>
           {% else %}
-            <div class="text-muted">No CV PDFs uploaded yet.</div>
+            <div class="text-muted small">No CV PDFs uploaded yet.</div>
           {% endif %}
         </div>
       </div>
@@ -180,38 +252,75 @@
       </h2>
       <div id="cCS" class="accordion-collapse collapse" data-bs-parent="#cvAcc">
         <div class="accordion-body">
-          {% if cvfile_shares %}
-            <div class="table-responsive">
-              <table class="table table-sm">
-                <thead>
+          {% if pair_shares %}
+          <h6>One-Page CVs</h6>
+          <div class="table-responsive mb-3">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>CV</th>
+                  <th>Owner</th>
+                  <th>Shared Date</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in pair_shares %}
+                  {% set p = shared_pairs.get(s.cv_id) %}
+                  {% set o = owners.get(s.owner_user_id) %}
                   <tr>
-                    <th>CV</th>
-                    <th>Owner</th>
-                    <th>Shared Date</th>
-                    <th>Link</th>
+                    <td>{{ p.op_title if p else ("CV #" ~ s.cv_id) }}</td>
+                    <td>{{ o.email if o else ("User #" ~ s.owner_user_id) }}</td>
+                    <td class="text-muted">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
+                    <td>
+                      {% if s.is_public %}
+                        <a href="{{ url_for('cvviewer.view_pair', token=s.share_token) }}" target="_blank">View</a>
+                      {% else %}
+                        <span class="text-muted">Private</span>
+                      {% endif %}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {% for s in cvfile_shares %}
-                    {% set c = shared_cvfiles.get(s.cvfile_id) %}
-                    {% set o = owners.get(s.owner_user_id) %}
-                    <tr>
-                      <td>{{ c.cv_name if c else ("CV #" ~ s.cvfile_id) }}</td>
-                      <td>{{ o.email if o else ("User #" ~ s.owner_user_id) }}</td>
-                      <td class="text-muted">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
-                      <td>
-                        {% if s.is_public %}
-                          <a href="{{ url_for('cvviewer.view', token=s.share_token) }}" target="_blank">View</a>
-                        {% else %}
-                          <span class="text-muted">Private</span>
-                        {% endif %}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if cvfile_shares %}
+          <h6>Uploaded CV files</h6>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>CV</th>
+                  <th>Owner</th>
+                  <th>Shared Date</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in cvfile_shares %}
+                  {% set c = shared_cvfiles.get(s.cvfile_id) %}
+                  {% set o = owners.get(s.owner_user_id) %}
+                  <tr>
+                    <td>{{ c.cv_name if c else ("CV #" ~ s.cvfile_id) }}</td>
+                    <td>{{ o.email if o else ("User #" ~ s.owner_user_id) }}</td>
+                    <td class="text-muted">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
+                    <td>
+                      {% if s.is_public %}
+                        <a href="{{ url_for('cvviewer.view', token=s.share_token) }}" target="_blank">View</a>
+                      {% else %}
+                        <span class="text-muted">Private</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if not pair_shares and not cvfile_shares %}
             <div class="text-muted">No CVs shared with you yet.</div>
           {% endif %}
         </div>
@@ -220,4 +329,27 @@
 
   </div>
 </div>
+
+<script>
+function addRow(tbodyId, kind){
+  const tbody = document.getElementById(tbodyId);
+  const tr = document.createElement('tr');
+  if(kind === 'skill'){
+    tr.innerHTML = `
+      <td><input class="form-control" name="skill_title[]" value=""></td>
+      <td><input class="form-control" name="skill_desc[]" value=""></td>
+      <td><input class="form-control" name="skill_exp[]" value=""></td>
+      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+  } else {
+    tr.innerHTML = `
+      <td><input class="form-control" name="service_title[]" value=""></td>
+      <td><input class="form-control" name="service_desc[]" value=""></td>
+      <td><input class="form-control" name="service_exp[]" value=""></td>
+      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+    `;
+  }
+  tbody.appendChild(tr);
+}
+</script>
 {% endblock %}
