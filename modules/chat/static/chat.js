@@ -18,11 +18,16 @@
   }
 
   function appendMessage(m) {
+    const email =
+      (cfg.senderEmails &&
+        cfg.senderEmails[m.sender_id] &&
+        cfg.senderEmails[m.sender_id].email) ||
+      `User ${m.sender_id}`;
     const div = document.createElement("div");
     div.className = "chat-msg";
     div.innerHTML = `
       <div class="meta">
-        <span><b>User ${escapeHtml(String(m.sender_id))}</b></span>
+        <span><b>${escapeHtml(email)}</b></span>
         · <span>${escapeHtml(m.created_at || "")}</span>
       </div>
       <div class="body">${escapeHtml(m.body || "")}</div>

@@ -30,7 +30,15 @@
     window.RG_CHAT = {
       threadId: {{ active_thread.thread_id }},
       currentUserId: {{ me_id }},
-      socketEnabled: false
+      socketEnabled: true,
+      httpSendUrl: "{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}",
+      senderEmails: {
+        {% for uid, user in users_by_id.items() %}
+          "{{ uid }}": {"email": "{{ user.email }}"}{% if not loop.last %},{% endif %}
+        {% endfor %}
+      }
     };
   </script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="{{ url_for('chat.static', filename='chat.js') }}"></script>
 {% endblock %}

@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from extensions import db, login_manager
+from extensions import db, login_manager, socketio
 from flask_login import current_user
 
 from models import RBModule, RBUserModule
@@ -11,6 +11,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
+    socketio.init_app(app, async_mode="threading", cors_allowed_origins="*")
 
     from routes_home import home_bp
     from routes_auth import auth_bp
@@ -67,4 +68,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)

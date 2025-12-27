@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Share CV — Revamp Mock</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a2c;
+      --card2:#0d1728;
+      --text:#e7edf7;
+      --muted:#9cb0cc;
+      --line:rgba(255,255,255,.08);
+      --primary:#4b8bff;
+      --primary2:#2f6fff;
+      --warn:#ffb020;
+      --danger:#ff4d4d;
+      --ok:#36d399;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:14px;
+      --radius2:12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(75,139,255,.18), transparent 55%),
+                  radial-gradient(900px 600px at 85% 5%, rgba(54,211,153,.10), transparent 50%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .container{
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 18px 60px;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    h1{
+      font-size:22px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.3;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid transparent;
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition:transform .05s ease, background .15s ease, border .15s ease;
+      user-select:none;
+    }
+    .btn:hover{background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.10);}
+    .btn:active{transform: translateY(1px);}
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(75,139,255,.95), rgba(47,111,255,.95));
+      border-color: rgba(255,255,255,.12);
+      box-shadow: 0 10px 24px rgba(75,139,255,.24);
+    }
+    .btn.primary:hover{filter:brightness(1.03);}
+    .btn.ghost{background:transparent;border-color: rgba(255,255,255,.12);}
+    .btn.danger{background: rgba(255,77,77,.12); border-color: rgba(255,77,77,.22);}
+    .btn.warn{background: rgba(255,176,32,.14); border-color: rgba(255,176,32,.25);}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill.ok{color: rgba(54,211,153,.95); border-color: rgba(54,211,153,.22); background: rgba(54,211,153,.10);}
+    .pill.warn{color: rgba(255,176,32,.95); border-color: rgba(255,176,32,.28); background: rgba(255,176,32,.12);}
+    .pill.danger{color: rgba(255,77,77,.95); border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.10);}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width: 950px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      background: rgba(255,255,255,.02);
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size:15px;
+      letter-spacing:.2px;
+    }
+    .cardHeader p{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:12.5px;
+      line-height:1.35;
+    }
+    .cardBody{padding:14px 16px;}
+    .fileRow{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .fileMeta{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      min-width:260px;
+      flex:1;
+    }
+    .fileIcon{
+      width:40px;height:40px;border-radius:12px;
+      background: rgba(75,139,255,.14);
+      border:1px solid rgba(75,139,255,.22);
+      display:grid;place-items:center;
+      font-weight:900;
+    }
+    .fileName{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .fileName strong{font-size:14px;}
+    .metaLine{
+      color:var(--muted);
+      font-size:12.5px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .metaDot::before{
+      content:"•";
+      margin:0 8px;
+      color: rgba(156,176,204,.7);
+    }
+    .split{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 950px){
+      .split{grid-template-columns:1fr}
+    }
+    label{
+      display:block;
+      font-size:12px;
+      color: var(--muted);
+      margin-bottom:6px;
+    }
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      outline:none;
+      font-family: var(--sans);
+    }
+    textarea{min-height:88px; resize: vertical;}
+    input::placeholder{color: rgba(156,176,204,.55)}
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .row > *{flex:1}
+    .row .w-2{flex:2}
+    .hint{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:8px;
+      line-height:1.35;
+    }
+    .hint strong{color: rgba(231,237,247,.92)}
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      margin-top:8px;
+      overflow:hidden;
+      border-radius:12px;
+    }
+    .table th, .table td{
+      padding:12px 10px;
+      border-bottom:1px solid var(--line);
+      vertical-align:middle;
+      font-size:13px;
+    }
+    .table th{
+      text-align:left;
+      color: var(--muted);
+      font-size:12px;
+      letter-spacing:.3px;
+      font-weight:800;
+    }
+    .table tr:hover td{background: rgba(255,255,255,.03)}
+    .mono{font-family: var(--mono)}
+    .nowrap{white-space:nowrap}
+    .actions{
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    /* Modal */
+    .backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:999;
+    }
+    .modal{
+      width:min(720px, 100%);
+      background: linear-gradient(180deg, rgba(15,26,44,.98), rgba(13,23,40,.98));
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modalHeader{
+      padding:14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .modalHeader h3{margin:0;font-size:15px;}
+    .modalHeader p{margin:6px 0 0;color:var(--muted);font-size:12.5px;}
+    .modalBody{padding:14px 16px;}
+    .modalFooter{
+      padding:12px 16px;
+      border-top: 1px solid var(--line);
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+    }
+    .switch{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 10px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      border-radius:12px;
+    }
+    .switch .left{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .switch .left strong{font-size:13px}
+    .switch .left span{font-size:12px; color:var(--muted); line-height:1.25}
+    .toggle{
+      position:relative; width:44px; height:26px;
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .toggle::after{
+      content:"";
+      position:absolute; top:3px; left:3px;
+      width:20px; height:20px;
+      border-radius:50%;
+      background: rgba(255,255,255,.85);
+      transition: left .15s ease, background .15s ease;
+    }
+    .toggle.on{background: rgba(75,139,255,.35); border-color: rgba(75,139,255,.35);}
+    .toggle.on::after{left:21px; background: rgba(255,255,255,.95);}
+    .divider{
+      height:1px; background: var(--line);
+      margin:12px 0;
+    }
+    .toast{
+      position:fixed;
+      bottom:18px; left:50%;
+      transform: translateX(-50%);
+      background: rgba(15,26,44,.96);
+      border:1px solid rgba(255,255,255,.14);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.55);
+      display:none;
+      gap:10px;
+      align-items:center;
+      z-index: 1000;
+      font-size:13px;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size:12px;
+      padding:2px 7px;
+      border-radius:8px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <div class="title">
+        <h1>Share CV</h1>
+        <p class="subtitle">Securely share time-bound links and private access for recruiters and team members.</p>
+      </div>
+      <div class="row" style="flex:0 0 auto; gap:10px;">
+        <button class="btn ghost" onclick="alert('Back (wire up to router)')">← Back</button>
+      </div>
+    </div>
+
+    <!-- File Summary -->
+    <div class="card">
+      <div class="cardHeader">
+        <div>
+          <h2>File</h2>
+          <p>Confirm you’re sharing the right document.</p>
+        </div>
+        <span class="pill">Owner: You</span>
+      </div>
+      <div class="cardBody">
+        <div class="fileRow">
+          <div class="fileMeta">
+            <div class="fileIcon">CV</div>
+            <div class="fileName">
+              <strong>RampalChauhanCV2021.pdf</strong>
+              <div class="metaLine">
+                <span>245 KB</span><span class="metaDot"></span><span>Last updated: 27 Dec 2025</span>
+              </div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn" onclick="alert('Preview (open viewer)')">👁️ Preview</button>
+            <button class="btn" onclick="alert('Download (if permitted)')">⬇️ Download</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Public Links -->
+      <div class="card">
+        <div class="cardHeader">
+          <div>
+            <h2>Public Access Links</h2>
+            <p>Create multiple time-bound links. Expiry supports minutes and shows a live countdown.</p>
+          </div>
+          <button class="btn primary" onclick="openModal()">+ Create Public Link</button>
+        </div>
+
+        <div class="cardBody">
+          <div class="hint">
+            <strong>Tip:</strong> Use different links per recruiter to revoke/extend access independently.
+          </div>
+
+          <table class="table" id="publicLinksTable">
+            <thead>
+              <tr>
+                <th style="width:22%">Name</th>
+                <th style="width:33%">URL</th>
+                <th style="width:20%">Expiry</th>
+                <th style="width:12%">Status</th>
+                <th style="width:13%; text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="publicLinksBody">
+              <!-- rows injected -->
+            </tbody>
+          </table>
+
+          <div class="hint" style="margin-top:12px;">
+            <span class="kbd">Copy</span> uses clipboard API. <span class="kbd">Disable</span> simulates revoking a token server-side.
+          </div>
+        </div>
+      </div>
+
+      <!-- Private sharing -->
+      <div class="card">
+        <div class="cardHeader">
+          <div>
+            <h2>Private Sharing</h2>
+            <p>Grant controlled access to an rgPro user or a specific email.</p>
+          </div>
+        </div>
+
+        <div class="cardBody">
+          <div class="split">
+            <div>
+              <label>Share with rgPro user</label>
+              <select>
+                <option value="">Select a user…</option>
+                <option>Recruiter Team</option>
+                <option>Hiring Manager</option>
+                <option>HR Ops</option>
+              </select>
+              <div style="height:10px;"></div>
+              <label>Permission</label>
+              <select>
+                <option>View only</option>
+                <option>View + Download</option>
+              </select>
+              <div style="height:10px;"></div>
+              <button class="btn primary" style="width:100%;" onclick="toast('Private share created (demo)')">Share Privately</button>
+            </div>
+
+            <div>
+              <label>Share via email</label>
+              <input placeholder="name@example.com" />
+              <div style="height:10px;"></div>
+              <label>Message (optional)</label>
+              <textarea placeholder="Hi, sharing my CV for your review…"></textarea>
+              <div style="height:10px;"></div>
+              <button class="btn primary" style="width:100%;" onclick="toast('Email share entry created (demo)')">Create Email Share</button>
+              <div class="hint">Email sending can be optional; the share entry should still be created.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sharing Activity -->
+    <div class="card" style="margin-top:14px;">
+      <div class="cardHeader">
+        <div>
+          <h2>Sharing Activity</h2>
+          <p>Audit-style history for support and compliance.</p>
+        </div>
+        <div class="row" style="flex:0 0 auto; gap:10px; min-width: 260px;">
+          <select id="filterSelect" onchange="render()">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="expiring">Expiring soon</option>
+            <option value="expired">Expired</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+      </div>
+      <div class="cardBody">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:18%">Type</th>
+              <th style="width:22%">Target</th>
+              <th style="width:35%">Reference</th>
+              <th style="width:25%">Created</th>
+            </tr>
+          </thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="backdrop" id="backdrop" onclick="closeModal(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createLinkTitle" onclick="event.stopPropagation()">
+      <div class="modalHeader">
+        <div>
+          <h3 id="createLinkTitle">Create Public Link</h3>
+          <p>Generate a unique URL with minute-level expiry. You can disable or extend later.</p>
+        </div>
+        <button class="btn ghost" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="split">
+          <div>
+            <label>Link name (optional)</label>
+            <input id="linkName" placeholder="Recruiter – ABC Corp" />
+
+            <div style="height:12px;"></div>
+
+            <label>Expiry duration</label>
+            <div class="row">
+              <input id="expiryValue" type="number" min="1" max="1440" value="15" />
+              <select id="expiryUnit" style="flex:0 0 150px;">
+                <option value="minutes">minutes</option>
+              </select>
+            </div>
+            <div class="hint">Valid range: 1–1440 minutes (demo). Server should enforce limits too.</div>
+
+            <div class="divider"></div>
+
+            <div class="switch">
+              <div class="left">
+                <strong>Allow download</strong>
+                <span>If off, viewer-only access for this link.</span>
+              </div>
+              <div class="toggle" id="toggleDownload" onclick="toggle(this)"></div>
+            </div>
+
+            <div style="height:10px;"></div>
+
+            <div class="switch">
+              <div class="left">
+                <strong>Require password</strong>
+                <span>Add a password prompt before viewing.</span>
+              </div>
+              <div class="toggle" id="togglePassword" onclick="toggle(this); onPasswordToggle()"></div>
+            </div>
+
+            <div style="height:10px;"></div>
+
+            <div id="passwordWrap" style="display:none;">
+              <label>Password</label>
+              <input id="passwordValue" type="password" placeholder="Set a password" />
+              <div class="hint">Store a salted hash server-side; never store plaintext.</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" style="box-shadow:none; background: rgba(255,255,255,.02);">
+              <div class="cardHeader">
+                <div>
+                  <h2 style="font-size:14px;">Security Preview</h2>
+                  <p style="margin-top:6px;">What this link will do.</p>
+                </div>
+              </div>
+              <div class="cardBody" style="display:flex; flex-direction:column; gap:10px;">
+                <div class="pill" id="previewExpiry">Expires in 15 minutes</div>
+                <div class="pill" id="previewDownload">Download: Disabled</div>
+                <div class="pill" id="previewPassword">Password: Not required</div>
+                <div class="hint">
+                  Public links are accessible by anyone who has the URL.
+                  Use separate links per recipient so you can revoke access quickly.
+                </div>
+              </div>
+            </div>
+
+            <div style="height:12px;"></div>
+
+            <div class="hint">
+              <strong>UX note:</strong> On create, show the URL once + copy button, but still store it in the list.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modalFooter">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn primary" onclick="createPublicLink()">Create Link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // --- Demo state ---
+    const state = {
+      fileId: "file_123",
+      baseUrl: "http://127.0.0.1:5000/cvviewer/",
+      links: [
+        // seeded example
+        makeLink({ name: "Recruiter – Demo", minutes: 25, allowDownload: false, requirePassword:false })
+      ],
+      activity: []
+    };
+
+    function nowMs(){ return Date.now(); }
+    function fmtDate(ms){
+      const d = new Date(ms);
+      return d.toISOString().replace("T"," ").slice(0,16);
+    }
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
+    function msToCountdown(ms){
+      if (ms <= 0) return "Expired";
+      const totalSec = Math.floor(ms/1000);
+      const m = Math.floor(totalSec/60);
+      const s = totalSec % 60;
+      if (m >= 60){
+        const h = Math.floor(m/60);
+        const mm = m % 60;
+        return `${h}h ${mm}m`;
+      }
+      return `${m}m ${pad2(s)}s`;
+    }
+
+    function token(){
+      // demo token
+      return Math.random().toString(36).slice(2,10) + "-" + Math.random().toString(36).slice(2,10);
+    }
+
+    function makeLink({ name, minutes, allowDownload, requirePassword }){
+      const createdAt = nowMs();
+      const expiresAt = createdAt + (minutes * 60 * 1000);
+      const t = token();
+      return {
+        id: crypto.randomUUID ? crypto.randomUUID() : "id_" + Math.random().toString(36).slice(2),
+        type: "public",
+        name: name?.trim() || "(Untitled link)",
+        token: t,
+        url: state.baseUrl + t,
+        createdAt,
+        expiresAt,
+        expiryMinutes: minutes,
+        allowDownload: !!allowDownload,
+        requirePassword: !!requirePassword,
+        status: "active" // active | expired | disabled
+      };
+    }
+
+    function statusFor(link){
+      if (link.status === "disabled") return "disabled";
+      if (nowMs() >= link.expiresAt) return "expired";
+      const remaining = link.expiresAt - nowMs();
+      if (remaining <= 5*60*1000) return "expiring";
+      return "active";
+    }
+
+    function statusPill(status){
+      if (status === "active") return `<span class="pill ok">🟢 Active</span>`;
+      if (status === "expiring") return `<span class="pill warn">🟡 Expiring</span>`;
+      if (status === "expired") return `<span class="pill danger">🔴 Expired</span>`;
+      if (status === "disabled") return `<span class="pill danger">⛔ Disabled</span>`;
+      return `<span class="pill">${status}</span>`;
+    }
+
+    function actionButtons(link){
+      const s = statusFor(link);
+      const disableDisabled = (s === "disabled") ? "disabled" : "";
+      const extendDisabled = (s === "expired" || s === "disabled") ? "disabled" : "";
+      return `
+        <div class="actions">
+          <button class="btn" onclick="copyLink('${link.id}')">Copy</button>
+          <button class="btn warn" ${extendDisabled} onclick="extendLink('${link.id}', 10)">+10m</button>
+          <button class="btn danger" ${disableDisabled} onclick="disableLink('${link.id}')">Disable</button>
+        </div>
+      `;
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    function render(){
+      // Update public links
+      const tbody = document.getElementById("publicLinksBody");
+      const filter = document.getElementById("filterSelect").value;
+
+      const rows = state.links
+        .map(l => ({...l, computedStatus: statusFor(l)}))
+        .filter(l => {
+          if (filter === "all") return true;
+          return l.computedStatus === filter;
+        })
+        .sort((a,b) => b.createdAt - a.createdAt)
+        .map(link => {
+          const remaining = link.expiresAt - nowMs();
+          const expiryLabel = (link.computedStatus === "expired" || link.computedStatus === "disabled")
+            ? (link.computedStatus === "disabled" ? "Disabled" : "Expired")
+            : `Expires in ${msToCountdown(remaining)}`;
+
+          const urlShort = link.url.length > 42 ? link.url.slice(0,42) + "…" : link.url;
+
+          return `
+            <tr>
+              <td>${escapeHtml(link.name)}</td>
+              <td class="mono" title="${escapeHtml(link.url)}">${escapeHtml(urlShort)}</td>
+              <td class="nowrap">${expiryLabel}</td>
+              <td>${statusPill(link.computedStatus)}</td>
+              <td style="text-align:right;">${actionButtons(link)}</td>
+            </tr>
+          `;
+        }).join("");
+
+      tbody.innerHTML = rows || `<tr><td colspan="5" style="color:var(--muted);">No links found for this filter.</td></tr>`;
+
+      // Update activity log
+      const abody = document.getElementById("activityBody");
+      const actRows = state.activity
+        .slice()
+        .reverse()
+        .slice(0, 12)
+        .map(a => `
+          <tr>
+            <td>${escapeHtml(a.type)}</td>
+            <td>${escapeHtml(a.target)}</td>
+            <td class="mono">${escapeHtml(a.ref)}</td>
+            <td class="nowrap">${escapeHtml(fmtDate(a.createdAt))}</td>
+          </tr>
+        `).join("");
+
+      abody.innerHTML = actRows || `<tr><td colspan="4" style="color:var(--muted);">No activity yet.</td></tr>`;
+    }
+
+    // --- Clipboard ---
+    async function copyLink(id){
+      const link = state.links.find(l => l.id === id);
+      if (!link) return;
+      try{
+        await navigator.clipboard.writeText(link.url);
+        toast("Copied link to clipboard");
+        log("Public", "Clipboard", `copy ${link.token}`);
+      }catch(e){
+        // fallback
+        prompt("Copy this URL:", link.url);
+        log("Public", "Clipboard", `copy-fallback ${link.token}`);
+      }
+    }
+
+    // --- Actions ---
+    function disableLink(id){
+      const link = state.links.find(l => l.id === id);
+      if (!link) return;
+      if (!confirm(`Disable link "${link.name}"? This should revoke access immediately.`)) return;
+      link.status = "disabled";
+      toast("Link disabled");
+      log("Public", "Disabled", link.token);
+      render();
+    }
+
+    function extendLink(id, minutes){
+      const link = state.links.find(l => l.id === id);
+      if (!link) return;
+      link.expiresAt += minutes * 60 * 1000;
+      toast(`Extended by ${minutes} minutes`);
+      log("Public", "Extended", `${link.token} +${minutes}m`);
+      render();
+    }
+
+    function log(type, target, ref){
+      state.activity.push({ type, target, ref, createdAt: nowMs() });
+    }
+
+    // --- Modal controls ---
+    const backdrop = document.getElementById("backdrop");
+    function openModal(){
+      backdrop.style.display = "flex";
+      // reset modal fields
+      document.getElementById("linkName").value = "";
+      document.getElementById("expiryValue").value = 15;
+      setToggle("toggleDownload", false);
+      setToggle("togglePassword", false);
+      document.getElementById("passwordValue").value = "";
+      document.getElementById("passwordWrap").style.display = "none";
+      syncPreview();
+    }
+
+    function closeModal(evt){
+      if (evt && evt.target && evt.target.id !== "backdrop") return;
+      backdrop.style.display = "none";
+    }
+
+    function toggle(el){
+      el.classList.toggle("on");
+      syncPreview();
+    }
+    function setToggle(id, on){
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle("on", !!on);
+    }
+    function isOn(id){
+      return document.getElementById(id).classList.contains("on");
+    }
+    function onPasswordToggle(){
+      document.getElementById("passwordWrap").style.display = isOn("togglePassword") ? "block" : "none";
+      syncPreview();
+    }
+
+    function syncPreview(){
+      const minutes = Number(document.getElementById("expiryValue").value || 15);
+      document.getElementById("previewExpiry").textContent = `Expires in ${minutes} minutes`;
+
+      document.getElementById("previewDownload").textContent =
+        `Download: ${isOn("toggleDownload") ? "Enabled" : "Disabled"}`;
+
+      document.getElementById("previewPassword").textContent =
+        `Password: ${isOn("togglePassword") ? "Required" : "Not required"}`;
+    }
+
+    document.getElementById("expiryValue").addEventListener("input", syncPreview);
+
+    function createPublicLink(){
+      const name = document.getElementById("linkName").value;
+      const minutes = Math.max(1, Math.min(1440, Number(document.getElementById("expiryValue").value || 15)));
+      const allowDownload = isOn("toggleDownload");
+      const requirePassword = isOn("togglePassword");
+      const password = document.getElementById("passwordValue").value;
+
+      if (requirePassword && password.trim().length < 4){
+        alert("Password must be at least 4 characters (demo validation).");
+        return;
+      }
+
+      const link = makeLink({ name, minutes, allowDownload, requirePassword });
+      state.links.unshift(link);
+
+      toast("Public link created");
+      log("Public", "Created", `${link.token} (${minutes}m)`);
+
+      closeModal();
+      render();
+
+      // Optional: show URL once (demo)
+      setTimeout(() => {
+        const ok = confirm("Copy the newly created URL to clipboard?");
+        if (ok) copyLink(link.id);
+      }, 80);
+    }
+
+    // Toast
+    let toastTimer = null;
+    function toast(msg){
+      const t = document.getElementById("toast");
+      t.innerHTML = `✅ ${escapeHtml(msg)} <span class="kbd">Esc</span>`;
+      t.style.display = "inline-flex";
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.style.display = "none", 2200);
+    }
+
+    // keyboard
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape"){
+        backdrop.style.display = "none";
+        document.getElementById("toast").style.display = "none";
+      }
+    });
+
+    // timer re-render (countdowns)
+    setInterval(() => render(), 1000);
+
+    // seed activity
+    log("Public", "Created", `${state.links[0].token} (25m)`);
+    render();
+  </script>
+</body>
+</html>
