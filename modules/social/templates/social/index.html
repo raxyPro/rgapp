@@ -1,0 +1,183 @@
+{% extends "app_shell.html" %}
+{% block content %}
+<div class="hrow">
+  <div>
+    <h1>Social</h1>
+    <p>Post updates, reply in threads, attach images, or link a CV.</p>
+  </div>
+</div>
+
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>New update</h2>
+      <p>Share a message with optional image or CV link.</p>
+    </div>
+  </div>
+  <div class="cardBody">
+    <form method="post" action="{{ url_for('social.new_post') }}" enctype="multipart/form-data">
+      <label>Message</label>
+      <textarea name="body" required placeholder="Type your update..."></textarea>
+      <div class="row" style="margin-top:10px; align-items:flex-end;">
+        <div style="flex:0 0 auto;">
+          <label>Attach image</label>
+          <button type="button" class="btn" onclick="document.getElementById('new_image').click();" title="Attach image">📎 Image</button>
+          <input id="new_image" type="file" name="image" accept="image/*" style="display:none" onchange="previewNewImage(event)">
+          <input id="new_image_paste" type="text" style="display:none">
+          <div id="new_image_preview" class="mt-2" style="font-size:12px; color:var(--muted);"></div>
+        </div>
+        <div>
+          <label>Link a CV (optional)</label>
+          <select name="cvfile_id">
+            <option value="">None</option>
+            {% for cv in cv_files %}
+            <option value="{{ cv.cvfile_id }}">{{ cv.cv_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn primary" type="submit">Post</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<div style="height:14px;"></div>
+
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>Feed</h2>
+      <p>Two-level threads (root + replies).</p>
+    </div>
+  </div>
+  <div class="cardBody" style="display:grid; gap:14px;">
+    {% for r in roots %}
+      <div style="border:1px solid var(--border); border-radius: var(--radius); padding:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+          <div>
+            {% set su = users.get(r.user_id) %}
+            <div style="font-weight:700;">{{ su.handle or su.email if su else "User " ~ r.user_id }}</div>
+            <div style="color:var(--muted); font-size:12px;">{{ r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else "" }}</div>
+          </div>
+          <form method="post" action="{{ url_for('social.delete_post', post_id=r.post_id) }}" onsubmit="return confirm('Delete this message?');">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </div>
+        <div style="margin-top:8px;">{{ r.body }}</div>
+        {% if r.image_path %}
+        <div style="margin-top:8px;">
+          <img src="{{ r.image_path }}" alt="attachment" style="max-width:100%; border-radius:10px;">
+        </div>
+        {% endif %}
+        {% if r.cvfile_id %}
+        <div style="margin-top:6px;">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.share_cvfile', cvfile_id=r.cvfile_id) }}">View linked CV</a>
+        </div>
+        {% endif %}
+
+        <div style="margin-top:12px; padding:10px; border:1px dashed var(--border); border-radius:10px;">
+          <form method="post" action="{{ url_for('social.new_post') }}" enctype="multipart/form-data">
+            <input type="hidden" name="parent_id" value="{{ r.post_id }}">
+            <label>Reply</label>
+            <textarea name="body" required placeholder="Write a reply..."></textarea>
+            <div class="row" style="margin-top:8px; align-items:flex-end;">
+              <div style="flex:0 0 auto;">
+                <label>Attach image</label>
+                <button type="button" class="btn btn-sm" onclick="document.getElementById('img_{{ r.post_id }}').click();" title="Attach image">📎 Image</button>
+                <input id="img_{{ r.post_id }}" type="file" name="image" accept="image/*" style="display:none" onchange="previewReplyImage('{{ r.post_id }}', event)">
+                <div id="preview_{{ r.post_id }}" class="mt-1" style="font-size:12px; color:var(--muted);"></div>
+              </div>
+              <div>
+                <label>Link a CV (optional)</label>
+                <select name="cvfile_id">
+                  <option value="">None</option>
+                  {% for cv in cv_files %}
+                  <option value="{{ cv.cvfile_id }}">{{ cv.cv_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:8px;">
+              <button class="btn btn-sm primary" type="submit">Reply</button>
+            </div>
+          </form>
+        </div>
+
+        {% set reps = replies_by_parent.get(r.post_id, []) %}
+        {% if reps %}
+          <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
+            {% for rep in reps %}
+              <div style="padding:8px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                  <div>
+                    {% set ru = users.get(rep.user_id) %}
+                    <div style="font-weight:700;">{{ ru.handle or ru.email if ru else "User " ~ rep.user_id }}</div>
+                    <div style="color:var(--muted); font-size:12px;">{{ rep.created_at.strftime("%Y-%m-%d %H:%M") if rep.created_at else "" }}</div>
+                  </div>
+                  <form method="post" action="{{ url_for('social.delete_post', post_id=rep.post_id) }}" onsubmit="return confirm('Delete this reply?');">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                  </form>
+                </div>
+                <div style="margin-top:6px;">{{ rep.body }}</div>
+                {% if rep.image_path %}
+                <div style="margin-top:6px;">
+                  <img src="{{ rep.image_path }}" alt="attachment" style="max-width:100%; border-radius:10px;">
+                </div>
+                {% endif %}
+                {% if rep.cvfile_id %}
+                <div style="margin-top:6px;">
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.share_cvfile', cvfile_id=rep.cvfile_id) }}">View linked CV</a>
+                </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div style="color:var(--muted);">No posts yet.</div>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+  // Allow paste image into message: listen for paste and forward to hidden file input via clipboard data
+  document.addEventListener('paste', function(e){
+    if (!e.clipboardData) return;
+    const items = e.clipboardData.items;
+    for (let i=0; i<items.length; i++){
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1){
+        const file = item.getAsFile();
+        const input = document.getElementById('new_image');
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        previewNewImage({target: input});
+        break;
+      }
+    }
+  });
+
+  function previewNewImage(e){
+    const el = document.getElementById('new_image_preview');
+    if (!e.target.files || !e.target.files.length){
+      el.textContent = '';
+      return;
+    }
+    el.textContent = 'Attached: ' + e.target.files[0].name;
+  }
+
+  function previewReplyImage(id, e){
+    const el = document.getElementById('preview_' + id);
+    if (!el) return;
+    if (!e.target.files || !e.target.files.length){
+      el.textContent = '';
+      return;
+    }
+    el.textContent = 'Attached: ' + e.target.files[0].name;
+  }
+</script>
+{% endblock %}

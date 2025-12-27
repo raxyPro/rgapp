@@ -7,16 +7,33 @@
     <div style="font-size:12px;opacity:.7">
       {{ "Group chat" if active_thread.thread_type == "group" else "Direct chat" }}
     </div>
+    <form method="post" action="{{ url_for('chat.delete_thread', thread_id=active_thread.thread_id) }}" style="margin-top:8px;" onsubmit="return confirm('Delete this chat and its messages?');">
+      <button class="btn btn-sm btn-outline-danger" type="submit">Delete chat</button>
+    </form>
   </div>
 
   <div class="chat-msgs" id="chat-msgs">
     {% for m in messages %}
       <div class="chat-msg" data-mid="{{ m.message_id }}">
         <div class="meta">
-          <span><b>{{ users_by_id.get(m.sender_id).email if users_by_id.get(m.sender_id) else ("User " ~ m.sender_id) }}</b></span>
+          {% set u = users_by_id.get(m.sender_id) %}
+          <span><b>{{ u.handle or u.email if u else ("User " ~ m.sender_id) }}</b></span>
           · <span>{{ m.created_at }}</span>
+          {% if m.sender_id == me_id %}
+          <form method="post" action="{{ url_for('chat.delete_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:inline;">
+            <button class="btn btn-sm btn-outline-danger" style="margin-left:8px;padding:2px 6px;font-size:11px;" onclick="return confirm('Delete this message?');">Delete</button>
+          </form>
+          <button class="btn btn-sm btn-outline-secondary" type="button" style="margin-left:4px;padding:2px 6px;font-size:11px;" onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
+          {% endif %}
         </div>
-        <div class="body">{{ m.body }}</div>
+        <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | replace('\n','<br>') | safe }}</div>
+        <form id="edit_form_{{ m.message_id }}" class="mt-2" method="post" action="{{ url_for('chat.edit_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:none;">
+          <textarea class="form-control" name="body" rows="2">{{ m.body }}</textarea>
+          <div class="mt-2">
+            <button class="btn btn-sm btn-primary" type="submit">Save</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ m.message_id }}')">Cancel</button>
+          </div>
+        </form>
       </div>
     {% endfor %}
   </div>
@@ -26,6 +43,16 @@
     <button class="btn btn-primary" id="chat-send" type="submit">Send</button>
   </form>
 
+  <div style="padding:8px 12px;">
+    <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Top emojis</div>
+    <div id="emoji-bar" style="display:flex; gap:8px; flex-wrap:wrap;">
+      {% set emoji_list = ['😀','👍','🎉','🙏','💡','🔥','✅','🚀','❤️','😂'] %}
+      {% for e in emoji_list %}
+        <button type="button" class="btn btn-sm" style="padding:4px 8px;" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
   <script>
     window.RG_CHAT = {
       threadId: {{ active_thread.thread_id }},
@@ -34,11 +61,31 @@
       httpSendUrl: "{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}",
       senderEmails: {
         {% for uid, user in users_by_id.items() %}
-          "{{ uid }}": {"email": "{{ user.email }}"}{% if not loop.last %},{% endif %}
+          "{{ uid }}": {"email": "{{ user.email }}", "handle": "{{ user.handle or '' }}"}{% if not loop.last %},{% endif %}
         {% endfor %}
       }
     };
   </script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="{{ url_for('chat.static', filename='chat.js') }}"></script>
+  <script>
+    function insertEmoji(e) {
+      const ta = document.getElementById('chat-body');
+      if (!ta) return;
+      const start = ta.selectionStart || ta.value.length;
+      const end = ta.selectionEnd || ta.value.length;
+      const text = ta.value;
+      ta.value = text.slice(0, start) + e + text.slice(end);
+      ta.focus();
+      ta.selectionStart = ta.selectionEnd = start + e.length;
+    }
+    function toggleEdit(id){
+      const form = document.getElementById('edit_form_'+id);
+      const body = document.getElementById('body_display_'+id);
+      if(!form) return;
+      const visible = form.style.display === 'block';
+      form.style.display = visible ? 'none' : 'block';
+      if(body) body.style.display = visible ? 'block' : 'none';
+    }
+  </script>
 {% endblock %}

@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, abort, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from extensions import db
-from models import RBUser
+from models import RBUser, RBUserProfile
 from modules.chat.models import ChatThread, ChatThreadMember, ChatMessage
 from modules.chat.permissions import module_required, require_thread_member
 from modules.chat.util import get_current_user_id
@@ -41,7 +41,14 @@ def _users_by_ids(user_ids: list[int]) -> dict[int, RBUser]:
     if not user_ids:
         return {}
     users = RBUser.query.filter(RBUser.user_id.in_(user_ids)).all()
-    return {u.user_id: u for u in users}
+    profiles = {p.user_id: p for p in RBUserProfile.query.filter(RBUserProfile.user_id.in_(user_ids)).all()}
+    enriched = {}
+    for u in users:
+        prof = profiles.get(u.user_id)
+        if prof:
+            u.handle = getattr(prof, "handle", None)
+        enriched[u.user_id] = u
+    return enriched
 
 @chat_bp.get("/")
 @login_required
@@ -133,6 +140,50 @@ def create_chat():
     db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
     for uid in user_ids:
         db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=uid, role="member"))
+
+    db.session.commit()
+    return redirect(url_for("chat.thread", thread_id=thread.thread_id))
+
+
+@chat_bp.get("/dm_with_note/<int:user_id>")
+@login_required
+@module_required("chat")
+def dm_with_note(user_id: int):
+    """Start/open DM with a user and post a prefilled note."""
+    me_id = get_current_user_id()
+    if user_id == me_id:
+        abort(400, "Cannot DM yourself")
+
+    other = RBUser.query.get_or_404(user_id)
+
+    dm_threads = (
+        db.session.query(ChatThread.thread_id)
+        .join(ChatThreadMember, ChatThreadMember.thread_id == ChatThread.thread_id)
+        .filter(ChatThreadMember.user_id.in_([me_id, other.user_id]))
+        .filter(ChatThread.thread_type == "dm")
+        .group_by(ChatThread.thread_id)
+        .having(db.func.count(db.func.distinct(ChatThreadMember.user_id)) == 2)
+        .subquery()
+    )
+
+    existing_dm = ChatThread.query.filter(
+        ChatThread.thread_id.in_(db.session.query(dm_threads.c.thread_id))
+    ).first()
+
+    if existing_dm:
+        thread = existing_dm
+    else:
+        thread = ChatThread(thread_type="dm", name=None, created_by=me_id)
+        db.session.add(thread)
+        db.session.flush()
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other.user_id, role="member"))
+
+    note = (request.args.get("note") or "").strip()
+    if note:
+        msg = ChatMessage(thread_id=thread.thread_id, sender_id=me_id, body=note)
+        db.session.add(msg)
+        thread.updated_at = datetime.utcnow()
 
     db.session.commit()
     return redirect(url_for("chat.thread", thread_id=thread.thread_id))
@@ -236,6 +287,66 @@ def send_message_http(thread_id: int):
 
     db.session.commit()
     return redirect(url_for("chat.thread", thread_id=thread_id))
+
+
+@chat_bp.post("/t/<int:thread_id>/m/<int:message_id>/edit")
+@login_required
+@module_required("chat")
+def edit_message(thread_id: int, message_id: int):
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    msg = ChatMessage.query.get_or_404(message_id)
+    me_user = current_user.get_user() if hasattr(current_user, "get_user") else None
+    if msg.sender_id != me_id and not (me_user and getattr(me_user, "is_admin", False)):
+        abort(403)
+
+    body = (request.form.get("body") or "").strip()
+    if not body:
+        flash("Message cannot be empty.", "danger")
+        return redirect(url_for("chat.thread", thread_id=thread_id))
+
+    msg.body = body
+    db.session.add(msg)
+    db.session.commit()
+    flash("Message updated.", "success")
+    return redirect(url_for("chat.thread", thread_id=thread_id))
+
+
+@chat_bp.post("/t/<int:thread_id>/m/<int:message_id>/delete")
+@login_required
+@module_required("chat")
+def delete_message(thread_id: int, message_id: int):
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    msg = ChatMessage.query.get_or_404(message_id)
+
+    me_user = current_user.get_user() if hasattr(current_user, "get_user") else None
+    if msg.sender_id != me_id and not (me_user and getattr(me_user, "is_admin", False)):
+        abort(403)
+
+    db.session.delete(msg)
+    db.session.commit()
+    flash("Message deleted.", "info")
+    return redirect(url_for("chat.thread", thread_id=thread_id))
+
+
+@chat_bp.post("/t/<int:thread_id>/delete")
+@login_required
+@module_required("chat")
+def delete_thread(thread_id: int):
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    t = ChatThread.query.get_or_404(thread_id)
+    me_user = current_user.get_user() if hasattr(current_user, "get_user") else None
+    if not (me_user and getattr(me_user, "is_admin", False)):
+        # Allow any member to delete their personal window and messages
+        pass
+
+    # Cascades remove members/messages
+    db.session.delete(t)
+    db.session.commit()
+    flash("Chat deleted.", "info")
+    return redirect(url_for("chat.index"))
 
 @chat_bp.get("/api/thread/<int:thread_id>/messages")
 @login_required

@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>RayGrow Bridge — Share CV</title>
+  <link rel="stylesheet" href="./bridge.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">RG</div>
+        <div class="brandTitle">
+          <strong>RayGrow Bridge</strong>
+          <span>Talent workflow</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Primary">
+        <a href="#" >Dashboard</a>
+        <a href="#" >Candidates</a>
+        <a href="#" >Documents</a>
+        <a href="#" class="active">Shares</a>
+        <a href="#" >Settings</a>
+      </nav>
+
+      <div style="margin-top:16px; padding:12px; border:1px solid var(--border); border-radius: var(--radius); background: var(--surface-2);">
+        <small><strong>Security tip:</strong> Use expiring public links per recruiter so you can revoke access instantly.</small>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div class="search" role="search">
+          <span>⌕</span>
+          <input placeholder="Search candidates, documents, shares…" />
+        </div>
+        <div class="user">
+          <small>Ramu</small>
+          <div class="avatar">R</div>
+        </div>
+      </header>
+
+      <div class="container">
+        <div class="hrow">
+          <div>
+            <h1>Share CV</h1>
+            <p>Create time-bound public links, or share privately with controlled access.</p>
+          </div>
+          <div class="row" style="flex:0 0 auto;">
+            <button class="btn ghost" onclick="alert('Back: wire to router')">← Back</button>
+          </div>
+        </div>
+
+        <!-- File card -->
+        <section class="card">
+          <div class="cardHead">
+            <div>
+              <h2>Document</h2>
+              <p>Confirm you’re sharing the right file.</p>
+            </div>
+            <span class="pill">Owner: You</span>
+          </div>
+          <div class="cardBody" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; gap:12px; min-width:260px;">
+              <div class="logo" style="width:40px;height:40px;border-radius:12px;">CV</div>
+              <div>
+                <div style="font-weight:900; font-size:14px;">RampalChauhanCV2021.pdf</div>
+                <div style="margin-top:6px; color:var(--muted); font-size:12.5px;">
+                  245 KB <span style="padding:0 8px; color:#cbd5e1;">•</span> Last updated: 27 Dec 2025
+                </div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn" onclick="toast('Preview (demo)')">👁 Preview</button>
+              <button class="btn" onclick="toast('Download (demo)')">⬇ Download</button>
+            </div>
+          </div>
+        </section>
+
+        <div style="height:14px;"></div>
+
+        <div class="grid">
+
+          <!-- Public links -->
+          <section class="card">
+            <div class="cardHead">
+              <div>
+                <h2>Public access links</h2>
+                <p>Generate multiple URLs with minute-level expiry and live status.</p>
+              </div>
+              <button class="btn primary" onclick="openModal()">+ Create public link</button>
+            </div>
+
+            <div class="cardBody">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width:22%;">Name</th>
+                    <th style="width:34%;">URL</th>
+                    <th style="width:18%;">Expiry</th>
+                    <th style="width:12%;">Status</th>
+                    <th style="width:14%; text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="linksBody"></tbody>
+              </table>
+
+              <div style="margin-top:10px; color:var(--muted); font-size:12.5px;">
+                Status rules: Active • Expiring soon (&lt; 5 min) • Expired • Disabled.
+              </div>
+            </div>
+          </section>
+
+          <!-- Private sharing -->
+          <section class="card">
+            <div class="cardHead">
+              <div>
+                <h2>Private sharing</h2>
+                <p>Controlled access for internal users or specific emails.</p>
+              </div>
+            </div>
+
+            <div class="cardBody">
+              <div style="display:grid; gap:14px;">
+                <div>
+                  <label>Share with rgPro user</label>
+                  <select>
+                    <option value="">Select a user…</option>
+                    <option>Recruiter Team</option>
+                    <option>Hiring Manager</option>
+                    <option>HR Ops</option>
+                  </select>
+                  <div style="height:10px;"></div>
+                  <label>Permission</label>
+                  <select>
+                    <option>View only</option>
+                    <option>View + Download</option>
+                  </select>
+                  <div style="height:10px;"></div>
+                  <button class="btn primary" style="width:100%;" onclick="toast('Private share created (demo)')">Share privately</button>
+                </div>
+
+                <div style="border-top:1px solid var(--border); padding-top:14px;">
+                  <label>Share via email</label>
+                  <input placeholder="name@example.com"/>
+                  <div style="height:10px;"></div>
+                  <label>Message (optional)</label>
+                  <textarea placeholder="Hi, sharing the CV for review…"></textarea>
+                  <div style="height:10px;"></div>
+                  <button class="btn" style="width:100%;" onclick="toast('Email share entry created (demo)')">Create email share</button>
+                  <div style="margin-top:8px; color:var(--muted); font-size:12.5px;">
+                    Email sending can be optional; the share entry should still be created.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div style="height:14px;"></div>
+
+        <!-- Activity -->
+        <section class="card">
+          <div class="cardHead">
+            <div>
+              <h2>Sharing activity</h2>
+              <p>Audit history of share events.</p>
+            </div>
+            <select id="filter" style="max-width:220px;" onchange="render()">
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="expiring">Expiring soon</option>
+              <option value="expired">Expired</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+          <div class="cardBody">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:18%;">Type</th>
+                  <th style="width:22%;">Target</th>
+                  <th style="width:35%;">Reference</th>
+                  <th style="width:25%;">Created</th>
+                </tr>
+              </thead>
+              <tbody id="activityBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="backdrop" id="backdrop" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modalHead">
+        <div>
+          <h3>Create public link</h3>
+          <p>Create a unique URL with minute-level expiry. Extend or revoke later.</p>
+        </div>
+        <button class="btn ghost" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="row">
+          <div>
+            <label>Link name (optional)</label>
+            <input id="name" placeholder="Recruiter – ABC Corp">
+          </div>
+          <div>
+            <label>Expiry (minutes)</label>
+            <input id="minutes" type="number" min="1" max="1440" value="15">
+          </div>
+        </div>
+
+        <div style="height:12px;"></div>
+
+        <div class="row">
+          <div>
+            <label>Allow download</label>
+            <select id="download">
+              <option value="false">No (view only)</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div>
+            <label>Password protection</label>
+            <select id="pwRequired" onchange="onPwToggle()">
+              <option value="false">Not required</option>
+              <option value="true">Required</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="pwWrap" style="display:none; margin-top:12px;">
+          <label>Password</label>
+          <input id="pw" type="password" placeholder="Set a password">
+          <small>Store a salted hash server-side. Never store plaintext.</small>
+        </div>
+
+        <div style="margin-top:12px; padding:12px; border:1px solid var(--border); border-radius: var(--radius); background: var(--surface-2);">
+          <small><strong>Security preview:</strong> You’ll see status + countdown in the list, and can revoke access immediately.</small>
+        </div>
+      </div>
+
+      <div class="modalFoot">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn primary" onclick="createLink()">Create link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Demo state (wire to backend later)
+    const state = {
+      baseUrl: "http://127.0.0.1:5000/cvviewer/",
+      links: [],
+      activity: []
+    };
+
+    function now(){ return Date.now(); }
+    function token(){
+      return Math.random().toString(36).slice(2,10) + "-" + Math.random().toString(36).slice(2,10);
+    }
+    function fmt(ms){
+      const d = new Date(ms);
+      return d.toISOString().replace("T"," ").slice(0,16);
+    }
+    function countdown(ms){
+      if (ms <= 0) return "Expired";
+      const s = Math.floor(ms/1000);
+      const m = Math.floor(s/60);
+      const sec = String(s%60).padStart(2,"0");
+      if (m >= 60){
+        const h = Math.floor(m/60);
+        const mm = m%60;
+        return `${h}h ${mm}m`;
+      }
+      return `${m}m ${sec}s`;
+    }
+    function statusFor(link){
+      if (link.status === "disabled") return "disabled";
+      if (now() >= link.expiresAt) return "expired";
+      const rem = link.expiresAt - now();
+      if (rem <= 5*60*1000) return "expiring";
+      return "active";
+    }
+    function pill(status){
+      if (status === "active") return `<span class="pill ok">🟢 Active</span>`;
+      if (status === "expiring") return `<span class="pill warn">🟡 Expiring</span>`;
+      if (status === "expired") return `<span class="pill bad">🔴 Expired</span>`;
+      if (status === "disabled") return `<span class="pill bad">⛔ Disabled</span>`;
+      return `<span class="pill">${status}</span>`;
+    }
+    function esc(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));}
+
+    function log(type,target,ref){
+      state.activity.push({type,target,ref,createdAt: now()});
+    }
+
+    async function copy(id){
+      const l = state.links.find(x=>x.id===id);
+      if(!l) return;
+      try{
+        await navigator.clipboard.writeText(l.url);
+        toast("Copied link");
+        log("Public","Clipboard",`copy ${l.token}`);
+      }catch(e){
+        prompt("Copy URL:", l.url);
+        log("Public","Clipboard",`copy-fallback ${l.token}`);
+      }
+    }
+    function extend(id, mins){
+      const l = state.links.find(x=>x.id===id);
+      if(!l) return;
+      if (statusFor(l)==="expired" || statusFor(l)==="disabled") return;
+      l.expiresAt += mins*60*1000;
+      toast(`Extended +${mins}m`);
+      log("Public","Extended",`${l.token} +${mins}m`);
+      render();
+    }
+    function disable(id){
+      const l = state.links.find(x=>x.id===id);
+      if(!l) return;
+      if(!confirm("Disable this link now?")) return;
+      l.status = "disabled";
+      toast("Link disabled");
+      log("Public","Disabled",l.token);
+      render();
+    }
+
+    function render(){
+      const filter = document.getElementById("filter").value;
+      const body = document.getElementById("linksBody");
+      const rows = state.links
+        .map(l => ({...l, s: statusFor(l)}))
+        .filter(l => filter==="all" ? true : l.s===filter)
+        .sort((a,b)=>b.createdAt-a.createdAt)
+        .map(l=>{
+          const rem = l.expiresAt - now();
+          const expiryText = (l.s==="expired"||l.s==="disabled")
+            ? (l.s==="disabled" ? "Disabled" : "Expired")
+            : `Expires in ${countdown(rem)}`;
+
+          const shortUrl = l.url.length>44 ? l.url.slice(0,44)+"…" : l.url;
+
+          return `
+            <tr>
+              <td>${esc(l.name || "(Untitled)")}</td>
+              <td class="mono" title="${esc(l.url)}">${esc(shortUrl)}</td>
+              <td>${expiryText}</td>
+              <td>${pill(l.s)}</td>
+              <td style="text-align:right;">
+                <div class="actions">
+                  <button class="btn" onclick="copy('${l.id}')">Copy</button>
+                  <button class="btn warn" onclick="extend('${l.id}',10)">+10m</button>
+                  <button class="btn danger" onclick="disable('${l.id}')">Disable</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+      body.innerHTML = rows || `<tr><td colspan="5" style="color:var(--muted);">No links yet. Create one to get started.</td></tr>`;
+
+      const ab = document.getElementById("activityBody");
+      const arows = state.activity.slice().reverse().slice(0,12).map(a=>`
+        <tr>
+          <td>${esc(a.type)}</td>
+          <td>${esc(a.target)}</td>
+          <td class="mono">${esc(a.ref)}</td>
+          <td>${esc(fmt(a.createdAt))}</td>
+        </tr>
+      `).join("");
+      ab.innerHTML = arows || `<tr><td colspan="4" style="color:var(--muted);">No activity yet.</td></tr>`;
+    }
+
+    // Modal
+    const backdrop = document.getElementById("backdrop");
+    function openModal(){
+      backdrop.style.display="flex";
+      document.getElementById("name").value="";
+      document.getElementById("minutes").value=15;
+      document.getElementById("download").value="false";
+      document.getElementById("pwRequired").value="false";
+      document.getElementById("pw").value="";
+      document.getElementById("pwWrap").style.display="none";
+    }
+    function closeModal(e){
+      if(e && e.target && e.target.id !== "backdrop") return;
+      backdrop.style.display="none";
+    }
+    function onPwToggle(){
+      const req = document.getElementById("pwRequired").value === "true";
+      document.getElementById("pwWrap").style.display = req ? "block" : "none";
+    }
+    function createLink(){
+      const name = document.getElementById("name").value.trim();
+      const minutes = Math.max(1, Math.min(1440, Number(document.getElementById("minutes").value || 15)));
+      const allowDownload = document.getElementById("download").value === "true";
+      const pwReq = document.getElementById("pwRequired").value === "true";
+      const pw = document.getElementById("pw").value;
+
+      if (pwReq && pw.trim().length < 4){
+        alert("Password must be at least 4 characters (demo).");
+        return;
+      }
+
+      const t = token();
+      const createdAt = now();
+      const link = {
+        id: (crypto.randomUUID ? crypto.randomUUID() : "id_"+Math.random().toString(36).slice(2)),
+        token: t,
+        url: state.baseUrl + t,
+        name,
+        createdAt,
+        expiresAt: createdAt + minutes*60*1000,
+        allowDownload,
+        pwReq,
+        status: "active"
+      };
+
+      state.links.unshift(link);
+      log("Public","Created",`${t} (${minutes}m)`);
+      closeModal();
+      toast("Public link created");
+      render();
+
+      setTimeout(()=>{ if(confirm("Copy link to clipboard?")) copy(link.id); }, 50);
+    }
+
+    // Toast
+    let timer=null;
+    function toast(msg){
+      const t=document.getElementById("toast");
+      t.textContent="✅ "+msg;
+      t.style.display="block";
+      clearTimeout(timer);
+      timer=setTimeout(()=>t.style.display="none", 2200);
+    }
+
+    // Seed demo
+    (function seed(){
+      const t = token();
+      const createdAt = now();
+      state.links.push({
+        id: (crypto.randomUUID ? crypto.randomUUID() : "id_"+Math.random().toString(36).slice(2)),
+        token: t,
+        url: state.baseUrl + t,
+        name: "Recruiter – Demo",
+        createdAt,
+        expiresAt: createdAt + 25*60*1000,
+        allowDownload:false,
+        pwReq:false,
+        status:"active"
+      });
+      log("Public","Created",`${t} (25m)`);
+      render();
+      setInterval(render, 1000);
+    })();
+  </script>
+</body>
+</html>

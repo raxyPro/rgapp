@@ -25,17 +25,17 @@ def create_app():
 
     @app.context_processor
     def inject_module_access():
-        """Expose enabled module keys user can access as `module_access` in all templates."""
+        """Expose enabled module keys user can access as `module_access` and `user_obj` in all templates."""
         try:
             if not current_user.is_authenticated:
-                return {"module_access": set()}
+                return {"module_access": set(), "user_obj": None}
 
             u = current_user.get_user()
 
             # Admin: show all enabled modules in nav.
             if getattr(u, "is_admin", False):
                 keys = {m.module_key for m in RBModule.query.filter(RBModule.is_enabled == True).all()}
-                return {"module_access": keys}
+                return {"module_access": keys, "user_obj": u}
 
             keys = {
                 r[0]
@@ -48,10 +48,10 @@ def create_app():
                     .all()
                 )
             }
-            return {"module_access": keys}
+            return {"module_access": keys, "user_obj": u}
         except Exception:
             # Never fail rendering due to DB issues.
-            return {"module_access": set()}
+            return {"module_access": set(), "user_obj": None}
 
 
     # ─────────────────────────────
@@ -62,6 +62,13 @@ def create_app():
 
     from modules.cv import register_cv_module
     register_cv_module(app)
+
+    try:
+        from modules.social import register_social_module
+        register_social_module(app)
+    except Exception:
+        # Keep app booting even if optional module fails.
+        pass
 
     return app
 

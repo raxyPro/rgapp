@@ -128,6 +128,25 @@ class RBCVFileShare(db.Model):
     )
 
 
+class RBCVPublicLink(db.Model):
+    __tablename__ = "rb_cv_public_link"
+
+    link_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    cvfile_id = db.Column(db.BigInteger, db.ForeignKey("rb_cv_file.cvfile_id", ondelete="CASCADE"), nullable=False, index=True)
+    created_by = db.Column(db.BigInteger, nullable=False, index=True)
+
+    name = db.Column(db.String(150), nullable=True)
+    token = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    allow_download = db.Column(db.Boolean, nullable=False, default=False)
+
+    password_hash = db.Column(db.String(255), nullable=True)
+
+    status = db.Column(db.Enum("active", "disabled"), nullable=False, default="active")
+    expires_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+
 class RBCVPair(db.Model):
     __tablename__ = "rb_cv_pair"
 

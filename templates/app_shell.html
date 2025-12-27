@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "RayGrow Bridge" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='bridge.css') }}">
+</head>
+<body>
+  <div class="app">
+    <main class="main">
+      <header class="topbar">
+        <div class="brand-inline">
+          <div class="logo">RG</div>
+          <div class="brandTitle">
+            <strong>RayGrow Bridge</strong>
+            <span>Talent workflow</span>
+          </div>
+        </div>
+        <nav class="nav-inline" aria-label="Primary">
+          <a href="{{ url_for('user.welcome') }}" class="{% if request.endpoint and request.endpoint.startswith('user.') %}active{% endif %}">Home</a>
+          <a href="{{ url_for('cv.home') }}" class="{% if request.endpoint and request.endpoint.startswith('cv.') %}active{% endif %}">CVs</a>
+          <a href="{{ url_for('chat.index') }}" class="{% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}">Chat</a>
+          <a href="{{ url_for('social.index') }}" class="{% if request.endpoint and request.endpoint.startswith('social.') %}active{% endif %}">Social</a>
+          {% if current_user.is_authenticated and current_user.get_user() and current_user.get_user().is_admin %}
+          <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">Admin</a>
+          {% endif %}
+        </nav>
+        {% set user_obj = user_obj or current_user %}
+        <div class="user">
+          <div class="text-end">
+            <small style="display:block; color:var(--muted);">Logged in</small>
+            <strong style="font-size:13px;">{{ user_obj.email if user_obj else 'User' }}</strong>
+          </div>
+          <div class="avatar">{{ (user_obj.email[0]|upper) if user_obj and user_obj.email else "U" }}</div>
+          <a class="btn" href="{{ url_for('auth.logout') if request.endpoint!='auth.logout' else '/logout' }}">Logout</a>
+        </div>
+      </header>
+
+      <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="alert alert-{{cat}}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</body>
+</html>

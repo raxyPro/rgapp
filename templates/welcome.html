@@ -1,35 +1,48 @@
-{% extends "base.html" %}
+{% extends "app_shell.html" %}
 {% block content %}
-<div class="card p-4">
-  <h3>Welcome</h3>
-  <p class="mb-0">You are logged in as <b>{{ user.email }}</b>.</p>
-  <a class="btn btn-outline-primary mt-3" href="/app/profile">Set Profile</a>
-
-  <hr class="my-4">
-  <h5 class="mb-3">Your Modules</h5>
-
-  {% if modules and modules|length > 0 %}
-    <div class="row g-3">
-      {% for m in modules %}
-        <div class="col-md-4">
-          <div class="card h-100">
-            <div class="card-body">
-              <h6 class="card-title mb-1">{{ m.name }}</h6>
-              {% if m.description %}<div class="text-muted small mb-3">{{ m.description }}</div>{% endif %}
-              {% if m.module_key == "chat" %}
-              <a href="{{ url_for('chat.index') }}" class="btn btn-sm btn-primary">Open</a>
-{% elif m.module_key == "cv" %}
-              <a href="{{ url_for('cv.home') }}" class="btn btn-sm btn-primary">Open</a>
-{% else %}
-              <a href="#" class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true" tabindex="-1">Open</a>
-{% endif %}
-            </div>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-      {% else %}
-    <div class="text-muted">No modules assigned yet. Please contact admin.</div>
-  {% endif %}
+<div class="hrow">
+  <div>
+    <h1>Dashboard</h1>
+    <p>Welcome back, {{ user.email }}. Quick links and top tech news below.</p>
+  </div>
+  <div class="row" style="flex:0 0 auto;">
+    <a class="btn" href="{{ url_for('user.profile') }}">Edit Profile</a>
+  </div>
 </div>
+
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>Top News</h2>
+      <p>Handpicked headlines (static placeholder; wire to API if available).</p>
+    </div>
+  </div>
+  <div class="cardBody">
+    <ul style="margin:0; padding-left:18px; color:var(--muted); line-height:1.5;">
+      <li><strong>AI & ML:</strong> Transformer-based models see efficiency gains with sparse attention.</li>
+      <li><strong>Cloud:</strong> Multi-cloud cost optimization tools gaining adoption across enterprises.</li>
+      <li><strong>Security:</strong> Zero-trust rollouts accelerate with passwordless and hardware keys.</li>
+      <li><strong>DevEx:</strong> Platform engineering teams standardize golden paths for microservices.</li>
+      <li><strong>Data:</strong> Lakehouse architectures blend streaming + batch for real-time BI.</li>
+    </ul>
+  </div>
+</section>
+
+<div style="height:14px;"></div>
+
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>Blog</h2>
+      <p>Latest updates and insights.</p>
+    </div>
+  </div>
+  <div class="cardBody">
+    <ul style="margin:0; padding-left:18px; color:var(--muted); line-height:1.5;">
+      <li><strong>Product update:</strong> Multi-link CV sharing now supports expiry and passwords.</li>
+      <li><strong>Security note:</strong> Use handles for chat/social to keep your identity private.</li>
+      <li><strong>Tip:</strong> Collapse sections on CV page to focus on what you need.</li>
+    </ul>
+  </div>
+</section>
 {% endblock %}

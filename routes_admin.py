@@ -16,6 +16,20 @@ from emailer import send_invite_email
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+def _unique_handle(base: str, user_id: int | None = None) -> str:
+    handle = "".join(ch.lower() if ch.isalnum() or ch in ("_", ".") else "-" for ch in base).strip("-._")
+    handle = handle or "user"
+    candidate = handle
+    suffix = 1
+    while True:
+        exists = RBUserProfile.query.filter(RBUserProfile.handle == candidate)
+        if user_id:
+            exists = exists.filter(RBUserProfile.user_id != user_id)
+        if not exists.first():
+            return candidate
+        suffix += 1
+        candidate = f"{handle}{suffix}"
+
 def admin_required(fn):
     from functools import wraps
     @wraps(fn)
@@ -123,15 +137,16 @@ def invite():
         email = request.form.get("email", "").strip().lower()
         full_name = request.form.get("full_name", "").strip()
         display_name = request.form.get("display_name", "").strip()
+        handle_base = request.form.get("handle", "").strip() or display_name or full_name or email
 
-        if not email:
-            flash("Email is required.", "danger")
-            return render_template("invite.html")
+        if not email or not full_name or not display_name:
+            flash("Email, full name, and display name are required.", "danger")
+            return render_template("invite.html", email=email, full_name=full_name, display_name=display_name)
 
         existing = RBUser.query.filter_by(email=email).first()
         if existing and existing.status != "deleted":
             flash("User already exists.", "warning")
-            return render_template("invite.html")
+            return render_template("invite.html", email=email, full_name=full_name, display_name=display_name)
 
         # Create invited user
         admin_user = current_user.get_user()
@@ -153,9 +168,15 @@ def invite():
             rgDisplay=(display_name or full_name or email),
             full_name=(full_name or None),
             display_name=(display_name or None),
+            handle=_unique_handle(handle_base, user_id=u.user_id),
             rgData={}
         )
         db.session.add(prof)
+
+        # Default grant: social module if enabled
+        social_mod = RBModule.query.filter_by(module_key="social", is_enabled=True).first()
+        if social_mod:
+            db.session.add(RBUserModule(user_id=u.user_id, module_key="social", has_access=True, granted_by=admin_user.user_id))
 
         event_id = str(uuid.uuid4())
         db.session.add(RBAudit(
@@ -179,6 +200,103 @@ def invite():
         return redirect(url_for("admin.dashboard"))
 
     return render_template("invite.html")
+
+@admin_bp.route("/user/<int:user_id>/send_invite", methods=["POST"])
+@login_required
+@admin_required
+def send_invite(user_id: int):
+    admin_user = current_user.get_user()
+    u = RBUser.query.get_or_404(user_id)
+    if u.status == "active":
+        flash("User is already active; invite disabled.", "info")
+        return redirect(url_for("admin.dashboard"))
+
+    token = generate_invite_token(u.email)
+    invite_url = f"{current_app.config['APP_BASE_URL'].rstrip('/')}/register/{token}"
+    send_invite_email(u.email, invite_url)
+
+    db.session.add(RBAudit(
+        event_id=str(uuid.uuid4()),
+        tblname="rb_user",
+        row_id=u.user_id,
+        action="invite",
+        actor_id=admin_user.user_id,
+        source="admin",
+        prev_data=None,
+        new_data={"email": u.email, "status": u.status, "invite_sent_at": datetime.utcnow().isoformat()}
+    ))
+    db.session.commit()
+    flash("Invitation sent.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/user/<int:user_id>/deactivate", methods=["POST"])
+@login_required
+@admin_required
+def deactivate_user(user_id: int):
+    admin_user = current_user.get_user()
+    u = RBUser.query.get_or_404(user_id)
+    if u.status == "deleted":
+        flash("User already deleted.", "warning")
+        return redirect(url_for("admin.dashboard"))
+
+    prev_status = u.status
+    u.status = "blocked"
+    db.session.add(u)
+    db.session.add(RBAudit(
+        event_id=str(uuid.uuid4()),
+        tblname="rb_user",
+        row_id=u.user_id,
+        action="edit",
+        actor_id=admin_user.user_id,
+        source="admin",
+        prev_data={"status": prev_status},
+        new_data={"status": "blocked"}
+    ))
+    db.session.commit()
+    flash("User set to inactive.", "success")
+    return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/user/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_user(user_id: int):
+    u = RBUser.query.get_or_404(user_id)
+    prof = RBUserProfile.query.get(u.user_id)
+
+    if request.method == "POST":
+        full_name = request.form.get("full_name", "").strip()
+        display_name = request.form.get("display_name", "").strip()
+        is_admin = bool(request.form.get("is_admin"))
+        handle = (request.form.get("handle") or "").strip()
+
+        u.is_admin = is_admin
+        db.session.add(u)
+
+        if prof:
+            prof.full_name = full_name or None
+            prof.display_name = display_name or None
+            prof.rgDisplay = display_name or full_name or u.email
+            if handle:
+                prof.handle = _unique_handle(handle, user_id=u.user_id)
+            db.session.add(prof)
+
+        db.session.add(RBAudit(
+            event_id=str(uuid.uuid4()),
+            tblname="rb_user",
+            row_id=u.user_id,
+            action="edit",
+            actor_id=current_user.get_user().user_id,
+            source="admin",
+            prev_data=None,
+            new_data={"full_name": full_name, "display_name": display_name, "is_admin": is_admin}
+        ))
+        db.session.commit()
+        flash("User updated.", "success")
+        return redirect(url_for("admin.dashboard"))
+
+    return render_template("admin_edit_user.html", user=u, profile=prof)
 
 @admin_bp.route("/reset/<int:user_id>", methods=["POST"])
 @login_required

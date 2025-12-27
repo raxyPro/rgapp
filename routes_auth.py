@@ -10,7 +10,7 @@ from security import verify_password, hash_password
 
 
 from extensions import db, login_manager
-from models import RBUser, RBUserProfile, RBAudit
+from models import RBUser, RBUserProfile, RBAudit, RBModule, RBUserModule
 from tokens import verify_invite_token
 import uuid
 
@@ -85,6 +85,9 @@ def login():
             prev_data=None,
             new_data={"email": u.email, "at": u.last_login_at.isoformat()}
         ))
+
+        # Default: grant social module if enabled
+        _ensure_module_access(u.user_id, "social")
         db.session.commit()
 
         login_user(UserLoginAdapter(u))
@@ -230,3 +233,10 @@ def reset_password(token):
         return redirect(url_for("auth.login"))
 
     return render_template("reset_password.html", email=email)
+def _ensure_module_access(user_id: int, module_key: str):
+    mod = RBModule.query.filter_by(module_key=module_key, is_enabled=True).first()
+    if not mod:
+        return
+    exists = RBUserModule.query.filter_by(user_id=user_id, module_key=module_key).first()
+    if not exists:
+        db.session.add(RBUserModule(user_id=user_id, module_key=module_key, has_access=True))

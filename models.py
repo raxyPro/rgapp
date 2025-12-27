@@ -33,6 +33,7 @@ class RBUserProfile(db.Model):
 
     user_id = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id", ondelete="CASCADE"), primary_key=True)
 
+    handle = db.Column(db.String(64), nullable=True, unique=True, index=True)
     rgDisplay = db.Column(db.String(200), nullable=False)  # quick label
     full_name = db.Column(db.String(200), nullable=True)
     display_name = db.Column(db.String(120), nullable=True)

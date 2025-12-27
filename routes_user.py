@@ -5,6 +5,21 @@ import uuid
 from extensions import db
 from models import RBUserProfile, RBAudit, RBModule, RBUserModule
 
+
+def _unique_handle(base: str, user_id: int | None = None) -> str:
+    handle = "".join(ch.lower() if ch.isalnum() or ch in ("_", ".") else "-" for ch in base).strip("-._")
+    handle = handle or "user"
+    candidate = handle
+    suffix = 1
+    while True:
+        exists = RBUserProfile.query.filter(RBUserProfile.handle == candidate)
+        if user_id:
+            exists = exists.filter(RBUserProfile.user_id != user_id)
+        if not exists.first():
+            return candidate
+        suffix += 1
+        candidate = f"{handle}{suffix}"
+
 user_bp = Blueprint("user", __name__, url_prefix="/app")
 
 @user_bp.route("/welcome")
@@ -32,12 +47,15 @@ def profile():
     if request.method == "POST":
         full_name = request.form.get("full_name", "").strip()
         display_name = request.form.get("display_name", "").strip()
+        handle = request.form.get("handle", "").strip()
 
         prev = {"full_name": prof.full_name, "display_name": prof.display_name, "rgDisplay": prof.rgDisplay}
 
         prof.full_name = full_name or None
         prof.display_name = display_name or None
         prof.rgDisplay = display_name or full_name or u.email
+        if handle:
+            prof.handle = _unique_handle(handle, user_id=u.user_id)
 
         db.session.add(prof)
         db.session.add(RBAudit(
@@ -48,7 +66,7 @@ def profile():
             actor_id=u.user_id,
             source="self",
             prev_data=prev,
-            new_data={"full_name": prof.full_name, "display_name": prof.display_name, "rgDisplay": prof.rgDisplay}
+            new_data={"full_name": prof.full_name, "display_name": prof.display_name, "rgDisplay": prof.rgDisplay, "handle": prof.handle}
         ))
         db.session.commit()
 

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "app_shell.html" %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7">
@@ -12,6 +12,10 @@
 
         <label class="form-label mt-3">Display Name</label>
         <input name="display_name" class="form-control" value="{{ profile.display_name or '' }}">
+
+        <label class="form-label mt-3">Handle (used in chat/social for privacy)</label>
+        <input name="handle" class="form-control" value="{{ profile.handle or '' }}" placeholder="e.g., yourname">
+        <div class="form-text">Must be unique; letters, numbers, dots, underscore allowed.</div>
 
         <button class="btn btn-primary w-100 mt-4">Save</button>
       </form>

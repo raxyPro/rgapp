@@ -3,7 +3,7 @@ from datetime import datetime
 
 from app import create_app
 from extensions import db
-from models import RBUser, RBUserProfile, RBAudit
+from models import RBUser, RBUserProfile, RBAudit, RBModule, RBUserModule
 from security import hash_password
 
 # =========================
@@ -116,6 +116,11 @@ def create_admin_always():
                 }
             )
             db.session.add(audit)
+
+            # Grant social by default if enabled
+            social_mod = RBModule.query.filter_by(module_key="social", is_enabled=True).first()
+            if social_mod:
+                db.session.add(RBUserModule(user_id=user.user_id, module_key="social", has_access=True, granted_by=user.user_id))
 
             db.session.commit()
 
