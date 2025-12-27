@@ -28,6 +28,32 @@
         <label class="form-label">Tagline</label>
         <input class="form-control" name="tagline" value="{{ vcard.tagline }}">
       </div>
+      <div class="col-md-6 mt-3">
+        <label class="form-label">Location</label>
+        <input class="form-control" name="location" value="{{ vcard.location or '' }}" placeholder="e.g., Remote, Onsite">
+      </div>
+      <div class="col-md-6 mt-3">
+        <label class="form-label">Work mode</label>
+        <select class="form-select" name="work_mode">
+          {% set wm = vcard.work_mode or '' %}
+          <option value="" {% if not wm %}selected{% endif %}>Select</option>
+          <option value="wfo" {% if wm == 'wfo' %}selected{% endif %}>Work from office</option>
+          <option value="hybrid" {% if wm == 'hybrid' %}selected{% endif %}>Hybrid</option>
+          <option value="remote" {% if wm == 'remote' %}selected{% endif %}>Remote</option>
+        </select>
+      </div>
+      <div class="col-md-6 mt-3">
+        <label class="form-label">City</label>
+        <input class="form-control" name="city" value="{{ vcard.city or '' }}" placeholder="City">
+      </div>
+      <div class="col-md-3 mt-3">
+        <label class="form-label">Available from</label>
+        <input class="form-control" type="date" name="available_from" value="{{ vcard.available_from }}">
+      </div>
+      <div class="col-md-3 mt-3">
+        <label class="form-label">Hours per day available</label>
+        <input class="form-control" type="number" min="1" max="24" name="hours_per_day" value="{{ vcard.hours_per_day }}">
+      </div>
     </div>
 
     <hr class="my-4"/>

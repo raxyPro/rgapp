@@ -37,7 +37,8 @@ class ChatThread(db.Model):
         names = []
         for uid in other_ids:
             u = users_by_id.get(uid)
-            names.append(getattr(u, "email", f"User {uid}"))
+            handle = getattr(u, "handle", None)
+            names.append(handle or getattr(u, "email", f"User {uid}"))
         return ", ".join(names[:3]) + ("…" if len(names) > 3 else "")
 
 

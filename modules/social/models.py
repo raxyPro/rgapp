@@ -20,3 +20,16 @@ class SocialPost(db.Model):
     __table_args__ = (
         db.Index("ix_social_root", "parent_id", "created_at"),
     )
+
+
+class SocialLike(db.Model):
+    __tablename__ = "rb_social_like"
+
+    like_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    post_id = db.Column(db.BigInteger, db.ForeignKey("rb_social_post.post_id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("post_id", "user_id", name="uq_social_like"),
+    )

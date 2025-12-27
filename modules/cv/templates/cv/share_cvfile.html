@@ -34,24 +34,36 @@
 
 <div style="height:14px;"></div>
 
-<div class="grid">
-  <!-- Public links -->
+<!-- Unified sharing -->
+<div>
   <section class="card">
     <div class="cardHead">
       <div>
-        <h2>Public links</h2>
-        <p>Create multiple URLs with expiry, download rules, and optional password.</p>
+        <h2>Add new share</h2>
+        <p>Create a share via public link, Raygrow ID, or email. Optional expiry/password.</p>
       </div>
     </div>
     <div class="cardBody">
       <form class="row" method="post" action="{{ url_for('cv.create_public_link', cvfile_id=c.cvfile_id) }}">
         <div>
+          <label>Share type</label>
+          <select name="share_type" id="share_type" onchange="toggleTarget()">
+            <option value="public">Public link</option>
+            <option value="user">Raygrow ID</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div id="target_wrap">
+          <label id="target_label">Target (ID or email)</label>
+          <input name="target" id="target" placeholder="User ID or email">
+        </div>
+        <div>
           <label>Name (optional)</label>
           <input name="name" placeholder="Recruiter A">
         </div>
         <div>
-          <label>Expiry (minutes)</label>
-          <input name="expiry_minutes" type="number" min="1" max="1440" value="15" required>
+          <label>Expiry (minutes, 0 = no expiry)</label>
+          <input name="expiry_minutes" type="number" min="0" max="1440" value="0" required>
         </div>
         <div>
           <label>Allow download</label>
@@ -66,7 +78,7 @@
           <small>Hashed server-side</small>
         </div>
         <div style="flex:0 0 140px; display:flex; align-items:flex-end;">
-          <button class="btn primary" type="submit">Create link</button>
+          <button class="btn primary" type="submit">Add share</button>
         </div>
       </form>
 
@@ -74,11 +86,13 @@
         <table class="table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>URL</th>
-              <th>Expiry</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
+              <th style="width:6%;">S.No.</th>
+              <th style="width:14%;">Type</th>
+              <th style="width:24%;">Target</th>
+              <th style="width:26%;">URL</th>
+              <th style="width:18%;">Valid Till</th>
+              <th style="width:12%;">Status</th>
+              <th class="text-end" style="width:12%;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -88,12 +102,12 @@
                 {% set status = pl.status %}
                 {% set rem = pl.rem_secs %}
                 <tr>
-                  <td>{{ obj.name or "(Untitled)" }}</td>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ obj.share_type.title() }}</td>
+                  <td>{{ obj.target or obj.name or '—' }}</td>
+                  <td>{{ obj.target or obj.name or '—' }}</td>
                   <td class="mono">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <a href="{{ url_for('cvviewer.view', token=obj.token) }}" target="_blank">{{ obj.token[:8] }}...</a>
-                      <button class="btn btn-sm" type="button" onclick="copyLink('{{ url_for('cvviewer.view', token=obj.token, _external=True) }}')">Copy</button>
-                    </div>
+                    <a href="{{ url_for('cvviewer.view', token=obj.token) }}" target="_blank">{{ url_for('cvviewer.view', token=obj.token, _external=True) }}</a>
                   </td>
                   <td>
                     {% if obj.expires_at %}
@@ -113,6 +127,7 @@
                   </td>
                   <td class="text-end">
                     <div class="actions">
+                      <a class="btn btn-sm" href="{{ url_for('cvviewer.view', token=obj.token) }}" target="_blank">View</a>
                       <form method="post" action="{{ url_for('cv.extend_public_link', link_id=obj.link_id) }}">
                         <button class="btn btn-sm warn" type="submit">+10m</button>
                       </form>
@@ -121,7 +136,7 @@
                         <button class="btn btn-sm btn-outline-danger" type="submit">Disable</button>
                       </form>
                       {% endif %}
-                      <form method="post" action="{{ url_for('cv.delete_public_link', link_id=obj.link_id) }}" onsubmit="return confirm('Delete this link?');">
+                      <form method="post" action="{{ url_for('cv.delete_public_link', link_id=obj.link_id) }}" onsubmit="return confirm('Delete this share?');">
                         <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                       </form>
                     </div>
@@ -129,102 +144,16 @@
                 </tr>
               {% endfor %}
             {% else %}
-              <tr><td colspan="5" style="color:var(--muted);">No public links yet.</td></tr>
+              <tr><td colspan="6" style="color:var(--muted);">No shares yet.</td></tr>
             {% endif %}
           </tbody>
         </table>
       </div>
     </div>
   </section>
-
-  <!-- Private sharing -->
-  <section class="card">
-    <div class="cardHead">
-      <div>
-        <h2>Private sharing</h2>
-        <p>Controlled access for internal users or specific emails.</p>
-      </div>
-    </div>
-    <div class="cardBody">
-      <div style="display:grid; gap:12px;">
-        <div>
-          <label>Share with rgPro user</label>
-          <form method="post" action="{{ url_for('cv.share_cvfile_user', cvfile_id=c.cvfile_id) }}">
-            <select name="target_user_id" required>
-              <option value="">Select a user</option>
-              {% for u in users %}
-                <option value="{{ u.user_id }}">{{ u.email }}</option>
-              {% endfor %}
-            </select>
-            <div style="height:10px;"></div>
-            <button class="btn primary" type="submit" style="width:100%;">Share privately</button>
-          </form>
-        </div>
-        <div style="border-top:1px solid var(--border); padding-top:10px;">
-          <label>Share via email</label>
-          <form method="post" action="{{ url_for('cv.share_cvfile_email', cvfile_id=c.cvfile_id) }}">
-            <input name="target_email" placeholder="name@example.com" required>
-            <div style="height:10px;"></div>
-            <button class="btn" type="submit" style="width:100%;">Create email share</button>
-            <div style="margin-top:6px; color:var(--muted); font-size:12.5px;">Creates a private share entry (email sending optional).</div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </section>
 </div>
 
 <div style="height:14px;"></div>
-
-<!-- Existing shares -->
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>Existing shares</h2>
-      <p>Public and private shares for this CV.</p>
-    </div>
-  </div>
-  <div class="cardBody">
-    {% if shares %}
-      <table class="table">
-        <thead>
-          <tr>
-            <th style="width:14%;">Type</th>
-            <th style="width:22%;">Target</th>
-            <th style="width:24%;">Link</th>
-            <th style="width:18%;">Created</th>
-            <th style="width:12%; text-align:right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for s in shares %}
-          <tr>
-            <td>{{ "Public" if s.is_public else "Private" }}</td>
-            <td>
-              {% if s.target_user_id %}User #{{ s.target_user_id }}{% elif s.target_email %}{{ s.target_email }}{% else %}-{% endif %}
-            </td>
-            <td class="mono">
-              {% if s.is_public %}
-                <a href="{{ url_for('cvviewer.view', token=s.share_token) }}" target="_blank">Open</a>
-              {% else %}
-                <span style="color:var(--muted);">Private</span>
-              {% endif %}
-            </td>
-            <td style="color:var(--muted);">{{ s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "" }}</td>
-            <td style="text-align:right;">
-              <form method="post" action="{{ url_for('cv.delete_cvfile_share', cvfile_id=c.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
-                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-              </form>
-            </td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <div style="color:var(--muted);">No shares yet.</div>
-    {% endif %}
-  </div>
-</section>
 
 <script>
   function copyLink(val){
@@ -235,5 +164,17 @@
       window.prompt('Copy link:', val);
     }
   }
+  function toggleTarget(){
+    const type = document.getElementById('share_type').value;
+    const wrap = document.getElementById('target_wrap');
+    const label = document.getElementById('target_label');
+    if(type === 'public'){
+      wrap.style.display = 'none';
+    } else {
+      wrap.style.display = 'block';
+      label.innerText = type === 'user' ? 'Target Raygrow ID' : 'Target email';
+    }
+  }
+  toggleTarget();
 </script>
 {% endblock %}

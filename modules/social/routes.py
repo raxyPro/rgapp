@@ -12,7 +12,7 @@ from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
 from modules.cv.models import RBCVFile
 from modules.cv.util import sanitize_filename
-from modules.social.models import SocialPost
+from modules.social.models import SocialLike, SocialPost
 from models import RBUser, RBUserProfile
 
 social_bp = Blueprint(
@@ -73,6 +73,28 @@ def index():
         for r in replies:
             replies_by_parent.setdefault(r.parent_id, []).append(r)
 
+    all_ids = [r.post_id for r in roots]
+    for rep_list in replies_by_parent.values():
+        all_ids.extend([x.post_id for x in rep_list])
+
+    likes_count = {}
+    user_likes = set()
+    if all_ids:
+        like_rows = (
+            db.session.query(SocialLike.post_id, db.func.count(SocialLike.like_id))
+            .filter(SocialLike.post_id.in_(all_ids))
+            .group_by(SocialLike.post_id)
+            .all()
+        )
+        likes_count = {pid: cnt for pid, cnt in like_rows}
+
+        mine = (
+            db.session.query(SocialLike.post_id)
+            .filter(SocialLike.post_id.in_(all_ids), SocialLike.user_id == me_id)
+            .all()
+        )
+        user_likes = {pid for (pid,) in mine}
+
     return render_template(
         "social/index.html",
         roots=roots,
@@ -80,6 +102,8 @@ def index():
         users=users,
         me_id=me_id,
         cv_files=cv_files,
+        likes_count=likes_count,
+        user_likes=user_likes,
     )
 
 
@@ -91,37 +115,13 @@ def new_post():
     body = (request.form.get("body") or "").strip()
     parent_id = request.form.get("parent_id")
     parent_id = int(parent_id) if parent_id and str(parent_id).isdigit() else None
-    cvfile_id = request.form.get("cvfile_id")
-    cvfile_id = int(cvfile_id) if cvfile_id and str(cvfile_id).isdigit() else None
+    cvfile_id = None  # attachments removed
 
     if not body:
         flash("Message is required.", "danger")
         return redirect(url_for("social.index"))
 
-    image = request.files.get("image")
-    image_path = None
-    if image and image.filename:
-        if not _allowed_image(image.filename):
-            flash("Only image uploads are allowed.", "danger")
-            return redirect(url_for("social.index"))
-        if hasattr(image, "content_length") and image.content_length and image.content_length > 2 * 1024 * 1024:
-            flash("Image too large (max 2MB).", "danger")
-            return redirect(url_for("social.index"))
-        if image.mimetype and not image.mimetype.startswith("image/"):
-            flash("Invalid image type.", "danger")
-            return redirect(url_for("social.index"))
-        safe = sanitize_filename(image.filename)
-        stored_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe}"
-        out_dir = _user_upload_dir(me_id)
-        full_path = out_dir / stored_name
-        image.save(full_path)
-        image_path = url_for("social.uploaded_file", user_id=me_id, filename=stored_name)
-
-    if cvfile_id:
-        owned = RBCVFile.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id).first()
-        if not owned:
-            flash("You can only share your own CV files.", "danger")
-            return redirect(url_for("social.index"))
+    image_path = None  # attachments removed
 
     p = SocialPost(
         user_id=me_id,
@@ -156,6 +156,24 @@ def delete_post(post_id: int):
     db.session.delete(p)
     db.session.commit()
     flash("Message deleted.", "info")
+    return redirect(url_for("social.index"))
+
+
+@social_bp.post("/like/<int:post_id>")
+@login_required
+@module_required("social")
+def toggle_like(post_id: int):
+    me_id = get_current_user_id()
+    post = SocialPost.query.get_or_404(post_id)
+    existing = SocialLike.query.filter_by(post_id=post_id, user_id=me_id).first()
+    if existing:
+        db.session.delete(existing)
+        flash("Like removed.", "info")
+    else:
+        db.session.add(SocialLike(post_id=post_id, user_id=me_id))
+        flash("Liked.", "success")
+    db.session.commit()
+    # Redirect back to feed
     return redirect(url_for("social.index"))
 
 

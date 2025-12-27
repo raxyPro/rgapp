@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, current_app
+from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, current_app, flash
 from flask_login import login_required, current_user
 
 from extensions import db
@@ -62,6 +62,22 @@ def _get_or_create_vcard(user_id: int) -> RBVCard:
         db.session.add(v)
         db.session.commit()
     return v
+
+
+def _job_pref_from_vcard(v: RBVCard) -> str:
+    parts = []
+    if v.location:
+        parts.append(f"Location: {v.location}")
+    if v.work_mode:
+        label = "Work from office" if v.work_mode == "wfo" else ("Hybrid" if v.work_mode == "hybrid" else "Remote")
+        parts.append(f"Mode: {label}")
+    if v.city:
+        parts.append(f"City: {v.city}")
+    if v.available_from:
+        parts.append(f"Available from: {v.available_from}")
+    if v.hours_per_day:
+        parts.append(f"Hours/day: {v.hours_per_day}")
+    return "; ".join(parts)
 
 
 def _vcard_items(vcard_id: int):
@@ -215,6 +231,16 @@ def save_vcard():
     vcard.linkedin_url = (request.form.get("linkedin_url") or "").strip()
     vcard.phone = (request.form.get("phone") or "").strip()
     vcard.tagline = (request.form.get("tagline") or "").strip()
+    vcard.location = (request.form.get("location") or "").strip() or None
+    vcard.work_mode = (request.form.get("work_mode") or "").strip() or None
+    vcard.city = (request.form.get("city") or "").strip() or None
+    avail = (request.form.get("available_from") or "").strip()
+    vcard.available_from = datetime.strptime(avail, "%Y-%m-%d").date() if avail else None
+    hrs = request.form.get("hours_per_day")
+    try:
+        vcard.hours_per_day = int(hrs) if hrs else None
+    except ValueError:
+        vcard.hours_per_day = None
     vcard.touch()
 
     # Replace items (simple + reliable)
@@ -483,6 +509,7 @@ def cvfile_new():
     cv_name = (request.form.get("cv_name") or "").strip()
     if not cv_name:
         abort(400, "CV name required")
+    vcard = _get_or_create_vcard(me_id)
 
     f = request.files.get("pdf")
     if not f or not f.filename:
@@ -499,9 +526,30 @@ def cvfile_new():
 
     size_bytes = stored_path.stat().st_size
 
+    # Optional cover letter PDF
+    cover_file = request.files.get("cover_pdf")
+    cover_path = cover_name = cover_mime = None
+    cover_size = None
+    if cover_file and cover_file.filename:
+        if not allowed_pdf(cover_file.filename, getattr(cover_file, "mimetype", None)):
+            abort(400, "Cover letter must be PDF")
+        cover_safe = sanitize_filename(cover_file.filename)
+        cover_stored = out_dir / f"cover_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{cover_safe}"
+        cover_file.save(cover_stored)
+        cover_path = str(cover_stored)
+        cover_name = cover_safe
+        cover_mime = "application/pdf"
+        cover_size = cover_stored.stat().st_size
+
     rec = RBCVFile(
         owner_user_id=me_id,
         cv_name=cv_name,
+        cover_letter=(request.form.get("cover_letter") or "").strip() or None,
+        job_pref=(request.form.get("job_pref") or "").strip() or _job_pref_from_vcard(vcard) or None,
+        cover_letter_path=cover_path,
+        cover_letter_name=cover_name,
+        cover_letter_mime=cover_mime,
+        cover_letter_size=cover_size,
         original_filename=safe,
         stored_path=str(stored_path),
         mime_type="application/pdf",
@@ -540,7 +588,28 @@ def cvfile_edit(cvfile_id: int):
         c.mime_type = "application/pdf"
         c.size_bytes = stored_path.stat().st_size
 
+    cover_file = request.files.get("cover_pdf")
+    if cover_file and cover_file.filename:
+        if not allowed_pdf(cover_file.filename, getattr(cover_file, "mimetype", None)):
+            abort(400, "Cover letter must be PDF")
+        cover_safe = sanitize_filename(cover_file.filename)
+        out_dir = _cv_user_dir(me_id)
+        cover_stored = out_dir / f"cover_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{cover_safe}"
+        cover_file.save(cover_stored)
+        # Best effort remove old cover
+        try:
+            if c.cover_letter_path and os.path.exists(c.cover_letter_path):
+                os.remove(c.cover_letter_path)
+        except Exception:
+            pass
+        c.cover_letter_path = str(cover_stored)
+        c.cover_letter_name = cover_safe
+        c.cover_letter_mime = "application/pdf"
+        c.cover_letter_size = cover_stored.stat().st_size
+
     c.cv_name = cv_name
+    c.cover_letter = (request.form.get("cover_letter") or c.cover_letter or "").strip() or None
+    c.job_pref = (request.form.get("job_pref") or c.job_pref or "").strip() or None
     c.touch()
     db.session.add(c)
     db.session.commit()
@@ -586,6 +655,25 @@ def cvfile_view(cvfile_id: int):
         mimetype="application/pdf",
         as_attachment=False,
         download_name=c.original_filename or "cv.pdf",
+        conditional=True,
+    )
+
+
+@cv_bp.get("/cvfile/<int:cvfile_id>/cover")
+@login_required
+@module_required("cv")
+def cvfile_cover_view(cvfile_id: int):
+    me_id = get_current_user_id()
+    c = RBCVFile.query.get_or_404(cvfile_id)
+    if c.owner_user_id != me_id:
+        abort(403)
+    if not c.cover_letter_path or not os.path.exists(c.cover_letter_path):
+        abort(404)
+    return send_file(
+        c.cover_letter_path,
+        mimetype=c.cover_letter_mime or "application/pdf",
+        as_attachment=False,
+        download_name=c.cover_letter_name or "cover-letter.pdf",
         conditional=True,
     )
 
@@ -705,18 +793,22 @@ def create_public_link(cvfile_id: int):
         abort(403)
 
     name = (request.form.get("name") or "").strip()
-    minutes = int(request.form.get("expiry_minutes") or 15)
-    minutes = max(1, min(1440, minutes))
+    minutes_raw = int(request.form.get("expiry_minutes") or 15)
+    minutes = max(0, min(1440, minutes_raw))
+    share_type = request.form.get("share_type") or "public"
+    target = (request.form.get("target") or "").strip() or None
     allow_download = request.form.get("allow_download") == "true"
     pw = (request.form.get("password") or "").strip()
     pw_hash = generate_password_hash(pw) if pw else None
 
     token = make_token()
-    expires_at = datetime.utcnow() + timedelta(minutes=minutes)
+    expires_at = datetime.utcnow() + timedelta(minutes=minutes) if minutes > 0 else None
     link = RBCVPublicLink(
         cvfile_id=c.cvfile_id,
         created_by=me_id,
         name=name or None,
+        share_type=share_type,
+        target=target,
         token=token,
         allow_download=allow_download,
         password_hash=pw_hash,
@@ -925,8 +1017,9 @@ def share_pair_email(cv_id: int):
 # ─────────────────────────────
 # Viewers
 # ─────────────────────────────
-@cvviewer_bp.get("/<token>")
+@cvviewer_bp.route("/<token>", methods=["GET", "POST"])
 def view(token: str):
+    from flask import session, render_template_string
     s = RBCVFileShare.query.filter_by(share_token=token).first()
     if s:
         # Token grants access whether public or private
@@ -940,10 +1033,23 @@ def view(token: str):
         abort(403)
     if pl.expires_at and pl.expires_at <= datetime.utcnow():
         abort(410)
+    # Password check
+    if pl.password_hash:
+        key = f"cv_pl_ok_{pl.token}"
+        if not session.get(key):
+            if request.method == "POST":
+                pw = (request.form.get("password") or "").strip()
+                from werkzeug.security import check_password_hash
+                if pw and check_password_hash(pl.password_hash, pw):
+                    session[key] = True
+                else:
+                    return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True, error="Invalid password"), 403
+            else:
+                return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True)
     c = RBCVFile.query.get_or_404(pl.cvfile_id)
     owner = RBUser.query.get(c.owner_user_id)
     cv_link = url_for("cvviewer.view", token=pl.token, _external=True)
-    return render_template("cv/view_public_cv.html", c=c, owner=owner, share=pl, cv_link=cv_link)
+    return render_template("cv/view_public_cv.html", c=c, owner=owner, share=pl, cv_link=cv_link, need_password=False)
 
 
 @cvviewer_bp.get("/file/<token>")
@@ -969,6 +1075,31 @@ def file(token: str):
         mimetype="application/pdf",
         as_attachment=allow_dl,
         download_name=c.original_filename or "cv.pdf",
+        conditional=True,
+    )
+
+
+@cvviewer_bp.get("/cover/<token>")
+def cover(token: str):
+    s = RBCVFileShare.query.filter_by(share_token=token).first()
+    if s:
+        c = RBCVFile.query.get_or_404(s.cvfile_id)
+    else:
+        pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
+        if pl.status != "active":
+            abort(403)
+        if pl.expires_at and pl.expires_at <= datetime.utcnow():
+            abort(410)
+        c = RBCVFile.query.get_or_404(pl.cvfile_id)
+
+    if not c.cover_letter_path or not os.path.exists(c.cover_letter_path):
+        abort(404)
+
+    return send_file(
+        c.cover_letter_path,
+        mimetype=c.cover_letter_mime or "application/pdf",
+        as_attachment=False,
+        download_name=c.cover_letter_name or "cover-letter.pdf",
         conditional=True,
     )
 

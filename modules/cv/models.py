@@ -15,6 +15,11 @@ class RBVCard(db.Model):
     phone = db.Column(db.String(60), nullable=False, default="")
     linkedin_url = db.Column(db.String(255), nullable=False, default="")
     tagline = db.Column(db.String(255), nullable=False, default="")
+    location = db.Column(db.String(150), nullable=True)
+    work_mode = db.Column(db.String(20), nullable=True)  # e.g., wfo / hybrid / remote
+    city = db.Column(db.String(120), nullable=True)
+    available_from = db.Column(db.Date, nullable=True)
+    hours_per_day = db.Column(db.Integer, nullable=True)
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -58,6 +63,12 @@ class RBCVFile(db.Model):
     owner_user_id = db.Column(db.BigInteger, nullable=False, index=True)
 
     cv_name = db.Column(db.String(200), nullable=False, default="")
+    cover_letter = db.Column(db.Text, nullable=True)
+    job_pref = db.Column(db.Text, nullable=True)
+    cover_letter_path = db.Column(db.String(500), nullable=True)
+    cover_letter_name = db.Column(db.String(255), nullable=True)
+    cover_letter_mime = db.Column(db.String(100), nullable=True)
+    cover_letter_size = db.Column(db.BigInteger, nullable=True)
 
     original_filename = db.Column(db.String(255), nullable=False, default="")
     stored_path = db.Column(db.String(500), nullable=False, default="")
@@ -134,6 +145,8 @@ class RBCVPublicLink(db.Model):
     link_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     cvfile_id = db.Column(db.BigInteger, db.ForeignKey("rb_cv_file.cvfile_id", ondelete="CASCADE"), nullable=False, index=True)
     created_by = db.Column(db.BigInteger, nullable=False, index=True)
+    share_type = db.Column(db.Enum("public", "user", "email"), nullable=False, default="public")
+    target = db.Column(db.String(320), nullable=True)
 
     name = db.Column(db.String(150), nullable=True)
     token = db.Column(db.String(64), nullable=False, unique=True, index=True)

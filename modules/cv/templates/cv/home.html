@@ -26,13 +26,18 @@
       <div style="display:grid; gap:6px; font-size:13px;">
         <div><strong>Email:</strong> {{ vcard.email }}</div>
         <div><strong>Phone:</strong> {{ vcard.phone }}</div>
-        <div><strong>LinkedIn:</strong> {% if vcard.linkedin_url %}<a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>{% else %}—{% endif %}</div>
+        <div><strong>LinkedIn:</strong> {% if vcard.linkedin_url %}<a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>{% else %}-{% endif %}</div>
+        {% if vcard.location %}<div><strong>Location:</strong> {{ vcard.location }}</div>{% endif %}
+        {% if vcard.work_mode %}<div><strong>Work mode:</strong> {{ 'Work from office' if vcard.work_mode=='wfo' else ('Hybrid' if vcard.work_mode=='hybrid' else 'Remote') }}</div>{% endif %}
+        {% if vcard.city %}<div><strong>City:</strong> {{ vcard.city }}</div>{% endif %}
+        {% if vcard.available_from %}<div><strong>Available from:</strong> {{ vcard.available_from }}</div>{% endif %}
+        {% if vcard.hours_per_day %}<div><strong>Hours/day available:</strong> {{ vcard.hours_per_day }}</div>{% endif %}
       </div>
       <div style="margin-top:12px;">
         <h6>Skills</h6>
         {% if skills %}
           <ul style="margin:0; padding-left:18px;">
-            {% for s in skills %}<li><strong>{{ s.title }}</strong> — {{ s.description }} ({{ s.experience }})</li>{% endfor %}
+            {% for s in skills %}<li><strong>{{ s.title }}</strong> - {{ s.description }} ({{ s.experience }})</li>{% endfor %}
           </ul>
         {% else %}
           <div style="color:var(--muted);">No skills added.</div>
@@ -40,7 +45,7 @@
         <h6 style="margin-top:10px;">Services</h6>
         {% if services %}
           <ul style="margin:0; padding-left:18px;">
-            {% for s in services %}<li><strong>{{ s.title }}</strong> — {{ s.description }} ({{ s.experience }})</li>{% endfor %}
+            {% for s in services %}<li><strong>{{ s.title }}</strong> - {{ s.description }} ({{ s.experience }})</li>{% endfor %}
           </ul>
         {% else %}
           <div style="color:var(--muted);">No services added.</div>
@@ -57,7 +62,7 @@
   <div class="cardHead">
     <div>
       <h2>CV Files</h2>
-      <p>List of your CV PDFs. Click “Add CV” to insert a new row in edit mode.</p>
+      <p>List of your CV PDFs. Click "Add CV" to insert a new row in edit mode.</p>
     </div>
     <div class="actions">
       <button class="btn" type="button" onclick="toggleCvFiles()">Collapse</button>
@@ -81,7 +86,18 @@
             <form method="post" action="{{ url_for('cv.cvfile_new') }}" enctype="multipart/form-data">
               <td>New</td>
               <td><input class="form-control form-control-sm" name="cv_name" placeholder="Enter CV name" required></td>
-              <td><input class="form-control form-control-sm" type="file" name="pdf" accept="application/pdf" required></td>
+              <td>
+                <div class="d-grid gap-2">
+                  <div>
+                    <label class="form-label" style="margin-bottom:4px;">CV PDF *</label>
+                    <input class="form-control form-control-sm" type="file" name="pdf" accept="application/pdf" required>
+                  </div>
+                  <div>
+                    <label class="form-label" style="margin-bottom:4px;">Cover letter (PDF, optional)</label>
+                    <input class="form-control form-control-sm" type="file" name="cover_pdf" accept="application/pdf">
+                  </div>
+                </div>
+              </td>
               <td class="text-end">
                 <button class="btn btn-sm primary" type="submit">Save</button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" onclick="hideNewCvRow()">Cancel</button>
@@ -95,30 +111,86 @@
               <td>{{ loop.index }}</td>
               <td>
                 <div id="view_name_{{ c.cvfile_id }}">{{ c.cv_name }}</div>
-                <form class="d-flex gap-2 align-items-center" method="post" action="{{ url_for('cv.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data" id="edit_name_{{ c.cvfile_id }}" style="display:none;">
+                <form class="d-flex gap-2 align-items-center" method="post" action="{{ url_for('cv.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data" id="edit_form_{{ c.cvfile_id }}" style="display:none;">
                   <input class="form-control form-control-sm" name="cv_name" value="{{ c.cv_name }}" required>
-                  <button class="btn btn-sm primary" type="submit">Save</button>
-                  <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ c.cvfile_id }}')">Cancel</button>
                 </form>
               </td>
               <td>
-                <div id="view_file_{{ c.cvfile_id }}" class="text-muted small">{{ c.original_filename }}</div>
-                <form class="mt-1" method="post" action="{{ url_for('cv.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data" id="edit_file_{{ c.cvfile_id }}" style="display:none;">
-                  <input class="form-control form-control-sm" type="file" name="pdf" accept="application/pdf">
-                  <button class="btn btn-sm btn-outline-secondary mt-1" type="submit">Replace PDF</button>
-                </form>
+                <div id="view_file_{{ c.cvfile_id }}" class="text-muted small">
+                  <div><strong>CV:</strong> {{ c.original_filename }}</div>
+                  <div>
+                    <strong>Cover letter:</strong>
+                    {% if c.cover_letter_name %}
+                      <a href="{{ url_for('cv.cvfile_cover_view', cvfile_id=c.cvfile_id) }}" target="_blank">{{ c.cover_letter_name }}</a>
+                    {% else %}
+                      <span class="text-muted">Not uploaded</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="mt-1 d-grid gap-2" id="edit_file_wrap_{{ c.cvfile_id }}" style="display:none;">
+                  <div>
+                    <label class="form-label" style="margin-bottom:4px;">Replace CV PDF</label>
+                    <input class="form-control form-control-sm" type="file" name="pdf" form="edit_form_{{ c.cvfile_id }}" accept="application/pdf">
+                  </div>
+                  <div>
+                    <label class="form-label" style="margin-bottom:4px;">Replace cover letter (PDF, optional)</label>
+                    <input class="form-control form-control-sm" type="file" name="cover_pdf" form="edit_form_{{ c.cvfile_id }}" accept="application/pdf">
+                  </div>
+                </div>
               </td>
               <td class="text-end">
                 <div id="view_actions_{{ c.cvfile_id }}">
                   <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.cvfile_view', cvfile_id=c.cvfile_id) }}" target="_blank">View</a>
                   <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ c.cvfile_id }}')">Edit</button>
+                  <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Preferences</button>
                   <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.share_cvfile', cvfile_id=c.cvfile_id) }}">Share</a>
                   <form method="post" action="{{ url_for('cv.cvfile_delete', cvfile_id=c.cvfile_id) }}" style="display:inline" onsubmit="return confirm('Delete this CV?');">
                     <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                   </form>
                 </div>
                 <div id="edit_actions_{{ c.cvfile_id }}" style="display:none;">
-                  <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ c.cvfile_id }}')">Done</button>
+                  <button class="btn btn-sm primary" type="submit" form="edit_form_{{ c.cvfile_id }}">Save</button>
+                  <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ c.cvfile_id }}')">Cancel</button>
+                </div>
+                <div id="pref_wrap_{{ c.cvfile_id }}" class="mt-2" style="display:none; text-align:left;">
+                  <form method="post" action="{{ url_for('cv.cvfile_edit', cvfile_id=c.cvfile_id) }}" onsubmit="return buildPref('{{ c.cvfile_id }}')">
+                    <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
+                    <input type="hidden" name="job_pref" id="job_pref_hidden_{{ c.cvfile_id }}">
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-6">
+                        <label class="form-label">Location</label>
+                        <input class="form-control form-control-sm" type="text" id="pref_loc_{{ c.cvfile_id }}" placeholder="e.g., Remote, Onsite" value="{{ vcard.location or '' }}">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Work mode</label>
+                        {% set wm = vcard.work_mode or '' %}
+                        <select class="form-select form-select-sm" id="pref_mode_{{ c.cvfile_id }}">
+                          <option value="" {% if not wm %}selected{% endif %}>Select</option>
+                          <option value="wfo" {% if wm == 'wfo' %}selected{% endif %}>Work from office</option>
+                          <option value="hybrid" {% if wm == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                          <option value="remote" {% if wm == 'remote' %}selected{% endif %}>Remote</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                      <div class="col-md-6">
+                        <label class="form-label">City</label>
+                        <input class="form-control form-control-sm" type="text" id="pref_city_{{ c.cvfile_id }}" placeholder="City" value="{{ vcard.city or '' }}">
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">Available from</label>
+                        <input class="form-control form-control-sm" type="date" id="pref_from_{{ c.cvfile_id }}" value="{{ vcard.available_from }}">
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">Hours/day</label>
+                        <input class="form-control form-control-sm" type="number" min="1" max="24" id="pref_hours_{{ c.cvfile_id }}" value="{{ vcard.hours_per_day }}">
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-end">
+                      <button class="btn btn-sm primary" type="submit">Save preference</button>
+                      <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Close</button>
+                    </div>
+                  </form>
                 </div>
               </td>
             </tr>
@@ -201,9 +273,9 @@
     if(row) row.style.display = 'none';
   }
   function toggleEdit(id){
-    const n = document.getElementById('edit_name_'+id);
+    const n = document.getElementById('edit_form_'+id);
     const nf = document.getElementById('view_name_'+id);
-    const f = document.getElementById('edit_file_'+id);
+    const f = document.getElementById('edit_file_wrap_'+id);
     const vf = document.getElementById('view_file_'+id);
     const va = document.getElementById('view_actions_'+id);
     const ea = document.getElementById('edit_actions_'+id);
@@ -220,10 +292,34 @@
     if(!body) return;
     body.style.display = body.style.display === 'none' ? 'block' : 'none';
   }
+  function togglePref(id){
+    const w = document.getElementById('pref_wrap_'+id);
+    if(!w) return;
+    w.style.display = w.style.display === 'none' ? 'block' : 'none';
+  }
   function toggleShared(){
     const body = document.getElementById('sharedBody');
     if(!body) return;
     body.style.display = body.style.display === 'none' ? 'block' : 'none';
+  }
+  function buildPref(id){
+    const parts = [];
+    const loc = document.getElementById('pref_loc_'+id)?.value.trim();
+    const mode = document.getElementById('pref_mode_'+id)?.value;
+    const city = document.getElementById('pref_city_'+id)?.value.trim();
+    const from = document.getElementById('pref_from_'+id)?.value;
+    const hrs = document.getElementById('pref_hours_'+id)?.value;
+    if(loc) parts.push(`Location: ${loc}`);
+    if(mode){
+      const label = mode === 'wfo' ? 'Work from office' : (mode === 'hybrid' ? 'Hybrid' : 'Remote');
+      parts.push(`Mode: ${label}`);
+    }
+    if(city) parts.push(`City: ${city}`);
+    if(from) parts.push(`Available from: ${from}`);
+    if(hrs) parts.push(`Hours/day: ${hrs}`);
+    const hidden = document.getElementById('job_pref_hidden_'+id);
+    if(hidden) hidden.value = parts.join('; ');
+    return true;
   }
 </script>
 {% endblock %}

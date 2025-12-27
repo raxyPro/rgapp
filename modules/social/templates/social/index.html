@@ -3,7 +3,7 @@
 <div class="hrow">
   <div>
     <h1>Social</h1>
-    <p>Post updates, reply in threads, attach images, or link a CV.</p>
+    <p>Post updates and reply in threads. Use emojis from the bar below.</p>
   </div>
 </div>
 
@@ -11,30 +11,18 @@
   <div class="cardHead">
     <div>
       <h2>New update</h2>
-      <p>Share a message with optional image or CV link.</p>
+      <p>Share a message. Add emojis from the bar below.</p>
     </div>
   </div>
   <div class="cardBody">
     <form method="post" action="{{ url_for('social.new_post') }}" enctype="multipart/form-data">
       <label>Message</label>
-      <textarea name="body" required placeholder="Type your update..."></textarea>
-      <div class="row" style="margin-top:10px; align-items:flex-end;">
-        <div style="flex:0 0 auto;">
-          <label>Attach image</label>
-          <button type="button" class="btn" onclick="document.getElementById('new_image').click();" title="Attach image">📎 Image</button>
-          <input id="new_image" type="file" name="image" accept="image/*" style="display:none" onchange="previewNewImage(event)">
-          <input id="new_image_paste" type="text" style="display:none">
-          <div id="new_image_preview" class="mt-2" style="font-size:12px; color:var(--muted);"></div>
-        </div>
-        <div>
-          <label>Link a CV (optional)</label>
-          <select name="cvfile_id">
-            <option value="">None</option>
-            {% for cv in cv_files %}
-            <option value="{{ cv.cvfile_id }}">{{ cv.cv_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
+      <textarea name="body" id="new-body" required placeholder="Type your update..."></textarea>
+      <div style="padding:6px 0; display:flex; gap:6px; flex-wrap:wrap;">
+        {% set emojis = ['😀','👍','🎉','🙏','💡','🔥','✅','🚀','❤️','😂'] %}
+        {% for e in emojis %}
+        <button class="btn btn-sm" type="button" onclick="insertEmoji('new-body','{{ e }}')">{{ e }}</button>
+        {% endfor %}
       </div>
       <div style="margin-top:10px;">
         <button class="btn primary" type="submit">Post</button>
@@ -61,9 +49,16 @@
             <div style="font-weight:700;">{{ su.handle or su.email if su else "User " ~ r.user_id }}</div>
             <div style="color:var(--muted); font-size:12px;">{{ r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else "" }}</div>
           </div>
-          <form method="post" action="{{ url_for('social.delete_post', post_id=r.post_id) }}" onsubmit="return confirm('Delete this message?');">
-            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-          </form>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <form method="post" action="{{ url_for('social.toggle_like', post_id=r.post_id) }}">
+              <button class="btn btn-sm {{ 'primary' if r.post_id in user_likes else '' }}" type="submit">
+                {{ 'Unlike' if r.post_id in user_likes else 'Like' }} ({{ likes_count.get(r.post_id, 0) }})
+              </button>
+            </form>
+            <form method="post" action="{{ url_for('social.delete_post', post_id=r.post_id) }}" onsubmit="return confirm('Delete this message?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </div>
         </div>
         <div style="margin-top:8px;">{{ r.body }}</div>
         {% if r.image_path %}
@@ -81,23 +76,12 @@
           <form method="post" action="{{ url_for('social.new_post') }}" enctype="multipart/form-data">
             <input type="hidden" name="parent_id" value="{{ r.post_id }}">
             <label>Reply</label>
-            <textarea name="body" required placeholder="Write a reply..."></textarea>
-            <div class="row" style="margin-top:8px; align-items:flex-end;">
-              <div style="flex:0 0 auto;">
-                <label>Attach image</label>
-                <button type="button" class="btn btn-sm" onclick="document.getElementById('img_{{ r.post_id }}').click();" title="Attach image">📎 Image</button>
-                <input id="img_{{ r.post_id }}" type="file" name="image" accept="image/*" style="display:none" onchange="previewReplyImage('{{ r.post_id }}', event)">
-                <div id="preview_{{ r.post_id }}" class="mt-1" style="font-size:12px; color:var(--muted);"></div>
-              </div>
-              <div>
-                <label>Link a CV (optional)</label>
-                <select name="cvfile_id">
-                  <option value="">None</option>
-                  {% for cv in cv_files %}
-                  <option value="{{ cv.cvfile_id }}">{{ cv.cv_name }}</option>
-                  {% endfor %}
-                </select>
-              </div>
+            <textarea name="body" id="reply-body-{{ r.post_id }}" required placeholder="Write a reply..."></textarea>
+            <div style="padding:6px 0; display:flex; gap:6px; flex-wrap:wrap;">
+              {% set emojis = ['😀','👍','🎉','🙏','💡','🔥','✅','🚀','❤️','😂'] %}
+              {% for e in emojis %}
+              <button class="btn btn-sm" type="button" onclick="insertEmoji('reply-body-{{ r.post_id }}','{{ e }}')">{{ e }}</button>
+              {% endfor %}
             </div>
             <div style="margin-top:8px;">
               <button class="btn btn-sm primary" type="submit">Reply</button>
@@ -116,21 +100,18 @@
                     <div style="font-weight:700;">{{ ru.handle or ru.email if ru else "User " ~ rep.user_id }}</div>
                     <div style="color:var(--muted); font-size:12px;">{{ rep.created_at.strftime("%Y-%m-%d %H:%M") if rep.created_at else "" }}</div>
                   </div>
-                  <form method="post" action="{{ url_for('social.delete_post', post_id=rep.post_id) }}" onsubmit="return confirm('Delete this reply?');">
-                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                  </form>
+                  <div style="display:flex; gap:8px; align-items:center;">
+                    <form method="post" action="{{ url_for('social.toggle_like', post_id=rep.post_id) }}">
+                      <button class="btn btn-sm {{ 'primary' if rep.post_id in user_likes else '' }}" type="submit">
+                        {{ 'Unlike' if rep.post_id in user_likes else 'Like' }} ({{ likes_count.get(rep.post_id, 0) }})
+                      </button>
+                    </form>
+                    <form method="post" action="{{ url_for('social.delete_post', post_id=rep.post_id) }}" onsubmit="return confirm('Delete this reply?');">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                  </div>
                 </div>
                 <div style="margin-top:6px;">{{ rep.body }}</div>
-                {% if rep.image_path %}
-                <div style="margin-top:6px;">
-                  <img src="{{ rep.image_path }}" alt="attachment" style="max-width:100%; border-radius:10px;">
-                </div>
-                {% endif %}
-                {% if rep.cvfile_id %}
-                <div style="margin-top:6px;">
-                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('cv.share_cvfile', cvfile_id=rep.cvfile_id) }}">View linked CV</a>
-                </div>
-                {% endif %}
               </div>
             {% endfor %}
           </div>
@@ -143,41 +124,15 @@
 </section>
 
 <script>
-  // Allow paste image into message: listen for paste and forward to hidden file input via clipboard data
-  document.addEventListener('paste', function(e){
-    if (!e.clipboardData) return;
-    const items = e.clipboardData.items;
-    for (let i=0; i<items.length; i++){
-      const item = items[i];
-      if (item.type.indexOf('image') !== -1){
-        const file = item.getAsFile();
-        const input = document.getElementById('new_image');
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        input.files = dt.files;
-        previewNewImage({target: input});
-        break;
-      }
-    }
-  });
-
-  function previewNewImage(e){
-    const el = document.getElementById('new_image_preview');
-    if (!e.target.files || !e.target.files.length){
-      el.textContent = '';
-      return;
-    }
-    el.textContent = 'Attached: ' + e.target.files[0].name;
-  }
-
-  function previewReplyImage(id, e){
-    const el = document.getElementById('preview_' + id);
-    if (!el) return;
-    if (!e.target.files || !e.target.files.length){
-      el.textContent = '';
-      return;
-    }
-    el.textContent = 'Attached: ' + e.target.files[0].name;
+  function insertEmoji(elId, emoji){
+    const ta = document.getElementById(elId);
+    if(!ta) return;
+    const start = ta.selectionStart || ta.value.length;
+    const end = ta.selectionEnd || ta.value.length;
+    const txt = ta.value;
+    ta.value = txt.slice(0, start) + emoji + txt.slice(end);
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = start + emoji.length;
   }
 </script>
 {% endblock %}
