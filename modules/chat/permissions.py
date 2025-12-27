@@ -7,7 +7,7 @@ from flask import abort
 from flask_login import current_user
 
 from extensions import db
-from models import RBUserModule
+from models import RBUserModule, RBModule
 
 from modules.chat.models import ChatThreadMember
 
@@ -47,10 +47,12 @@ def module_required(module_key: str):
 
             has = (
                 db.session.query(RBUserModule)
+                .join(RBModule, RBModule.module_key == RBUserModule.module_key)
                 .filter(
                     RBUserModule.user_id == u.user_id,
                     RBUserModule.module_key == module_key,
                     RBUserModule.has_access.is_(True),
+                    RBModule.is_enabled.is_(True),
                 )
                 .first()
             )

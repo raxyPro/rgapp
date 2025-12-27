@@ -53,13 +53,46 @@ class RBAudit(db.Model):
     row_id = db.Column(db.BigInteger, nullable=False)
 
     audit_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    action = db.Column(db.Enum("add", "invite", "register", "login", "edit"), nullable=False)
+    action = db.Column(
+        db.Enum("add", "invite", "register", "login", "edit", "grant_module", "revoke_module"),
+        nullable=False,
+    )
 
     actor_id = db.Column(db.BigInteger, nullable=True)
     source = db.Column(db.Enum("self", "admin", "api"), nullable=False, default="api")
 
     prev_data = db.Column(db.JSON, nullable=True)
     new_data = db.Column(db.JSON, nullable=True)
+
+
+class RBInvitation(db.Model):
+    __tablename__ = "rb_invitation"
+
+    invitation_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    email = db.Column(db.String(320), nullable=False)
+    token = db.Column(db.String(255), nullable=False, unique=True, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.Index("ix_invite_email", "email"),
+    )
+
+
+class RBPasswordReset(db.Model):
+    __tablename__ = "rb_password_reset"
+
+    reset_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id", ondelete="CASCADE"), nullable=False)
+    token = db.Column(db.String(255), nullable=False, unique=True, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.Index("fk_reset_user", "user_id"),
+    )
 
 
 class RBModule(db.Model):
