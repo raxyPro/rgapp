@@ -4,6 +4,10 @@ from __future__ import annotations
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, abort, jsonify
 from flask_login import login_required, current_user
+from markupsafe import Markup, escape
+import re
+from urllib.parse import unquote_plus
+from sqlalchemy import or_
 
 from extensions import db
 from models import RBUser, RBUserProfile
@@ -18,6 +22,38 @@ chat_bp = Blueprint(
     static_folder="static",
     url_prefix="/chat",
 )
+
+_URL_RE = re.compile(r"(https?://[^\s]+)", re.IGNORECASE)
+_IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
+
+
+def _render_body_html(body: str) -> Markup:
+    """Render message text as safe HTML with links and inline image previews."""
+    if not body:
+        return Markup("")
+
+    def _replace(match: re.Match) -> str:
+        url = match.group(0)
+        safe_url = escape(url)
+        lower = url.split("?", 1)[0].lower()
+        if lower.endswith(_IMAGE_EXTS):
+            return (
+                f'<a href="{safe_url}" target="_blank" rel="noopener">'
+                f'<img src="{safe_url}" alt="Image" style="max-width:240px;max-height:240px;'
+                f'border-radius:8px;display:block;margin-top:6px;">'
+                f"</a>"
+            )
+        return f'<a href="{safe_url}" target="_blank" rel="noopener">{safe_url}</a>'
+
+    escaped = escape(body)
+    linked = _URL_RE.sub(_replace, escaped)
+    html = linked.replace("\n", "<br>")
+    return Markup(html)
+
+
+@chat_bp.app_template_filter("chat_rich")
+def chat_rich(body: str) -> Markup:
+    return _render_body_html(body)
 
 def _threads_for_user(user_id: int) -> list[ChatThread]:
     thread_ids = (
@@ -50,6 +86,42 @@ def _users_by_ids(user_ids: list[int]) -> dict[int, RBUser]:
         enriched[u.user_id] = u
     return enriched
 
+
+def _message_counts(thread_ids: list[int]) -> dict[int, int]:
+    if not thread_ids:
+        return {}
+    rows = (
+        db.session.query(ChatMessage.thread_id, db.func.count(ChatMessage.message_id))
+        .filter(ChatMessage.thread_id.in_(thread_ids))
+        .group_by(ChatMessage.thread_id)
+        .all()
+    )
+    return {tid: cnt for tid, cnt in rows}
+
+
+def _unread_counts(thread_ids: list[int], me_id: int) -> dict[int, int]:
+    if not thread_ids:
+        return {}
+    rows = (
+        db.session.query(ChatMessage.thread_id, db.func.count(ChatMessage.message_id))
+        .join(
+            ChatThreadMember,
+            (ChatThreadMember.thread_id == ChatMessage.thread_id)
+            & (ChatThreadMember.user_id == me_id),
+        )
+        .filter(ChatMessage.thread_id.in_(thread_ids))
+        .filter(ChatMessage.sender_id != me_id)
+        .filter(
+            or_(
+                ChatThreadMember.last_read_at.is_(None),
+                ChatMessage.created_at > ChatThreadMember.last_read_at,
+            )
+        )
+        .group_by(ChatMessage.thread_id)
+        .all()
+    )
+    return {tid: cnt for tid, cnt in rows}
+
 @chat_bp.get("/")
 @login_required
 @module_required("chat")
@@ -65,6 +137,9 @@ def index():
     for m in members:
         members_by_thread.setdefault(m.thread_id, []).append(m)
 
+    message_counts = _message_counts(thread_ids)
+    unread_counts = _unread_counts(thread_ids, me_id)
+
     return render_template(
         "chat/index.html",
         threads=threads,
@@ -72,6 +147,8 @@ def index():
         users_by_id=users_by_id,
         active_thread=None,
         me_id=me_id,
+        message_counts=message_counts,
+        unread_counts=unread_counts,
     )
 
 @chat_bp.get("/new")
@@ -124,8 +201,9 @@ def create_chat():
         db.session.add(thread)
         db.session.flush()
 
-        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
-        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other_id, role="member"))
+        now = datetime.utcnow()
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner", last_read_at=now))
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other_id, role="member", last_read_at=now))
         db.session.commit()
 
         return redirect(url_for("chat.thread", thread_id=thread.thread_id))
@@ -137,9 +215,10 @@ def create_chat():
     db.session.add(thread)
     db.session.flush()
 
-    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
+    now = datetime.utcnow()
+    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner", last_read_at=now))
     for uid in user_ids:
-        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=uid, role="member"))
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=uid, role="member", last_read_at=now))
 
     db.session.commit()
     return redirect(url_for("chat.thread", thread_id=thread.thread_id))
@@ -176,10 +255,14 @@ def dm_with_note(user_id: int):
         thread = ChatThread(thread_type="dm", name=None, created_by=me_id)
         db.session.add(thread)
         db.session.flush()
-        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
-        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other.user_id, role="member"))
+        now = datetime.utcnow()
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner", last_read_at=now))
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other.user_id, role="member", last_read_at=now))
 
-    note = (request.args.get("note") or "").strip()
+    note_raw = request.args.get("note") or ""
+    note = unquote_plus(note_raw).strip()
+    if not note and note_raw:
+        note = note_raw.strip()
     if note:
         msg = ChatMessage(thread_id=thread.thread_id, sender_id=me_id, body=note)
         db.session.add(msg)
@@ -221,8 +304,9 @@ def start_dm(user_id: int):
     db.session.add(thread)
     db.session.flush()
 
-    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner"))
-    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other.user_id, role="member"))
+    now = datetime.utcnow()
+    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner", last_read_at=now))
+    db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=other.user_id, role="member", last_read_at=now))
     db.session.commit()
 
     return redirect(url_for("chat.thread", thread_id=thread.thread_id))
@@ -245,6 +329,16 @@ def thread(thread_id: int):
 
     t = ChatThread.query.get_or_404(thread_id)
 
+    # Mark as read for the current user.
+    my_member = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=me_id).first()
+    if my_member:
+        my_member.last_read_at = datetime.utcnow()
+        db.session.add(my_member)
+        db.session.commit()
+
+    message_counts = _message_counts(thread_ids)
+    unread_counts = _unread_counts(thread_ids, me_id)
+
     msgs = (
         ChatMessage.query
         .filter_by(thread_id=thread_id)
@@ -265,6 +359,8 @@ def thread(thread_id: int):
         active_thread_display_name=display_name,
         messages=msgs,
         me_id=me_id,
+        message_counts=message_counts,
+        unread_counts=unread_counts,
     )
 
 @chat_bp.post("/t/<int:thread_id>/send")
@@ -284,6 +380,11 @@ def send_message_http(thread_id: int):
     t = ChatThread.query.get(thread_id)
     if t:
         t.updated_at = datetime.utcnow()
+
+    my_member = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=me_id).first()
+    if my_member:
+        my_member.last_read_at = datetime.utcnow()
+        db.session.add(my_member)
 
     db.session.commit()
     return redirect(url_for("chat.thread", thread_id=thread_id))

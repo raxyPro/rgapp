@@ -1,0 +1,46 @@
+2025-12-28 12:02:07.665240 [ERROR] [UID:6106][0] Fail to open file /home/rcprhkdi/bridge/passenger_wsgi.py. 
+[ERROR] [UID:6106][1512106] Fail to open file /home/rcprhkdi/bridge/passenger_wsgi.py. 
+2025-12-28 12:03:18.164365 [ERROR] [UID:6106][0] Fail to open file /home/rcprhkdi/bridge/passenger_wsgi.py. 
+[ERROR] [UID:6106][1533215] Fail to open file /home/rcprhkdi/bridge/passenger_wsgi.py. 
+Traceback (most recent call last):
+  File "/home/rcprhkdi/bridge/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'passanger_wspi.py')
+  File "/opt/alt/python36/lib64/python3.6/imp.py", line 172, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 684, in _load
+  File "<frozen importlib._bootstrap>", line 665, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 678, in exec_module
+  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+  File "passanger_wspi.py", line 8, in <module>
+    from app import app as application  # <-- this line fixes the problem
+  File "/home/rcprhkdi/bridge/app.py", line 1, in <module>
+    from flask import Flask
+ModuleNotFoundError: No module named 'flask'
+Traceback (most recent call last):
+  File "/home/rcprhkdi/bridge/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'passanger_wspi.py')
+  File "/opt/alt/python36/lib64/python3.6/imp.py", line 172, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 684, in _load
+  File "<frozen importlib._bootstrap>", line 665, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 678, in exec_module
+  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+  File "passanger_wspi.py", line 8, in <module>
+    from app import app as application  # <-- this line fixes the problem
+  File "/home/rcprhkdi/bridge/app.py", line 1, in <module>
+    from flask import Flask
+ModuleNotFoundError: No module named 'flask'
+Traceback (most recent call last):
+  File "/home/rcprhkdi/bridge/passenger_wsgi.py", line 8, in <module>
+    wsgi = imp.load_source('wsgi', 'passanger_wspi.py')
+  File "/opt/alt/python36/lib64/python3.6/imp.py", line 172, in load_source
+    module = _load(spec)
+  File "<frozen importlib._bootstrap>", line 684, in _load
+  File "<frozen importlib._bootstrap>", line 665, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 678, in exec_module
+  File "<frozen importlib._bootstrap>", line 219, in _call_with_frames_removed
+  File "passanger_wspi.py", line 8, in <module>
+    from app import app as application  # <-- this line fixes the problem
+  File "/home/rcprhkdi/bridge/app.py", line 1, in <module>
+    from flask import Flask
+ModuleNotFoundError: No module named 'flask'

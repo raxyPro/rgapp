@@ -1,0 +1,38 @@
+{% set p = me %}
+<div style="border:1px solid var(--border); border-radius: var(--radius); padding:12px; display:flex; gap:12px; align-items:flex-start; background: var(--surface-2);">
+  <div style="width:42px; height:42px; border-radius:50%; background:#e8edff; display:flex; align-items:center; justify-content:center; font-weight:800; color:#3550ff;">
+    {{ (p.handle or p.email or '?')[0]|upper }}
+  </div>
+  <div style="flex:1; min-width:0;">
+    <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:800;">{{ p.handle or p.email }}</div>
+        <div style="color:var(--muted); font-size:13px;">{{ p.email }}</div>
+        {% if p.tagline %}<div style="margin-top:4px;">{{ p.tagline }}</div>{% endif %}
+      </div>
+      <div>
+        <a class="btn btn-sm primary" href="{{ url_for('chat.dm_with_note', user_id=p.user_id, note=('Inquiry about your services')|urlencode) }}">Chat</a>
+      </div>
+    </div>
+    {% if p.skills %}
+      <div style="margin-top:8px;">
+        <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Skills</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          {% for s in p.skills %}
+            <span class="pill">{{ s.title }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    {% if p.services %}
+      <div style="margin-top:8px;">
+        <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Services</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          {% for s in p.services %}
+            <span class="pill">{{ s.title }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>

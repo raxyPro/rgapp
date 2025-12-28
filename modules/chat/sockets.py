@@ -3,7 +3,7 @@ from flask_login import current_user
 from flask_socketio import emit, join_room
 
 from extensions import db, socketio
-from modules.chat.models import ChatMessage, ChatThread
+from modules.chat.models import ChatMessage, ChatThread, ChatThreadMember
 from modules.chat.permissions import require_thread_member, module_required
 from modules.chat.util import get_current_user_id
 from models import RBModule, RBUserModule
@@ -53,6 +53,12 @@ def register_chat_sockets(app):
         t = ChatThread.query.get(thread_id)
         if t:
             t.updated_at = db.func.now()
+
+        # Sender has read up to now; update last_read_at.
+        mem = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=user_id).first()
+        if mem:
+            mem.last_read_at = db.func.now()
+            db.session.add(mem)
 
         db.session.commit()
 

@@ -1,0 +1,10 @@
+pip install Flask
+pip install Flask-Login
+pip install Flask-SQLAlchemy
+pip install SQLAlchemy
+pip install PyMySQL
+pip install Flask-SocketIO
+pip install simple-websocket
+pip install itsdangerous
+pip install passlib[bcrypt]
+pip install python-dotenv

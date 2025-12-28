@@ -17,6 +17,25 @@
     });
   }
 
+  function renderRich(text) {
+    const urlRe = /(https?:\/\/[^\s]+)/gi;
+    const imgExts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
+    const escaped = escapeHtml(text || "");
+    const linked = escaped.replace(urlRe, (url) => {
+      const lower = url.split("?")[0].toLowerCase();
+      const isImg = imgExts.some((ext) => lower.endsWith(ext));
+      if (isImg) {
+        return `
+          <a href="${url}" target="_blank" rel="noopener">
+            <img src="${url}" alt="Image" style="max-width:240px;max-height:240px;border-radius:8px;display:block;margin-top:6px;">
+          </a>
+        `;
+      }
+      return `<a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+    });
+    return linked.replace(/\n/g, "<br>");
+  }
+
   function appendMessage(m) {
     const meta = cfg.senderEmails && cfg.senderEmails[m.sender_id];
     const name = (meta && (meta.handle || meta.email)) || `User ${m.sender_id}`;
@@ -27,7 +46,7 @@
         <span><b>${escapeHtml(name)}</b></span>
         · <span>${escapeHtml(m.created_at || "")}</span>
       </div>
-      <div class="body">${escapeHtml(m.body || "")}</div>
+      <div class="body">${renderRich(m.body || "")}</div>
     `;
     msgsEl.appendChild(div);
     scrollToBottom();
@@ -57,7 +76,7 @@
     });
   }
 
-  // Socket.IO (optional). If you don’t include socketio client, it will fall back.
+  // Socket.IO (optional). If you don't include socketio client, it will fall back.
   function wireSocket() {
     if (!window.io) return false;
 

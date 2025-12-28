@@ -178,6 +178,10 @@ def invite():
         if social_mod:
             db.session.add(RBUserModule(user_id=u.user_id, module_key="social", has_access=True, granted_by=admin_user.user_id))
 
+        services_mod = RBModule.query.filter_by(module_key="services", is_enabled=True).first()
+        if services_mod:
+            db.session.add(RBUserModule(user_id=u.user_id, module_key="services", has_access=True, granted_by=admin_user.user_id))
+
         event_id = str(uuid.uuid4())
         db.session.add(RBAudit(
             event_id=event_id,

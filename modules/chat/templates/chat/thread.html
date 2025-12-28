@@ -26,7 +26,7 @@
           <button class="btn btn-sm btn-outline-secondary" type="button" style="margin-left:4px;padding:2px 6px;font-size:11px;" onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
           {% endif %}
         </div>
-        <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | replace('\n','<br>') | safe }}</div>
+        <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | chat_rich }}</div>
         <form id="edit_form_{{ m.message_id }}" class="mt-2" method="post" action="{{ url_for('chat.edit_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:none;">
           <textarea class="form-control" name="body" rows="2">{{ m.body }}</textarea>
           <div class="mt-2">

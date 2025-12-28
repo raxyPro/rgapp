@@ -22,17 +22,21 @@
           <a href="{{ url_for('cv.home') }}" class="{% if request.endpoint and request.endpoint.startswith('cv.') %}active{% endif %}">CVs</a>
           <a href="{{ url_for('chat.index') }}" class="{% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}">Chat</a>
           <a href="{{ url_for('social.index') }}" class="{% if request.endpoint and request.endpoint.startswith('social.') %}active{% endif %}">Social</a>
+          {% if 'services' in module_access %}
+          <a href="{{ url_for('services.index') }}" class="{% if request.endpoint and request.endpoint.startswith('services.') %}active{% endif %}">Services</a>
+          {% endif %}
           {% if current_user.is_authenticated and current_user.get_user() and current_user.get_user().is_admin %}
           <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">Admin</a>
           {% endif %}
         </nav>
         {% set user_obj = user_obj or current_user %}
+        {% set display_name = user_display or (user_obj.email if user_obj else "User") %}
         <div class="user">
           <div class="text-end">
             <small style="display:block; color:var(--muted);">Logged in</small>
-            <strong style="font-size:13px;">{{ user_obj.email if user_obj else 'User' }}</strong>
+            <strong style="font-size:13px;">{{ display_name }}</strong>
           </div>
-          <div class="avatar">{{ (user_obj.email[0]|upper) if user_obj and user_obj.email else "U" }}</div>
+          <div class="avatar">{{ (display_name[0]|upper) if display_name else "U" }}</div>
           <a class="btn" href="{{ url_for('auth.logout') if request.endpoint!='auth.logout' else '/logout' }}">Logout</a>
         </div>
       </header>

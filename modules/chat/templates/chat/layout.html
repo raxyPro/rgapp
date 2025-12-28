@@ -6,9 +6,14 @@
   .chat-left{width:320px;border:1px solid #ddd;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
   .chat-left-top{padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
   .chat-left-list{overflow:auto;padding:8px}
-  .chat-item{display:block;padding:10px;border-radius:8px;color:inherit;text-decoration:none}
+  .chat-item{display:block;padding:10px;border-radius:8px;color:inherit;text-decoration:none;border:1px solid transparent}
   .chat-item:hover{background:#f6f6f6}
-  .chat-item.active{background:#eef3ff}
+  .chat-item.active{background:#eef3ff;border-color:#d9e5ff}
+  .chat-item .row1{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .chat-item .row1 .title{font-weight:600;flex:1;min-width:0}
+  .chat-item .row2{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;opacity:.8;flex-wrap:wrap}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#f2f4f8;font-weight:600;font-size:12px;color:#444}
+  .pill.unread{background:#e8f0ff;color:#264a9f}
   .chat-main{flex:1;border:1px solid #ddd;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
   .chat-main-top{padding:12px;border-bottom:1px solid #eee}
   .chat-msgs{flex:1;overflow:auto;padding:12px}
@@ -16,6 +21,13 @@
   .chat-msg .meta{font-size:12px;opacity:.7}
   .chat-compose{padding:12px;border-top:1px solid #eee;display:flex;gap:8px}
   .chat-compose textarea{flex:1;resize:none}
+
+  @media (max-width: 900px) {
+    .chat-shell{flex-direction:column;height:auto}
+    .chat-left{width:100%}
+    .chat-left-list{max-height:260px}
+    .chat-main{width:100%;height:60vh}
+  }
 </style>
 
 <div class="chat-shell">
@@ -28,11 +40,19 @@
       {% for t in threads %}
         {% set members = members_by_thread.get(t.thread_id, []) %}
         {% set title = t.display_name_for(me_id, members, users_by_id) %}
+        {% set total = message_counts.get(t.thread_id, 0) if message_counts else 0 %}
+        {% set unread = unread_counts.get(t.thread_id, 0) if unread_counts else 0 %}
         <a class="chat-item {% if active_thread and active_thread.thread_id == t.thread_id %}active{% endif %}"
            href="{{ url_for('chat.thread', thread_id=t.thread_id) }}">
-          <div style="font-weight:600">{{ title }}</div>
-          <div style="font-size:12px;opacity:.7">
-            {{ "Group" if t.thread_type == "group" else "Direct" }}
+          <div class="row1">
+            <div class="title">{{ title }}</div>
+            <div style="font-size:12px;opacity:.7;">{{ "Group" if t.thread_type == "group" else "Direct" }}</div>
+          </div>
+          <div class="row2">
+            <span class="pill">{{ total }} msgs</span>
+            {% if unread %}
+              <span class="pill unread">{{ unread }} unread</span>
+            {% endif %}
           </div>
         </a>
       {% else %}

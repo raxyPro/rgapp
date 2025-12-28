@@ -51,6 +51,7 @@ class ChatThreadMember(db.Model):
 
     role = db.Column(db.Enum("owner", "member"), nullable=False, default="member")
     joined_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    last_read_at = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
 
     __table_args__ = (
         UniqueConstraint("thread_id", "user_id", name="uq_chat_thread_member"),

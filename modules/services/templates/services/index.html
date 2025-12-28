@@ -1,0 +1,86 @@
+{% extends "app_shell.html" %}
+{% block content %}
+<div class="hrow">
+  <div>
+    <h1>Services & Skills</h1>
+    <p>Browse providers with a tagline and start a chat about their offerings.</p>
+  </div>
+</div>
+
+{% if me %}
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>Your services</h2>
+      <p>Visible to others. Update via your vCard.</p>
+    </div>
+  </div>
+  <div class="cardBody" style="overflow-x:auto;">
+    <table class="table" style="min-width:720px;">
+      <thead>
+        <tr>
+          <th style="width:50px; text-align:left;">S.No</th>
+          <th style="text-align:left;">Handle</th>
+          <th style="text-align:left;">Tagline</th>
+          <th style="text-align:left;">Services</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>{{ me.handle or me.email }}</td>
+          <td>{{ me.tagline }}</td>
+          <td>
+            {% if me.services %}
+              {% for s in me.services %}{{ s.title }}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% else %}-{% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<div style="height:14px;"></div>
+{% endif %}
+
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>All providers</h2>
+      <p>Find a handle, review services, and start a chat.</p>
+    </div>
+  </div>
+  <div class="cardBody" style="overflow-x:auto;">
+    {% if others %}
+      <table class="table" style="min-width:720px;">
+        <thead>
+          <tr>
+            <th style="width:50px; text-align:left;">S.No</th>
+            <th style="text-align:left;">Handle</th>
+            <th style="text-align:left;">Tagline</th>
+            <th style="text-align:left;">Services</th>
+            <th style="width:120px; text-align:left;">Chat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in others %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ p.handle or p.email }}</td>
+            <td>{{ p.tagline }}</td>
+            <td>
+              {% if p.services %}
+                {% for s in p.services %}{{ s.title }}{% if not loop.last %}, {% endif %}{% endfor %}
+              {% else %}-{% endif %}
+            </td>
+            <td><a class="btn btn-sm primary" href="{{ url_for('chat.dm_with_note', user_id=p.user_id, note=('Inquiry about your services')|urlencode) }}">Chat</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div style="color:var(--muted);">No providers found.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
