@@ -10,7 +10,7 @@ from flask_login import login_required
 from extensions import db
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
-from modules.cv.models import RBCVFile
+from modules.cv.models import RBCVProfile
 from modules.cv.util import sanitize_filename
 from modules.social.models import SocialLike, SocialPost
 from models import RBUser, RBUserProfile
@@ -53,7 +53,12 @@ def index():
         prof = profiles.get(uid)
         if prof:
             u.handle = getattr(prof, "handle", None)
-    cv_files = RBCVFile.query.filter_by(owner_user_id=me_id, is_archived=False).order_by(RBCVFile.updated_at.desc()).all()
+    cv_files = (
+        RBCVProfile.query
+        .filter_by(owner_user_id=me_id, is_archived=False, doc_type="cv")
+        .order_by(RBCVProfile.updated_at.desc())
+        .all()
+    )
 
     roots = (
         SocialPost.query

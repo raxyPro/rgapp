@@ -1,92 +1,238 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy.orm import synonym
+
 from extensions import db
 
 
-class RBVCard(db.Model):
-    __tablename__ = "rb_vcard"
+class RBCVProfile(db.Model):
+    """
+    Unified CV + vCard record.
+    - doc_type: 'vcard' or 'cv'
+    - details: JSON payload; for vcards it stores fields like name/email/phone/etc + skills/services arrays.
+               for CVs it stores cv_name, cover_letter, job_pref, original_filename, cover_letter_* metadata.
+    - pdf_data: binary CV (for doc_type='cv'); leave null for vCards.
+    """
 
-    vcard_id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(db.BigInteger, nullable=False, unique=True)
+    __tablename__ = "rb_cv_profile"
 
-    name = db.Column(db.String(150), nullable=False, default="")
-    email = db.Column(db.String(150), nullable=False, default="")
-    phone = db.Column(db.String(60), nullable=False, default="")
-    linkedin_url = db.Column(db.String(255), nullable=False, default="")
-    tagline = db.Column(db.String(255), nullable=False, default="")
-    location = db.Column(db.String(150), nullable=True)
-    work_mode = db.Column(db.String(20), nullable=True)  # e.g., wfo / hybrid / remote
-    city = db.Column(db.String(120), nullable=True)
-    available_from = db.Column(db.Date, nullable=True)
-    hours_per_day = db.Column(db.Integer, nullable=True)
+    vcard_id = db.Column("profile_id", db.BigInteger, primary_key=True, autoincrement=True)
+    cvfile_id = synonym("vcard_id")
 
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.BigInteger, nullable=False, index=True)
+    owner_user_id = synonym("user_id")
 
-    __table_args__ = (
-        db.UniqueConstraint("user_id", name="uq_rb_vcard_user"),
-        db.Index("idx_rb_vcard_user", "user_id"),
-    )
+    doc_type = db.Column(db.String(20), nullable=False, index=True)  # 'vcard' or 'cv'
+    details = db.Column(db.JSON, nullable=False, default=dict)
 
-    def touch(self):
-        self.updated_at = datetime.utcnow()
+    pdf_data = db.Column(db.LargeBinary, nullable=True)
+    pdf_name = db.Column(db.String(255), nullable=True)
+    pdf_mime = db.Column(db.String(120), nullable=True)
+    pdf_size = db.Column(db.BigInteger, nullable=True)
 
-
-class RBVCardItem(db.Model):
-    __tablename__ = "rb_vcard_item"
-
-    item_id = db.Column(db.BigInteger, primary_key=True)
-    vcard_id = db.Column(db.BigInteger, nullable=False, index=True)
-
-    # 'skill' or 'service'
-    item_type = db.Column(db.String(20), nullable=False, index=True)
-
-    title = db.Column(db.String(150), nullable=False, default="")
-    description = db.Column(db.Text, nullable=False, default="")
-    experience = db.Column(db.Text, nullable=False, default="")  # free text (NOT years)
-
-    sort_order = db.Column(db.Integer, nullable=False, default=0)
-
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    __table_args__ = (
-        db.Index("idx_rb_vcard_item_vcard", "vcard_id"),
-        db.Index("idx_rb_vcard_item_type", "item_type"),
-    )
-
-
-class RBCVFile(db.Model):
-    __tablename__ = "rb_cv_file"
-
-    cvfile_id = db.Column(db.BigInteger, primary_key=True)
-    owner_user_id = db.Column(db.BigInteger, nullable=False, index=True)
-
-    cv_name = db.Column(db.String(200), nullable=False, default="")
-    cover_letter = db.Column(db.Text, nullable=True)
-    job_pref = db.Column(db.Text, nullable=True)
-    cover_letter_path = db.Column(db.String(500), nullable=True)
-    cover_letter_name = db.Column(db.String(255), nullable=True)
-    cover_letter_mime = db.Column(db.String(100), nullable=True)
-    cover_letter_size = db.Column(db.BigInteger, nullable=True)
-
-    original_filename = db.Column(db.String(255), nullable=False, default="")
-    stored_path = db.Column(db.String(500), nullable=False, default="")
-    mime_type = db.Column(db.String(100), nullable=False, default="application/pdf")
-    size_bytes = db.Column(db.BigInteger, nullable=False, default=0)
+    cover_pdf_data = db.Column(db.LargeBinary, nullable=True)
+    cover_pdf_name = db.Column(db.String(255), nullable=True)
+    cover_pdf_mime = db.Column(db.String(120), nullable=True)
+    cover_pdf_size = db.Column(db.BigInteger, nullable=True)
 
     is_archived = db.Column(db.Boolean, nullable=False, default=False)
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+    __table_args__ = (
+        db.Index("idx_cv_profile_user_type", "user_id", "doc_type"),
+        db.Index("idx_cv_profile_user", "user_id"),
+    )
+
+    # --- helpers ---
     def touch(self):
         self.updated_at = datetime.utcnow()
 
-    __table_args__ = (
-        db.Index("idx_rb_cv_file_owner", "owner_user_id"),
-        db.Index("idx_rb_cv_file_arch", "is_archived"),
-    )
+    def _details(self) -> Dict[str, Any]:
+        if self.details is None:
+            self.details = {}
+        return self.details
+
+    def _set_detail(self, key: str, value: Any):
+        data = self._details()
+        data[key] = value
+        self.details = data
+
+    # vCard-like fields
+    @property
+    def name(self) -> str:
+        return (self._details().get("name") or "").strip()
+
+    @name.setter
+    def name(self, val: str):
+        self._set_detail("name", (val or "").strip())
+
+    @property
+    def email(self) -> str:
+        return (self._details().get("email") or "").strip()
+
+    @email.setter
+    def email(self, val: str):
+        self._set_detail("email", (val or "").strip())
+
+    @property
+    def phone(self) -> str:
+        return (self._details().get("phone") or "").strip()
+
+    @phone.setter
+    def phone(self, val: str):
+        self._set_detail("phone", (val or "").strip())
+
+    @property
+    def linkedin_url(self) -> str:
+        return (self._details().get("linkedin_url") or "").strip()
+
+    @linkedin_url.setter
+    def linkedin_url(self, val: str):
+        self._set_detail("linkedin_url", (val or "").strip())
+
+    @property
+    def tagline(self) -> str:
+        return (self._details().get("tagline") or "").strip()
+
+    @tagline.setter
+    def tagline(self, val: str):
+        self._set_detail("tagline", (val or "").strip())
+
+    @property
+    def location(self) -> Optional[str]:
+        return (self._details().get("location") or None) or None
+
+    @location.setter
+    def location(self, val: Optional[str]):
+        self._set_detail("location", (val or "").strip() or None)
+
+    @property
+    def work_mode(self) -> Optional[str]:
+        return (self._details().get("work_mode") or None) or None
+
+    @work_mode.setter
+    def work_mode(self, val: Optional[str]):
+        self._set_detail("work_mode", (val or "").strip() or None)
+
+    @property
+    def city(self) -> Optional[str]:
+        return (self._details().get("city") or None) or None
+
+    @city.setter
+    def city(self, val: Optional[str]):
+        self._set_detail("city", (val or "").strip() or None)
+
+    @property
+    def available_from(self) -> Optional[str]:
+        return self._details().get("available_from") or None
+
+    @available_from.setter
+    def available_from(self, val: Optional[str]):
+        self._set_detail("available_from", val or None)
+
+    @property
+    def hours_per_day(self) -> Optional[int]:
+        hrs = self._details().get("hours_per_day")
+        return int(hrs) if hrs not in (None, "") else None
+
+    @hours_per_day.setter
+    def hours_per_day(self, val: Optional[int]):
+        self._set_detail("hours_per_day", val if val is not None else None)
+
+    @property
+    def skills(self) -> List[Dict[str, Any]]:
+        return self._details().get("skills") or []
+
+    @skills.setter
+    def skills(self, val: List[Dict[str, Any]]):
+        self._set_detail("skills", val or [])
+
+    @property
+    def services(self) -> List[Dict[str, Any]]:
+        return self._details().get("services") or []
+
+    @services.setter
+    def services(self, val: List[Dict[str, Any]]):
+        self._set_detail("services", val or [])
+
+    # CV-like fields
+    @property
+    def cv_name(self) -> str:
+        return (self._details().get("cv_name") or "").strip()
+
+    @cv_name.setter
+    def cv_name(self, val: str):
+        self._set_detail("cv_name", (val or "").strip())
+
+    @property
+    def cover_letter(self) -> Optional[str]:
+        return self._details().get("cover_letter")
+
+    @cover_letter.setter
+    def cover_letter(self, val: Optional[str]):
+        self._set_detail("cover_letter", (val or None))
+
+    @property
+    def job_pref(self) -> Optional[str]:
+        return self._details().get("job_pref")
+
+    @job_pref.setter
+    def job_pref(self, val: Optional[str]):
+        self._set_detail("job_pref", (val or None))
+
+    @property
+    def original_filename(self) -> str:
+        return (self._details().get("original_filename") or self.pdf_name or "").strip()
+
+    @original_filename.setter
+    def original_filename(self, val: str):
+        self._set_detail("original_filename", (val or "").strip())
+
+    @property
+    def cover_letter_name(self) -> Optional[str]:
+        return self._details().get("cover_letter_name")
+
+    @cover_letter_name.setter
+    def cover_letter_name(self, val: Optional[str]):
+        self._set_detail("cover_letter_name", val or None)
+
+    @property
+    def cover_letter_mime(self) -> Optional[str]:
+        return self._details().get("cover_letter_mime")
+
+    @cover_letter_mime.setter
+    def cover_letter_mime(self, val: Optional[str]):
+        self._set_detail("cover_letter_mime", val or None)
+
+    @property
+    def cover_letter_size(self) -> Optional[int]:
+        size = self._details().get("cover_letter_size")
+        return int(size) if size not in (None, "") else None
+
+    @cover_letter_size.setter
+    def cover_letter_size(self, val: Optional[int]):
+        self._set_detail("cover_letter_size", val if val is not None else None)
+
+    @property
+    def mime_type(self) -> Optional[str]:
+        return self.pdf_mime
+
+    @mime_type.setter
+    def mime_type(self, val: Optional[str]):
+        self.pdf_mime = val
+
+    @property
+    def size_bytes(self) -> Optional[int]:
+        return self.pdf_size
+
+    @size_bytes.setter
+    def size_bytes(self, val: Optional[int]):
+        self.pdf_size = val
 
 
 class RBVCardShare(db.Model):
@@ -143,7 +289,12 @@ class RBCVPublicLink(db.Model):
     __tablename__ = "rb_cv_public_link"
 
     link_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    cvfile_id = db.Column(db.BigInteger, db.ForeignKey("rb_cv_file.cvfile_id", ondelete="CASCADE"), nullable=False, index=True)
+    cvfile_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("rb_cv_profile.profile_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     created_by = db.Column(db.BigInteger, nullable=False, index=True)
     share_type = db.Column(db.Enum("public", "user", "email"), nullable=False, default="public")
     target = db.Column(db.String(320), nullable=True)

@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from extensions import db, login_manager, socketio
+from extensions import db, login_manager
 from flask_login import current_user
 
 from models import RBModule, RBUserModule, RBUserProfile
@@ -11,18 +11,22 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
-    socketio.init_app(app, async_mode="threading", cors_allowed_origins="*")
 
-    from routes_home import home_bp
-    from routes_auth import auth_bp
-    from routes_admin import admin_bp
-    from routes_user import user_bp
+    #from routes_home import home_bp
+    import routes_home
+    #from routes_auth import auth_bp
+    import routes_auth
+    import routes_admin
 
-    app.register_blueprint(home_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(user_bp)
+    #from routes_admin import admin_bp
+    import routes_user 
 
+    app.register_blueprint(routes_home.home_bp)
+    app.register_blueprint(routes_auth.auth_bp)
+    #app.register_blueprint(admin_bp)
+    app.register_blueprint(routes_admin.admin_bp)
+    app.register_blueprint(routes_user.user_bp)
+    
     @app.context_processor
     def inject_module_access():
         """Expose enabled module keys user can access as `module_access` and `user_obj` in all templates."""
@@ -88,4 +92,4 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    app.run(debug=True)

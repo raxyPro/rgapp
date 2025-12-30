@@ -6,7 +6,7 @@ from flask_login import login_required
 from models import RBUser, RBUserProfile
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
-from modules.cv.models import RBVCard, RBVCardItem
+from modules.cv.models import RBCVProfile
 
 services_bp = Blueprint(
     "services",
@@ -26,7 +26,7 @@ def index():
     users = {u.user_id: u for u in RBUser.query.all()}
     profiles = {p.user_id: p for p in RBUserProfile.query.filter(RBUserProfile.user_id.in_(users.keys())).all()}
 
-    vcards = RBVCard.query.all()
+    vcards = RBCVProfile.query.filter_by(doc_type="vcard").all()
     providers = {}
     for v in vcards:
         # Only list vcards with a tagline to keep the catalogue meaningful.
@@ -47,16 +47,11 @@ def index():
         }
 
     if providers:
-        items = RBVCardItem.query.filter(RBVCardItem.vcard_id.in_([v.vcard_id for v in vcards])).all()
-        vcard_map = {v.vcard_id: v for v in vcards}
-        for item in items:
-            owner_id = vcard_map.get(item.vcard_id).user_id if vcard_map.get(item.vcard_id) else None
-            if owner_id not in providers:
+        for v in vcards:
+            if v.user_id not in providers:
                 continue
-            if item.item_type == "skill":
-                providers[owner_id]["skills"].append(item)
-            elif item.item_type == "service":
-                providers[owner_id]["services"].append(item)
+            providers[v.user_id]["skills"] = v.skills or []
+            providers[v.user_id]["services"] = v.services or []
 
     mine = providers.pop(me_id, None)
     others = list(providers.values())

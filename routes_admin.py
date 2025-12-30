@@ -2,6 +2,7 @@ from tokens import generate_reset_token
 from emailer import send_reset_email
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
@@ -16,7 +17,7 @@ from emailer import send_invite_email
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-def _unique_handle(base: str, user_id: int | None = None) -> str:
+def _unique_handle(base: str, user_id: Optional[int] = None) -> str:
     handle = "".join(ch.lower() if ch.isalnum() or ch in ("_", ".") else "-" for ch in base).strip("-._")
     handle = handle or "user"
     candidate = handle
@@ -197,7 +198,8 @@ def invite():
         db.session.commit()
 
         token = generate_invite_token(email)
-        invite_url = f"{current_app.config['APP_BASE_URL'].rstrip('/')}/register/{token}"
+        base_url = current_app.config.get("REGISTER_BASE_URL") or current_app.config.get("APP_BASE_URL")
+        invite_url = f"{base_url.rstrip('/')}/register/{token}"
         send_invite_email(email, invite_url)
 
         flash("Invitation sent.", "success")
@@ -216,7 +218,8 @@ def send_invite(user_id: int):
         return redirect(url_for("admin.dashboard"))
 
     token = generate_invite_token(u.email)
-    invite_url = f"{current_app.config['APP_BASE_URL'].rstrip('/')}/register/{token}"
+    base_url = current_app.config.get("REGISTER_BASE_URL") or current_app.config.get("APP_BASE_URL")
+    invite_url = f"{base_url.rstrip('/')}/register/{token}"
     send_invite_email(u.email, invite_url)
 
     db.session.add(RBAudit(

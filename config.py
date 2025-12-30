@@ -17,6 +17,7 @@ class Config:
     # --- App ---
     SECRET_KEY = config.get("app", "secret_key", fallback="dev-change-me")
     APP_BASE_URL = config.get("app", "app_base_url", fallback="http://localhost:5000")
+    REGISTER_BASE_URL = config.get("app", "register_base_url", fallback=APP_BASE_URL)
 
     # --- Database ---
     SQLALCHEMY_DATABASE_URI = config.get(
@@ -44,4 +45,9 @@ class Config:
     SMTP_PASS = config.get("email", "smtp_pass", fallback="")
     SMTP_FROM = config.get("email", "smtp_from", fallback="no-reply@raygrowbridge.com")
     SMTP_FROM_NAME = config.get("email", "smtp_from_name", fallback="RayGrow Bridge")
+    SMTP_USE_TLS = config.getboolean("email", "smtp_use_tls", fallback=True)
+    SMTP_USE_SSL = config.getboolean("email", "smtp_use_ssl", fallback=False)
+    SMTP_AUTH = config.getboolean("email", "smtp_auth", fallback=True)
+    SMTP_TIMEOUT = config.getint("email", "smtp_timeout", fallback=30)
+    SMTP_DEBUG = config.getboolean("email", "smtp_debug", fallback=False)
 

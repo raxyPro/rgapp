@@ -1,10 +1,9 @@
-pip install Flask
-pip install Flask-Login
-pip install Flask-SQLAlchemy
-pip install SQLAlchemy
-pip install PyMySQL
-pip install Flask-SocketIO
-pip install simple-websocket
-pip install itsdangerous
-pip install passlib[bcrypt]
-pip install python-dotenv
+pip install --upgrade "pip<23.1"
+pip install Flask==2.0.3
+pip install Flask-Login==0.6.2
+pip install Flask-SQLAlchemy==2.5.1
+pip install SQLAlchemy==1.4.52
+pip install PyMySQL==1.0.2
+pip install itsdangerous==2.0.1
+pip install "passlib[bcrypt]"==1.7.4
+pip install python-dotenv==0.21.0

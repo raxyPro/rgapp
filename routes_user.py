@@ -1,12 +1,13 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
+from typing import Optional
 import uuid
 
 from extensions import db
 from models import RBUserProfile, RBAudit, RBModule, RBUserModule
 
 
-def _unique_handle(base: str, user_id: int | None = None) -> str:
+def _unique_handle(base: str, user_id: Optional[int] = None) -> str:
     handle = "".join(ch.lower() if ch.isalnum() or ch in ("_", ".") else "-" for ch in base).strip("-._")
     handle = handle or "user"
     candidate = handle

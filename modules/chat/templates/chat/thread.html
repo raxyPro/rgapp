@@ -57,8 +57,8 @@
     window.RG_CHAT = {
       threadId: {{ active_thread.thread_id }},
       currentUserId: {{ me_id }},
-      socketEnabled: true,
-      httpSendUrl: "{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}",
+      sendUrl: "{{ url_for('chat.api_send', thread_id=active_thread.thread_id) }}",
+      pollUrl: "{{ url_for('chat.api_poll', thread_id=active_thread.thread_id) }}",
       senderEmails: {
         {% for uid, user in users_by_id.items() %}
           "{{ uid }}": {"email": "{{ user.email }}", "handle": "{{ user.handle or '' }}"}{% if not loop.last %},{% endif %}
@@ -66,7 +66,6 @@
       }
     };
   </script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="{{ url_for('chat.static', filename='chat.js') }}"></script>
   <script>
     function insertEmoji(e) {

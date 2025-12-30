@@ -76,9 +76,14 @@ def create_admin_always():
             delete_existing_admins()
 
             # Create fresh admin user
+            pw = ADMIN_PASSWORD
+            print("ADMIN_PASSWORD chars =", len(pw))
+            print("ADMIN_PASSWORD bytes =", len(pw.encode("utf-8")))
+            print("ADMIN_PASSWORD repr  =", repr(pw))
+
             user = RBUser(
                 email=ADMIN_EMAIL.strip().lower(),
-                password_hash=hash_password(ADMIN_PASSWORD),
+                password_hash=hash_password(pw),
                 status="active",
                 is_admin=True,
                 invited_at=now,

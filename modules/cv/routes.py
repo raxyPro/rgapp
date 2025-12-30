@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import os
 from datetime import datetime, timedelta
-from pathlib import Path
+from io import BytesIO
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, current_app, flash
+from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, flash
 from flask_login import login_required, current_user
 
 from extensions import db
@@ -12,9 +11,7 @@ from models import RBUser, RBUserProfile
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
 from modules.cv.models import (
-    RBVCard,
-    RBVCardItem,
-    RBCVFile,
+    RBCVProfile,
     RBVCardShare,
     RBCVFileShare,
     RBCVPair,
@@ -55,16 +52,33 @@ def _current_user_email_lower() -> str:
     return (getattr(me, "email", "") or "").strip().lower()
 
 
-def _get_or_create_vcard(user_id: int) -> RBVCard:
-    v = RBVCard.query.filter_by(user_id=user_id).first()
+def _get_or_create_vcard(user_id: int) -> RBCVProfile:
+    v = RBCVProfile.query.filter_by(user_id=user_id, doc_type="vcard").first()
     if not v:
-        v = RBVCard(user_id=user_id)
+        v = RBCVProfile(
+            user_id=user_id,
+            doc_type="vcard",
+            details={
+                "name": "",
+                "email": "",
+                "phone": "",
+                "linkedin_url": "",
+                "tagline": "",
+                "location": None,
+                "work_mode": None,
+                "city": None,
+                "available_from": None,
+                "hours_per_day": None,
+                "skills": [],
+                "services": [],
+            },
+        )
         db.session.add(v)
         db.session.commit()
     return v
 
 
-def _job_pref_from_vcard(v: RBVCard) -> str:
+def _job_pref_from_vcard(v: RBCVProfile) -> str:
     parts = []
     if v.location:
         parts.append(f"Location: {v.location}")
@@ -81,30 +95,19 @@ def _job_pref_from_vcard(v: RBVCard) -> str:
 
 
 def _vcard_items(vcard_id: int):
-    items = (
-        RBVCardItem.query
-        .filter_by(vcard_id=vcard_id)
-        .order_by(RBVCardItem.item_type.asc(), RBVCardItem.sort_order.asc(), RBVCardItem.item_id.asc())
-        .all()
-    )
-    skills = [i for i in items if i.item_type == "skill"]
-    services = [i for i in items if i.item_type == "service"]
+    vcard = RBCVProfile.query.filter_by(vcard_id=vcard_id, doc_type="vcard").first()
+    if not vcard:
+        return [], []
+    skills = sorted(vcard.skills or [], key=lambda i: i.get("sort_order", 0))
+    services = sorted(vcard.services or [], key=lambda i: i.get("sort_order", 0))
     return skills, services
 
 
-def _uploads_root() -> Path:
-    # Store uploads next to project root by default: <project>/uploads
-    # You can override with app config CV_UPLOAD_DIR
-    cfg = current_app.config.get("CV_UPLOAD_DIR") if current_app else None
-    if cfg:
-        return Path(cfg)
-    return Path(current_app.root_path).parent / "uploads"
-
-
-def _cv_user_dir(user_id: int) -> Path:
-    d = _uploads_root() / "cv" / str(user_id)
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+def _get_cv_profile(cvfile_id: int) -> RBCVProfile:
+    c = RBCVProfile.query.get_or_404(cvfile_id)
+    if c.doc_type != "cv":
+        abort(404)
+    return c
 
 
 def _render_onepage_html(p: RBCVPair) -> str:
@@ -145,9 +148,9 @@ def home():
     skills, services = _vcard_items(vcard.vcard_id)
 
     cv_files = (
-        RBCVFile.query
-        .filter_by(owner_user_id=me_id, is_archived=False)
-        .order_by(RBCVFile.updated_at.desc())
+        RBCVProfile.query
+        .filter_by(owner_user_id=me_id, is_archived=False, doc_type="cv")
+        .order_by(RBCVProfile.updated_at.desc())
         .all()
     )
 
@@ -182,10 +185,22 @@ def home():
 
     # Assets maps
     shared_vcard_ids = list({s.vcard_id for s in vcard_shares})
-    shared_vcards = {v.vcard_id: v for v in RBVCard.query.filter(RBVCard.vcard_id.in_(shared_vcard_ids)).all()} if shared_vcard_ids else {}
+    shared_vcards = {
+        v.vcard_id: v
+        for v in RBCVProfile.query.filter(
+            RBCVProfile.vcard_id.in_(shared_vcard_ids),
+            RBCVProfile.doc_type == "vcard",
+        ).all()
+    } if shared_vcard_ids else {}
 
     shared_cvfile_ids = list({s.cvfile_id for s in cvfile_shares})
-    shared_cvfiles = {c.cvfile_id: c for c in RBCVFile.query.filter(RBCVFile.cvfile_id.in_(shared_cvfile_ids)).all()} if shared_cvfile_ids else {}
+    shared_cvfiles = {
+        c.cvfile_id: c
+        for c in RBCVProfile.query.filter(
+            RBCVProfile.vcard_id.in_(shared_cvfile_ids),
+            RBCVProfile.doc_type == "cv",
+        ).all()
+    } if shared_cvfile_ids else {}
 
     shared_pair_ids = list({s.cv_id for s in pair_shares})
     shared_pairs = {p.cv_id: p for p in RBCVPair.query.filter(RBCVPair.cv_id.in_(shared_pair_ids)).all()} if shared_pair_ids else {}
@@ -235,7 +250,7 @@ def save_vcard():
     vcard.work_mode = (request.form.get("work_mode") or "").strip() or None
     vcard.city = (request.form.get("city") or "").strip() or None
     avail = (request.form.get("available_from") or "").strip()
-    vcard.available_from = datetime.strptime(avail, "%Y-%m-%d").date() if avail else None
+    vcard.available_from = avail if avail else None
     hrs = request.form.get("hours_per_day")
     try:
         vcard.hours_per_day = int(hrs) if hrs else None
@@ -243,38 +258,43 @@ def save_vcard():
         vcard.hours_per_day = None
     vcard.touch()
 
-    # Replace items (simple + reliable)
-    RBVCardItem.query.filter_by(vcard_id=vcard.vcard_id).delete()
+    skills = []
+    services = []
 
-    def _ingest(kind: str, titles, descs, exps):
+    def _ingest(kind: str, titles, descs, exps, target_list):
         for idx, t in enumerate(titles):
             title = (t or "").strip()
             if not title:
                 continue
             desc = (descs[idx] if idx < len(descs) else "") or ""
             exp = (exps[idx] if idx < len(exps) else "") or ""
-            item = RBVCardItem(
-                vcard_id=vcard.vcard_id,
-                item_type=kind,
-                title=title.strip(),
-                description=desc.strip(),
-                experience=exp.strip(),
-                sort_order=idx,
+            target_list.append(
+                {
+                    "item_type": kind,
+                    "title": title.strip(),
+                    "description": desc.strip(),
+                    "experience": exp.strip(),
+                    "sort_order": idx,
+                }
             )
-            db.session.add(item)
 
     _ingest(
         "skill",
         request.form.getlist("skill_title[]"),
         request.form.getlist("skill_desc[]"),
         request.form.getlist("skill_exp[]"),
+        skills,
     )
     _ingest(
         "service",
         request.form.getlist("service_title[]"),
         request.form.getlist("service_desc[]"),
         request.form.getlist("service_exp[]"),
+        services,
     )
+
+    vcard.skills = skills
+    vcard.services = services
 
     db.session.commit()
     return redirect(url_for("cv.home"))
@@ -519,41 +539,45 @@ def cvfile_new():
         abort(400, "Only PDF files are allowed")
 
     safe = sanitize_filename(f.filename)
-    stored_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe}"
-    out_dir = _cv_user_dir(me_id)
-    stored_path = out_dir / stored_name
-    f.save(stored_path)
-
-    size_bytes = stored_path.stat().st_size
+    pdf_bytes = f.read()
+    size_bytes = len(pdf_bytes) if pdf_bytes else 0
+    if size_bytes == 0:
+        abort(400, "Empty PDF")
 
     # Optional cover letter PDF
     cover_file = request.files.get("cover_pdf")
-    cover_path = cover_name = cover_mime = None
+    cover_name = cover_mime = None
     cover_size = None
+    cover_bytes = None
     if cover_file and cover_file.filename:
         if not allowed_pdf(cover_file.filename, getattr(cover_file, "mimetype", None)):
             abort(400, "Cover letter must be PDF")
         cover_safe = sanitize_filename(cover_file.filename)
-        cover_stored = out_dir / f"cover_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{cover_safe}"
-        cover_file.save(cover_stored)
-        cover_path = str(cover_stored)
         cover_name = cover_safe
         cover_mime = "application/pdf"
-        cover_size = cover_stored.stat().st_size
+        cover_bytes = cover_file.read()
+        cover_size = len(cover_bytes) if cover_bytes else 0
 
-    rec = RBCVFile(
-        owner_user_id=me_id,
-        cv_name=cv_name,
-        cover_letter=(request.form.get("cover_letter") or "").strip() or None,
-        job_pref=(request.form.get("job_pref") or "").strip() or _job_pref_from_vcard(vcard) or None,
-        cover_letter_path=cover_path,
-        cover_letter_name=cover_name,
-        cover_letter_mime=cover_mime,
-        cover_letter_size=cover_size,
-        original_filename=safe,
-        stored_path=str(stored_path),
-        mime_type="application/pdf",
-        size_bytes=size_bytes,
+    rec = RBCVProfile(
+        user_id=me_id,
+        doc_type="cv",
+        details={
+            "cv_name": cv_name,
+            "cover_letter": (request.form.get("cover_letter") or "").strip() or None,
+            "job_pref": (request.form.get("job_pref") or "").strip() or _job_pref_from_vcard(vcard) or None,
+            "original_filename": safe,
+            "cover_letter_name": cover_name,
+            "cover_letter_mime": cover_mime,
+            "cover_letter_size": cover_size,
+        },
+        pdf_data=pdf_bytes,
+        pdf_name=safe,
+        pdf_mime="application/pdf",
+        pdf_size=size_bytes,
+        cover_pdf_data=cover_bytes,
+        cover_pdf_name=cover_name,
+        cover_pdf_mime=cover_mime,
+        cover_pdf_size=cover_size,
     )
     db.session.add(rec)
     db.session.commit()
@@ -566,8 +590,8 @@ def cvfile_new():
 @module_required("cv")
 def cvfile_edit(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
-    if c.owner_user_id != me_id:
+    c = RBCVProfile.query.get_or_404(cvfile_id)
+    if c.owner_user_id != me_id or c.doc_type != "cv":
         abort(403)
 
     cv_name = (request.form.get("cv_name") or "").strip()
@@ -579,33 +603,26 @@ def cvfile_edit(cvfile_id: int):
         if not allowed_pdf(file.filename, getattr(file, "mimetype", None)):
             abort(400, "Only PDF files are allowed")
         safe = sanitize_filename(file.filename)
-        stored_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{safe}"
-        out_dir = _cv_user_dir(me_id)
-        stored_path = out_dir / stored_name
-        file.save(stored_path)
-        c.stored_path = str(stored_path)
+        pdf_bytes = file.read()
+        c.pdf_data = pdf_bytes
+        c.pdf_name = safe
         c.original_filename = safe
         c.mime_type = "application/pdf"
-        c.size_bytes = stored_path.stat().st_size
+        c.size_bytes = len(pdf_bytes) if pdf_bytes else 0
 
     cover_file = request.files.get("cover_pdf")
     if cover_file and cover_file.filename:
         if not allowed_pdf(cover_file.filename, getattr(cover_file, "mimetype", None)):
             abort(400, "Cover letter must be PDF")
         cover_safe = sanitize_filename(cover_file.filename)
-        out_dir = _cv_user_dir(me_id)
-        cover_stored = out_dir / f"cover_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{cover_safe}"
-        cover_file.save(cover_stored)
-        # Best effort remove old cover
-        try:
-            if c.cover_letter_path and os.path.exists(c.cover_letter_path):
-                os.remove(c.cover_letter_path)
-        except Exception:
-            pass
-        c.cover_letter_path = str(cover_stored)
+        cover_bytes = cover_file.read()
+        c.cover_pdf_data = cover_bytes
+        c.cover_pdf_name = cover_safe
         c.cover_letter_name = cover_safe
+        c.cover_pdf_mime = "application/pdf"
         c.cover_letter_mime = "application/pdf"
-        c.cover_letter_size = cover_stored.stat().st_size
+        c.cover_pdf_size = len(cover_bytes) if cover_bytes else 0
+        c.cover_letter_size = c.cover_pdf_size
 
     c.cv_name = cv_name
     c.cover_letter = (request.form.get("cover_letter") or c.cover_letter or "").strip() or None
@@ -621,16 +638,9 @@ def cvfile_edit(cvfile_id: int):
 @module_required("cv")
 def cvfile_delete(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
-    if c.owner_user_id != me_id:
+    c = RBCVProfile.query.get_or_404(cvfile_id)
+    if c.owner_user_id != me_id or c.doc_type != "cv":
         abort(403)
-
-    # best effort remove file
-    try:
-        if c.stored_path and os.path.exists(c.stored_path):
-            os.remove(c.stored_path)
-    except Exception:
-        pass
 
     # delete shares
     RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id).delete()
@@ -645,14 +655,14 @@ def cvfile_delete(cvfile_id: int):
 @module_required("cv")
 def cvfile_view(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
-    if c.owner_user_id != me_id:
+    c = RBCVProfile.query.get_or_404(cvfile_id)
+    if c.owner_user_id != me_id or c.doc_type != "cv":
         abort(403)
-    if not c.stored_path or not os.path.exists(c.stored_path):
+    if not c.pdf_data:
         abort(404)
     return send_file(
-        c.stored_path,
-        mimetype="application/pdf",
+        BytesIO(c.pdf_data),
+        mimetype=c.mime_type or "application/pdf",
         as_attachment=False,
         download_name=c.original_filename or "cv.pdf",
         conditional=True,
@@ -664,13 +674,13 @@ def cvfile_view(cvfile_id: int):
 @module_required("cv")
 def cvfile_cover_view(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
-    if c.owner_user_id != me_id:
+    c = RBCVProfile.query.get_or_404(cvfile_id)
+    if c.owner_user_id != me_id or c.doc_type != "cv":
         abort(403)
-    if not c.cover_letter_path or not os.path.exists(c.cover_letter_path):
+    if not c.cover_pdf_data:
         abort(404)
     return send_file(
-        c.cover_letter_path,
+        BytesIO(c.cover_pdf_data),
         mimetype=c.cover_letter_mime or "application/pdf",
         as_attachment=False,
         download_name=c.cover_letter_name or "cover-letter.pdf",
@@ -683,7 +693,7 @@ def cvfile_cover_view(cvfile_id: int):
 @module_required("cv")
 def share_cvfile(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
+    c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
         abort(403)
 
@@ -722,7 +732,7 @@ def share_cvfile(cvfile_id: int):
 @module_required("cv")
 def delete_cvfile_share(cvfile_id: int, share_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
+    c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
         abort(403)
 
@@ -764,7 +774,7 @@ def share_pair(cv_id: int):
 @module_required("cv")
 def share_cvfile_public(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
+    c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
         abort(403)
 
@@ -788,7 +798,7 @@ def share_cvfile_public(cvfile_id: int):
 @module_required("cv")
 def create_public_link(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
+    c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
         abort(403)
 
@@ -827,7 +837,7 @@ def create_public_link(cvfile_id: int):
 def extend_public_link(link_id: int):
     me_id = get_current_user_id()
     link = RBCVPublicLink.query.get_or_404(link_id)
-    cv = RBCVFile.query.get_or_404(link.cvfile_id)
+    cv = _get_cv_profile(link.cvfile_id)
     if cv.owner_user_id != me_id:
         abort(403)
     link.expires_at = (link.expires_at or datetime.utcnow()) + timedelta(minutes=10)
@@ -843,7 +853,7 @@ def extend_public_link(link_id: int):
 def disable_public_link(link_id: int):
     me_id = get_current_user_id()
     link = RBCVPublicLink.query.get_or_404(link_id)
-    cv = RBCVFile.query.get_or_404(link.cvfile_id)
+    cv = _get_cv_profile(link.cvfile_id)
     if cv.owner_user_id != me_id:
         abort(403)
     link.status = "disabled"
@@ -859,7 +869,7 @@ def disable_public_link(link_id: int):
 def delete_public_link(link_id: int):
     me_id = get_current_user_id()
     link = RBCVPublicLink.query.get_or_404(link_id)
-    cv = RBCVFile.query.get_or_404(link.cvfile_id)
+    cv = _get_cv_profile(link.cvfile_id)
     if cv.owner_user_id != me_id:
         abort(403)
     db.session.delete(link)
@@ -897,7 +907,7 @@ def share_pair_public(cv_id: int):
 @module_required("cv")
 def share_cvfile_user(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
+    c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
         abort(403)
 
@@ -959,7 +969,7 @@ def share_pair_user(cv_id: int):
 @module_required("cv")
 def share_cvfile_email(cvfile_id: int):
     me_id = get_current_user_id()
-    c = RBCVFile.query.get_or_404(cvfile_id)
+    c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
         abort(403)
 
@@ -1019,11 +1029,11 @@ def share_pair_email(cv_id: int):
 # ─────────────────────────────
 @cvviewer_bp.route("/<token>", methods=["GET", "POST"])
 def view(token: str):
-    from flask import session, render_template_string
+    from flask import session
     s = RBCVFileShare.query.filter_by(share_token=token).first()
     if s:
         # Token grants access whether public or private
-        c = RBCVFile.query.get_or_404(s.cvfile_id)
+        c = _get_cv_profile(s.cvfile_id)
         owner = RBUser.query.get(c.owner_user_id)
         cv_link = url_for("cvviewer.view", token=s.share_token, _external=True)
         return render_template("cv/view_public_cv.html", c=c, owner=owner, share=s, cv_link=cv_link)
@@ -1046,7 +1056,7 @@ def view(token: str):
                     return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True, error="Invalid password"), 403
             else:
                 return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True)
-    c = RBCVFile.query.get_or_404(pl.cvfile_id)
+    c = _get_cv_profile(pl.cvfile_id)
     owner = RBUser.query.get(c.owner_user_id)
     cv_link = url_for("cvviewer.view", token=pl.token, _external=True)
     return render_template("cv/view_public_cv.html", c=c, owner=owner, share=pl, cv_link=cv_link, need_password=False)
@@ -1056,7 +1066,7 @@ def view(token: str):
 def file(token: str):
     s = RBCVFileShare.query.filter_by(share_token=token).first()
     if s:
-        c = RBCVFile.query.get_or_404(s.cvfile_id)
+        c = _get_cv_profile(s.cvfile_id)
         allow_dl = True
     else:
         pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
@@ -1064,15 +1074,15 @@ def file(token: str):
             abort(403)
         if pl.expires_at and pl.expires_at <= datetime.utcnow():
             abort(410)
-        c = RBCVFile.query.get_or_404(pl.cvfile_id)
+        c = _get_cv_profile(pl.cvfile_id)
         allow_dl = pl.allow_download
 
-    if not c.stored_path or not os.path.exists(c.stored_path):
+    if not c.pdf_data:
         abort(404)
 
     return send_file(
-        c.stored_path,
-        mimetype="application/pdf",
+        BytesIO(c.pdf_data),
+        mimetype=c.mime_type or "application/pdf",
         as_attachment=allow_dl,
         download_name=c.original_filename or "cv.pdf",
         conditional=True,
@@ -1083,20 +1093,20 @@ def file(token: str):
 def cover(token: str):
     s = RBCVFileShare.query.filter_by(share_token=token).first()
     if s:
-        c = RBCVFile.query.get_or_404(s.cvfile_id)
+        c = _get_cv_profile(s.cvfile_id)
     else:
         pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
         if pl.status != "active":
             abort(403)
         if pl.expires_at and pl.expires_at <= datetime.utcnow():
             abort(410)
-        c = RBCVFile.query.get_or_404(pl.cvfile_id)
+        c = _get_cv_profile(pl.cvfile_id)
 
-    if not c.cover_letter_path or not os.path.exists(c.cover_letter_path):
+    if not c.cover_pdf_data:
         abort(404)
 
     return send_file(
-        c.cover_letter_path,
+        BytesIO(c.cover_pdf_data),
         mimetype=c.cover_letter_mime or "application/pdf",
         as_attachment=False,
         download_name=c.cover_letter_name or "cover-letter.pdf",
@@ -1121,7 +1131,9 @@ def view(token: str):
     if not s.is_public:
         abort(403)
 
-    v = RBVCard.query.get_or_404(s.vcard_id)
+    v = RBCVProfile.query.get_or_404(s.vcard_id)
+    if v.doc_type != "vcard":
+        abort(404)
     skills, services = _vcard_items(v.vcard_id)
     owner = RBUser.query.get(v.user_id)
     return render_template("cv/view_public_vcard.html", vcard=v, skills=skills, services=services, owner=owner, share=s)

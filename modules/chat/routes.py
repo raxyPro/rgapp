@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import time
 from flask import Blueprint, render_template, request, redirect, url_for, abort, jsonify
 from flask_login import login_required, current_user
 from markupsafe import Markup, escape
@@ -121,6 +122,21 @@ def _unread_counts(thread_ids: list[int], me_id: int) -> dict[int, int]:
         .all()
     )
     return {tid: cnt for tid, cnt in rows}
+
+
+def _serialize_message(m: ChatMessage) -> dict:
+    return {
+        "message_id": m.message_id,
+        "thread_id": m.thread_id,
+        "sender_id": m.sender_id,
+        "body": m.body,
+        "created_at": m.created_at.isoformat(),
+    }
+
+
+POLL_TIMEOUT_SEC = 25
+POLL_SLEEP_SEC = 0.1
+POLL_MAX_RETURN = 200
 
 @chat_bp.get("/")
 @login_required
@@ -370,8 +386,11 @@ def send_message_http(thread_id: int):
     me_id = get_current_user_id()
     require_thread_member(thread_id, me_id)
 
-    body = (request.form.get("body") or "").strip()
+    payload = request.get_json(silent=True) if request.is_json else request.form
+    body = ((payload.get("body") if payload else None) or "").strip()
     if not body:
+        if request.is_json:
+            return jsonify({"ok": False, "error": "Message required"}), 400
         return redirect(url_for("chat.thread", thread_id=thread_id))
 
     msg = ChatMessage(thread_id=thread_id, sender_id=me_id, body=body)
@@ -387,6 +406,9 @@ def send_message_http(thread_id: int):
         db.session.add(my_member)
 
     db.session.commit()
+
+    if request.is_json:
+        return jsonify({"ok": True, "message": _serialize_message(msg)})
     return redirect(url_for("chat.thread", thread_id=thread_id))
 
 
@@ -464,13 +486,67 @@ def api_messages(thread_id: int):
         .all()
     )
 
-    return jsonify([
-        {
-            "message_id": m.message_id,
-            "thread_id": m.thread_id,
-            "sender_id": m.sender_id,
-            "body": m.body,
-            "created_at": m.created_at.isoformat(),
-        }
-        for m in msgs
-    ])
+    return jsonify([_serialize_message(m) for m in msgs])
+
+
+@chat_bp.post("/api/thread/<int:thread_id>/send")
+@login_required
+@module_required("chat")
+def api_send(thread_id: int):
+    # JSON-only send endpoint for long polling client
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    data = request.get_json(silent=True) or {}
+    body = (data.get("body") or "").strip()
+    if not body:
+        return jsonify({"ok": False, "error": "Message required"}), 400
+
+    msg = ChatMessage(thread_id=thread_id, sender_id=me_id, body=body)
+    db.session.add(msg)
+
+    t = ChatThread.query.get(thread_id)
+    if t:
+        t.updated_at = datetime.utcnow()
+
+    mem = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=me_id).first()
+    if mem:
+        mem.last_read_at = datetime.utcnow()
+        db.session.add(mem)
+
+    db.session.commit()
+    return jsonify({"ok": True, "message": _serialize_message(msg)})
+
+
+@chat_bp.get("/api/thread/<int:thread_id>/poll")
+@login_required
+@module_required("chat")
+def api_poll(thread_id: int):
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    try:
+        since = int(request.args.get("since", "0"))
+    except ValueError:
+        since = 0
+
+    deadline = time.time() + POLL_TIMEOUT_SEC
+    while True:
+        new_msgs = (
+            ChatMessage.query
+            .filter(ChatMessage.thread_id == thread_id, ChatMessage.message_id > since)
+            .order_by(ChatMessage.message_id.asc())
+            .limit(POLL_MAX_RETURN)
+            .all()
+        )
+        if new_msgs:
+            # touch last_read for requester
+            mem = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=me_id).first()
+            if mem:
+                mem.last_read_at = datetime.utcnow()
+                db.session.add(mem)
+                db.session.commit()
+            return jsonify({"messages": [_serialize_message(m) for m in new_msgs]})
+
+        if time.time() >= deadline:
+            return jsonify({"messages": []})
+
+        time.sleep(POLL_SLEEP_SEC)
