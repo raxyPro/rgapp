@@ -1,0 +1,6 @@
+PassengerEnabled on
+PassengerAppRoot "/home/rcprhkdi/public_html/bridge"
+PassengerBaseURI "/bridge"
+PassengerPython "/home/rcprhkdi/virtualenv/public_html/bridge/3.11/bin/python"
+
+Options -Indexes

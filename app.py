@@ -1,3 +1,4 @@
+#
 from flask import Flask, redirect, request
 from config import Config
 from extensions import db, login_manager
@@ -27,16 +28,27 @@ def create_app():
     app.register_blueprint(routes_admin.admin_bp)
     app.register_blueprint(routes_user.user_bp)
 
-    subpath = (app.config.get("APP_SUBPATH") or "").strip("/")
+    @app.after_request
+    def no_cache(response):
+        """Prevent client/proxy caching of dynamic pages."""
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
+    subpath = (app.config.get("APP_SUBPATH") or "").strip("/")
     if subpath:
+        prefix = f"/{subpath}"
+
         @app.before_request
-        def _redirect_admin_subpath():
-            # If admin is accessed without the configured subpath, redirect to the correct path.
-            if request.path.startswith(f"/{subpath}/admin"):
+        def _redirect_subpath():
+            # Keep requests under the configured subpath; redirect absolute root paths.
+            if request.path == prefix or request.path.startswith(prefix + "/"):
                 return
-            if request.path.startswith("/admin"):
-                return redirect(f"/{subpath}{request.path}", code=302)
+            # Allow static files without redirect to avoid loops if served by web server directly.
+            if request.path.startswith("/static/"):
+                return
+            return redirect(f"{prefix}{request.path}", code=302)
     
     @app.context_processor
     def inject_module_access():
