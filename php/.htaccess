@@ -1,0 +1,5 @@
+PassengerEnabled off
+
+# Optional: if your host needs explicit PHP handler, uncomment ONE line (depends on cPanel):
+AddHandler application/x-httpd-ea-php81 .php
+# AddHandler application/x-httpd-ea-php82 .php

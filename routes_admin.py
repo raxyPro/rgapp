@@ -2,6 +2,7 @@ from tokens import generate_reset_token
 from emailer import send_reset_email
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from datetime import datetime
@@ -342,3 +343,25 @@ def admin_reset_password(user_id):
 
     flash(f"Reset link sent to {u.email}.", "success")
     return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/viewlog", methods=["GET"])
+@login_required
+@admin_required
+def view_log():
+    log_path = Path(current_app.root_path) / "stderr.log"
+
+    if not log_path.exists():
+        flash("stderr.log not found.", "warning")
+        return redirect(url_for("admin.dashboard"))
+
+    try:
+        with log_path.open("r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+    except Exception as exc:
+        flash(f"Unable to read stderr.log: {exc}", "danger")
+        return redirect(url_for("admin.dashboard"))
+
+    # Limit to last 400 lines to keep page responsive.
+    tail_lines = "".join(lines[-400:])
+    return render_template("admin_log.html", log_text=tail_lines, log_path=str(log_path))

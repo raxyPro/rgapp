@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect, request
 from config import Config
 from extensions import db, login_manager
 from flask_login import current_user
@@ -26,6 +26,17 @@ def create_app():
     #app.register_blueprint(admin_bp)
     app.register_blueprint(routes_admin.admin_bp)
     app.register_blueprint(routes_user.user_bp)
+
+    subpath = (app.config.get("APP_SUBPATH") or "").strip("/")
+
+    if subpath:
+        @app.before_request
+        def _redirect_admin_subpath():
+            # If admin is accessed without the configured subpath, redirect to the correct path.
+            if request.path.startswith(f"/{subpath}/admin"):
+                return
+            if request.path.startswith("/admin"):
+                return redirect(f"/{subpath}{request.path}", code=302)
     
     @app.context_processor
     def inject_module_access():
