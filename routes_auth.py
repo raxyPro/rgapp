@@ -89,6 +89,7 @@ def login():
         # Default: grant social module if enabled
         _ensure_module_access(u.user_id, "social")
         _ensure_module_access(u.user_id, "services")
+        _ensure_module_access(u.user_id, "cv")
         db.session.commit()
 
         login_user(UserLoginAdapter(u))

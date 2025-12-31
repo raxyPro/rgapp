@@ -21,7 +21,7 @@ def _unique_handle(base: str, user_id: Optional[int] = None) -> str:
         suffix += 1
         candidate = f"{handle}{suffix}"
 
-user_bp = Blueprint("user", __name__, url_prefix="/app")
+user_bp = Blueprint("user", __name__)
 
 @user_bp.route("/welcome")
 @login_required
@@ -75,3 +75,9 @@ def profile():
         return redirect(url_for("user.welcome"))
 
     return render_template("profile.html", profile=prof, email=u.email)
+
+
+# Backward compatibility for old /app/welcome path
+@user_bp.route("/app/welcome")
+def welcome_legacy():
+    return redirect(url_for("user.welcome"))

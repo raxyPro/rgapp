@@ -19,6 +19,7 @@ class Config:
     SECRET_KEY = config.get("app", "secret_key", fallback="dev-change-me")
     APP_BASE_URL = config.get("app", "app_base_url", fallback="http://localhost:5000")
     APP_SUBPATH = config.get("app", "app_subpath", fallback="")
+    APP_ENFORCE_SUBPATH = config.getboolean("app", "app_enforce_subpath", fallback=False)
     REGISTER_BASE_URL = config.get("app", "register_base_url", fallback=APP_BASE_URL)
 
     # --- Database ---

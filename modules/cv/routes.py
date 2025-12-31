@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta
 from io import BytesIO
+from pathlib import Path
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, flash
+from flask import Blueprint, abort, current_app, redirect, render_template, request, url_for, send_file, flash
 from flask_login import login_required, current_user
 
 from extensions import db
@@ -50,6 +52,40 @@ vcardviewer_bp = Blueprint(
 def _current_user_email_lower() -> str:
     me = current_user.get_user() if hasattr(current_user, "get_user") else None
     return (getattr(me, "email", "") or "").strip().lower()
+
+
+def _log_event(kind: str, reason: str, **context) -> None:
+    """Append a structured event to the CV log file."""
+    try:
+        cfg_path = current_app.config.get("CV_FORBIDDEN_LOG") if current_app else None
+        log_path = Path(cfg_path) if cfg_path else Path(__file__).resolve().parent / "cv_forbidden.log"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "ts": datetime.utcnow().isoformat() + "Z",
+            "kind": kind,
+            "reason": reason,
+            "path": request.path,
+            "method": request.method,
+            "user_id": get_current_user_id(),
+            "email": _current_user_email_lower(),
+            "remote_addr": request.headers.get("X-Forwarded-For", request.remote_addr),
+            "context": context,
+        }
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(payload, default=str) + "\n")
+    except Exception:
+        # Never block the request because of logging issues
+        pass
+
+
+def _forbidden(reason: str, **context):
+    _log_event("forbidden", reason, **context)
+    abort(403)
+
+
+def _log_access(reason: str, **context):
+    """Log a successful access event (helps validate logging pipeline)."""
+    _log_event("ok", reason, **context)
 
 
 def _get_or_create_vcard(user_id: int) -> RBCVProfile:
@@ -141,6 +177,7 @@ def _can_access_share_target(target_user_id: int | None, target_email: str | Non
 @login_required
 @module_required("cv")
 def home():
+    print("CV Home accessed")
     me_id = get_current_user_id()
     me_email = _current_user_email_lower()
 
@@ -342,7 +379,8 @@ def pair_edit(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("pair_edit_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
+    _log_access("pair_edit_ok", cv_id=cv_id, me_id=me_id)
     return render_template("cv/edit_pair.html", pair=p)
 
 
@@ -353,7 +391,7 @@ def pair_save(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("pair_save_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
 
     # vCard-like fields
     p.v_name = (request.form.get("v_name") or "").strip()
@@ -393,7 +431,7 @@ def pair_archive(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("pair_archive_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
     p.is_archived = True
     db.session.add(p)
     db.session.commit()
@@ -407,7 +445,7 @@ def pair_unarchive(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("pair_unarchive_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
     p.is_archived = False
     db.session.add(p)
     db.session.commit()
@@ -592,7 +630,7 @@ def cvfile_edit(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
     if c.owner_user_id != me_id or c.doc_type != "cv":
-        abort(403)
+        _forbidden("cvfile_edit_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, doc_type=c.doc_type, me_id=me_id)
 
     cv_name = (request.form.get("cv_name") or "").strip()
     if not cv_name:
@@ -640,7 +678,7 @@ def cvfile_delete(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
     if c.owner_user_id != me_id or c.doc_type != "cv":
-        abort(403)
+        _forbidden("cvfile_delete_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, doc_type=c.doc_type, me_id=me_id)
 
     # delete shares
     RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id).delete()
@@ -657,7 +695,8 @@ def cvfile_view(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
     if c.owner_user_id != me_id or c.doc_type != "cv":
-        abort(403)
+        _forbidden("cvfile_view_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, doc_type=c.doc_type, me_id=me_id)
+    _log_access("cvfile_view_ok", cvfile_id=cvfile_id, me_id=me_id, download=False)
     if not c.pdf_data:
         abort(404)
     return send_file(
@@ -676,7 +715,8 @@ def cvfile_cover_view(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
     if c.owner_user_id != me_id or c.doc_type != "cv":
-        abort(403)
+        _forbidden("cvfile_cover_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, doc_type=c.doc_type, me_id=me_id)
+    _log_access("cvfile_cover_ok", cvfile_id=cvfile_id, me_id=me_id)
     if not c.cover_pdf_data:
         abort(404)
     return send_file(
@@ -695,7 +735,7 @@ def share_cvfile(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
-        abort(403)
+        _forbidden("share_cvfile_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
 
     shares = (
         RBCVFileShare.query
@@ -734,11 +774,11 @@ def delete_cvfile_share(cvfile_id: int, share_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
-        abort(403)
+        _forbidden("delete_cvfile_share_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
 
     share = RBCVFileShare.query.get_or_404(share_id)
     if share.owner_user_id != me_id or share.cvfile_id != cvfile_id:
-        abort(403)
+        _forbidden("delete_cvfile_share_mismatch", cvfile_id=cvfile_id, owner=c.owner_user_id, share_owner=share.owner_user_id, share_cvfile_id=share.cvfile_id, me_id=me_id)
 
     db.session.delete(share)
     db.session.commit()
@@ -753,7 +793,7 @@ def share_pair(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("share_pair_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
 
     shares = (
         RBCVShare.query
@@ -776,7 +816,7 @@ def share_cvfile_public(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
-        abort(403)
+        _forbidden("share_cvfile_public_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
 
     s = RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id, is_public=True).first()
     if not s:
@@ -800,7 +840,7 @@ def create_public_link(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
-        abort(403)
+        _forbidden("cv_public_link_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
 
     name = (request.form.get("name") or "").strip()
     minutes_raw = int(request.form.get("expiry_minutes") or 15)
@@ -839,7 +879,7 @@ def extend_public_link(link_id: int):
     link = RBCVPublicLink.query.get_or_404(link_id)
     cv = _get_cv_profile(link.cvfile_id)
     if cv.owner_user_id != me_id:
-        abort(403)
+        _forbidden("cv_public_link_extend_not_owner", link_id=link_id, cvfile_id=cv.cvfile_id, owner=cv.owner_user_id, me_id=me_id)
     link.expires_at = (link.expires_at or datetime.utcnow()) + timedelta(minutes=10)
     db.session.add(link)
     db.session.commit()
@@ -855,7 +895,7 @@ def disable_public_link(link_id: int):
     link = RBCVPublicLink.query.get_or_404(link_id)
     cv = _get_cv_profile(link.cvfile_id)
     if cv.owner_user_id != me_id:
-        abort(403)
+        _forbidden("cv_public_link_disable_not_owner", link_id=link_id, cvfile_id=cv.cvfile_id, owner=cv.owner_user_id, me_id=me_id)
     link.status = "disabled"
     db.session.add(link)
     db.session.commit()
@@ -871,7 +911,7 @@ def delete_public_link(link_id: int):
     link = RBCVPublicLink.query.get_or_404(link_id)
     cv = _get_cv_profile(link.cvfile_id)
     if cv.owner_user_id != me_id:
-        abort(403)
+        _forbidden("cv_public_link_delete_not_owner", link_id=link_id, cvfile_id=cv.cvfile_id, owner=cv.owner_user_id, me_id=me_id)
     db.session.delete(link)
     db.session.commit()
     flash("Link deleted.", "info")
@@ -885,7 +925,7 @@ def share_pair_public(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("share_pair_public_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
 
     s = RBCVShare.query.filter_by(cv_id=cv_id, owner_user_id=me_id, is_public=True).first()
     if not s:
@@ -909,7 +949,7 @@ def share_cvfile_user(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
-        abort(403)
+        _forbidden("share_cvfile_user_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
 
     target_user_id = request.form.get("target_user_id")
     if not target_user_id or not str(target_user_id).isdigit():
@@ -940,7 +980,7 @@ def share_pair_user(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("share_pair_user_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
 
     target_user_id = request.form.get("target_user_id")
     if not target_user_id or not str(target_user_id).isdigit():
@@ -971,7 +1011,7 @@ def share_cvfile_email(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
     if c.owner_user_id != me_id:
-        abort(403)
+        _forbidden("share_cvfile_email_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
 
     email = (request.form.get("target_email") or "").strip().lower()
     if not email or "@" not in email:
@@ -1001,7 +1041,7 @@ def share_pair_email(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
-        abort(403)
+        _forbidden("share_pair_email_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
 
     email = (request.form.get("target_email") or "").strip().lower()
     if not email or "@" not in email:
@@ -1040,7 +1080,7 @@ def view(token: str):
 
     pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
     if pl.status != "active":
-        abort(403)
+        _forbidden("public_link_inactive", token=token, status=pl.status)
     if pl.expires_at and pl.expires_at <= datetime.utcnow():
         abort(410)
     # Password check
@@ -1053,6 +1093,7 @@ def view(token: str):
                 if pw and check_password_hash(pl.password_hash, pw):
                     session[key] = True
                 else:
+                    _log_forbidden("public_link_bad_password", token=token, remote_addr=request.remote_addr)
                     return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True, error="Invalid password"), 403
             else:
                 return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True)
@@ -1071,7 +1112,7 @@ def file(token: str):
     else:
         pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
         if pl.status != "active":
-            abort(403)
+            _forbidden("public_link_file_inactive", token=token, status=pl.status)
         if pl.expires_at and pl.expires_at <= datetime.utcnow():
             abort(410)
         c = _get_cv_profile(pl.cvfile_id)
@@ -1097,7 +1138,7 @@ def cover(token: str):
     else:
         pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
         if pl.status != "active":
-            abort(403)
+            _forbidden("public_link_cover_inactive", token=token, status=pl.status)
         if pl.expires_at and pl.expires_at <= datetime.utcnow():
             abort(410)
         c = _get_cv_profile(pl.cvfile_id)
@@ -1118,7 +1159,7 @@ def cover(token: str):
 def view_pair(token: str):
     s = RBCVShare.query.filter_by(share_token=token).first_or_404()
     if not s.is_public:
-        abort(403)
+        _forbidden("pair_view_not_public", token=token, share_id=s.share_id, owner=s.owner_user_id)
 
     p = RBCVPair.query.get_or_404(s.cv_id)
     owner = RBUser.query.get(p.user_id)
@@ -1129,7 +1170,7 @@ def view_pair(token: str):
 def view(token: str):
     s = RBVCardShare.query.filter_by(share_token=token).first_or_404()
     if not s.is_public:
-        abort(403)
+        _forbidden("vcard_view_not_public", token=token, share_id=s.share_id, owner=s.owner_user_id)
 
     v = RBCVProfile.query.get_or_404(s.vcard_id)
     if v.doc_type != "vcard":

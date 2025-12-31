@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from functools import wraps
 
-from flask import abort
+from flask import abort, flash, redirect, url_for
 from flask_login import current_user
 
 from extensions import db
@@ -40,7 +40,8 @@ def module_required(module_key: str):
 
             u = _real_user()
             if not u or not getattr(u, "user_id", None):
-                abort(403)
+                flash("Unable to verify user. Please sign in again.", "warning")
+                return redirect(url_for("user.welcome"))
 
             if getattr(u, "is_admin", False):
                 return fn(*args, **kwargs)
@@ -57,7 +58,10 @@ def module_required(module_key: str):
                 .first()
             )
             if not has:
-                abort(403)
+                mod = db.session.query(RBModule).filter(RBModule.module_key == module_key).first()
+                mod_name = mod.name if mod and getattr(mod, "name", None) else module_key.upper()
+                flash(f"You do not have access to the {mod_name} module.", "warning")
+                return redirect(url_for("user.welcome"))
 
             return fn(*args, **kwargs)
 

@@ -1,61 +1,113 @@
-#
-from flask import Flask, redirect, request
-from config import Config
-from extensions import db, login_manager
+import os
+from flask import Flask, redirect, request, url_for
 from flask_login import current_user
 
+from config import Config
+from extensions import db, login_manager
 from models import RBModule, RBUserModule, RBUserProfile
+
 
 def create_app():
     app = Flask(__name__)
+
+    # -------------------------------------------------
+    # Load config (INI-based)
+    # -------------------------------------------------
     app.config.from_object(Config)
 
+    # -------------------------------------------------
+    # SESSION / COOKIE CONFIG (CRITICAL)
+    # -------------------------------------------------
+    app.config.update(
+        SESSION_COOKIE_PATH="/",
+        REMEMBER_COOKIE_PATH="/",
+
+        # Unique cookie names so multiple apps don't clash
+        SESSION_COOKIE_NAME="bridge_session",
+        REMEMBER_COOKIE_NAME="bridge_remember",
+
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=True,  # HTTPS only
+    )
+
+    # Enable ONLY if you sometimes use www and sometimes not
+    # app.config["SESSION_COOKIE_DOMAIN"] = ".raygrowcs.com"
+
+    # -------------------------------------------------
+    # Init extensions
+    # -------------------------------------------------
     db.init_app(app)
     login_manager.init_app(app)
 
-    #from routes_home import home_bp
+    # -------------------------------------------------
+    # Register blueprints
+    # -------------------------------------------------
     import routes_home
-    #from routes_auth import auth_bp
     import routes_auth
     import routes_admin
-
-    #from routes_admin import admin_bp
-    import routes_user 
+    import routes_user
 
     app.register_blueprint(routes_home.home_bp)
     app.register_blueprint(routes_auth.auth_bp)
-    #app.register_blueprint(admin_bp)
     app.register_blueprint(routes_admin.admin_bp)
     app.register_blueprint(routes_user.user_bp)
 
+    # -------------------------------------------------
+    # Short alias (always resolves correctly)
+    # -------------------------------------------------
+    @app.route("/welcome")
+    def welcome_shortcut():
+        return redirect(url_for("user.welcome"))
+
+    # -------------------------------------------------
+    # Disable caching of authenticated pages
+    # -------------------------------------------------
     @app.after_request
     def no_cache(response):
-        """Prevent client/proxy caching of dynamic pages."""
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
 
+    # -------------------------------------------------
+    # SUBPATH ENFORCEMENT (DISABLED FOR PASSENGER)
+    # -------------------------------------------------
+    # IMPORTANT:
+    # PassengerBaseURI (/bridge) already handles mounting.
+    # Enforcing subpath inside Flask causes redirect/session bugs.
+    #
+    # Therefore: only enforce subpath in DEV, never under Passenger.
+    #
     subpath = (app.config.get("APP_SUBPATH") or "").strip("/")
-    if subpath:
+    enforce_subpath = bool(app.config.get("APP_ENFORCE_SUBPATH", False))
+
+    if os.environ.get("PASSENGER_BASE_URI"):
+        enforce_subpath = False
+
+    if subpath and enforce_subpath:
         prefix = f"/{subpath}"
 
         @app.before_request
         def _redirect_subpath():
-            # Keep requests under the configured subpath; redirect absolute root paths.
             if request.path == prefix or request.path.startswith(prefix + "/"):
                 return
-            # Allow static files without redirect to avoid loops if served by web server directly.
             if request.path.startswith("/static/"):
                 return
             return redirect(f"{prefix}{request.path}", code=302)
-    
+
+    # -------------------------------------------------
+    # Template globals (module access)
+    # -------------------------------------------------
     @app.context_processor
     def inject_module_access():
-        """Expose enabled module keys user can access as `module_access` and `user_obj` in all templates."""
         try:
             if not current_user.is_authenticated:
-                return {"module_access": set(), "user_obj": None, "user_profile": None, "user_display": None}
+                return {
+                    "module_access": set(),
+                    "user_obj": None,
+                    "user_profile": None,
+                    "user_display": None,
+                }
 
             u = current_user.get_user()
             prof = RBUserProfile.query.get(u.user_id) if u else None
@@ -66,11 +118,20 @@ def create_app():
             if not display and u:
                 display = u.email
 
-            # Admin: show all enabled modules in nav.
+            # Admin → all enabled modules
             if getattr(u, "is_admin", False):
-                keys = {m.module_key for m in RBModule.query.filter(RBModule.is_enabled == True).all()}
-                return {"module_access": keys, "user_obj": u, "user_profile": prof, "user_display": display}
+                keys = {
+                    m.module_key
+                    for m in RBModule.query.filter(RBModule.is_enabled == True).all()
+                }
+                return {
+                    "module_access": keys,
+                    "user_obj": u,
+                    "user_profile": prof,
+                    "user_display": display,
+                }
 
+            # Normal user → granted modules
             keys = {
                 r[0]
                 for r in (
@@ -82,15 +143,26 @@ def create_app():
                     .all()
                 )
             }
-            return {"module_access": keys, "user_obj": u, "user_profile": prof, "user_display": display}
+
+            return {
+                "module_access": keys,
+                "user_obj": u,
+                "user_profile": prof,
+                "user_display": display,
+            }
+
         except Exception:
-            # Never fail rendering due to DB issues.
-            return {"module_access": set(), "user_obj": None, "user_profile": None, "user_display": None}
+            # Never break rendering due to DB issues
+            return {
+                "module_access": set(),
+                "user_obj": None,
+                "user_profile": None,
+                "user_display": None,
+            }
 
-
-    # ─────────────────────────────
-    # REGISTER MODULES HERE
-    # ─────────────────────────────
+    # -------------------------------------------------
+    # Register feature modules
+    # -------------------------------------------------
     from modules.chat import register_chat_module
     register_chat_module(app)
 
@@ -101,7 +173,6 @@ def create_app():
         from modules.social import register_social_module
         register_social_module(app)
     except Exception:
-        # Keep app booting even if optional module fails.
         pass
 
     try:
@@ -112,7 +183,10 @@ def create_app():
 
     return app
 
+
+# Passenger entry
 app = create_app()
 
+# Local dev only
 if __name__ == "__main__":
     app.run(debug=True)

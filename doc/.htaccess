@@ -1,6 +1,13 @@
+# CloudLinux Passenger (Python)
 PassengerEnabled on
 PassengerAppRoot "/home/rcprhkdi/public_html/bridge"
 PassengerBaseURI "/bridge"
 PassengerPython "/home/rcprhkdi/virtualenv/public_html/bridge/3.11/bin/python"
 
+# Security
 Options -Indexes
+
+# If you also want PHP files inside /bridge to work:
+<FilesMatch "\.php$">
+    PassengerEnabled off
+</FilesMatch>
