@@ -5,11 +5,51 @@
   <div class="chat-main-top">
     <strong>{{ active_thread_display_name }}</strong>
     <div style="font-size:12px;opacity:.7">
-      {{ "Group chat" if active_thread.thread_type == "group" else "Direct chat" }}
+      {% if active_thread.thread_type == "group" %}
+        Group chat
+      {% elif active_thread.thread_type == "broadcast" %}
+        Broadcast chat (owner posts; subscribers reply)
+      {% else %}
+        Direct chat
+      {% endif %}
     </div>
     <form method="post" action="{{ url_for('chat.delete_thread', thread_id=active_thread.thread_id) }}" style="margin-top:8px;" onsubmit="return confirm('Delete this chat and its messages?');">
       <button class="btn btn-sm btn-outline-danger" type="submit">Delete chat</button>
     </form>
+    {% if manage_members %}
+      <div style="margin-top:10px;">
+        <div style="font-weight:600; font-size:13px;">Members</div>
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+          {% for m in members_by_thread.get(active_thread.thread_id, []) %}
+            {% set u = users_by_id.get(m.user_id) %}
+            <div style="background:#f5f5f5; border-radius:20px; padding:4px 10px; display:flex; align-items:center; gap:6px;">
+              <span>{{ u.display_label if u and u.display_label else ("User " ~ m.user_id) }}{% if m.user_id == active_thread.created_by %} (owner){% endif %}</span>
+              {% if m.user_id != active_thread.created_by %}
+                <form method="post" action="{{ url_for('chat.remove_member', thread_id=active_thread.thread_id, user_id=m.user_id) }}" onsubmit="return confirm('Remove this member?');">
+                  <button class="btn btn-sm btn-outline-danger" style="padding:2px 6px;font-size:11px;" type="submit">&times;</button>
+                </form>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        {% if available_users %}
+          <form class="mt-2" method="post" action="{{ url_for('chat.add_members', thread_id=active_thread.thread_id) }}">
+            <button class="btn btn-sm btn-outline-primary" type="button" onclick="toggleAddMembers()">Add members</button>
+            <div id="addMembersList" style="display:none; margin-top:8px; border:1px solid #ddd; border-radius:8px; padding:8px; max-height:220px; overflow:auto;">
+              {% for u in available_users %}
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="user_ids" value="{{ u.user_id }}" id="addUser{{ u.user_id }}">
+                  <label class="form-check-label" for="addUser{{ u.user_id }}">{{ u.display_label or ("User " ~ u.user_id) }}</label>
+                </div>
+              {% endfor %}
+              <button class="btn btn-sm btn-primary mt-2" type="submit">Add selected</button>
+            </div>
+          </form>
+        {% else %}
+          <div class="text-muted" style="font-size:12px;margin-top:4px;">No more users to add.</div>
+        {% endif %}
+      </div>
+    {% endif %}
   </div>
 
   <div class="chat-msgs" id="chat-msgs">
@@ -17,8 +57,11 @@
       <div class="chat-msg" data-mid="{{ m.message_id }}">
         <div class="meta">
           {% set u = users_by_id.get(m.sender_id) %}
-          <span><b>{{ u.handle or u.email if u else ("User " ~ m.sender_id) }}</b></span>
-          · <span>{{ m.created_at }}</span>
+          <span><b>{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}</b></span>
+          AA§ <span>{{ m.created_at }}</span>
+          {% if m.reply_to_message_id %}
+            <span class="text-muted" style="margin-left:8px;">(reply to #{{ m.reply_to_message_id }})</span>
+          {% endif %}
           {% if m.sender_id == me_id %}
           <form method="post" action="{{ url_for('chat.delete_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:inline;">
             <button class="btn btn-sm btn-outline-danger" style="margin-left:8px;padding:2px 6px;font-size:11px;" onclick="return confirm('Delete this message?');">Delete</button>
@@ -42,11 +85,16 @@
     <textarea class="form-control" rows="2" name="body" id="chat-body" placeholder="Type a message..."></textarea>
     <button class="btn btn-primary" id="chat-send" type="submit">Send</button>
   </form>
+  {% if active_thread.thread_type == "broadcast" and active_thread.created_by != me_id %}
+    <div style="font-size:12px; opacity:.7; padding:0 12px 8px 12px;">
+      You can reply to broadcast messages; your replies are visible to the owner, not other subscribers.
+    </div>
+  {% endif %}
 
   <div style="padding:8px 12px;">
     <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Top emojis</div>
     <div id="emoji-bar" style="display:flex; gap:8px; flex-wrap:wrap;">
-      {% set emoji_list = ['😀','👍','🎉','🙏','💡','🔥','✅','🚀','❤️','😂'] %}
+      {% set emoji_list = [':)', ':D', '<3', '¯\\_(ツ)_/¯', ';)', ':P'] %}
       {% for e in emoji_list %}
         <button type="button" class="btn btn-sm" style="padding:4px 8px;" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
       {% endfor %}
@@ -74,7 +122,7 @@
       },
       senderEmails: {
         {% for uid, user in users_by_id.items() %}
-          "{{ uid }}": {"email": "{{ user.email }}", "handle": "{{ user.handle or '' }}"}{% if not loop.last %},{% endif %}
+          "{{ uid }}": {"label": "{{ user.display_label or '' }}"}{% if not loop.last %},{% endif %}
         {% endfor %}
       }
     };
@@ -101,6 +149,12 @@
       const visible = form.style.display === 'block';
       form.style.display = visible ? 'none' : 'block';
       if(body) body.style.display = visible ? 'block' : 'none';
+    }
+    function toggleAddMembers() {
+      const box = document.getElementById('addMembersList');
+      if (!box) return;
+      const visible = box.style.display === 'block';
+      box.style.display = visible ? 'none' : 'block';
     }
   </script>
 {% endblock %}

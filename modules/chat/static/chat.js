@@ -21,7 +21,7 @@
 
   function senderLabel(id) {
     const m = cfg.senderEmails?.[String(id)] || {};
-    return m.handle || m.email || `User ${id}`;
+    return m.label || `User ${id}`;
   }
 
   function fmtTime(ts) {

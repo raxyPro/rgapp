@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import time
-from flask import Blueprint, render_template, request, redirect, url_for, abort, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, abort, jsonify, flash
 from flask_login import login_required, current_user
 from markupsafe import Markup, escape
 import re
@@ -26,6 +26,42 @@ chat_bp = Blueprint(
 
 _URL_RE = re.compile(r"(https?://[^\s]+)", re.IGNORECASE)
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
+DEFAULT_MSG_LIMIT = 200
+
+
+def _user_label(user: RBUser, profile: RBUserProfile | None = None) -> str:
+    """Return a display label without exposing email."""
+    if profile:
+        for candidate in (
+            getattr(profile, "handle", None),
+            getattr(profile, "rgDisplay", None),
+            getattr(profile, "display_name", None),
+            getattr(profile, "full_name", None),
+        ):
+            text = (candidate or "").strip()
+            if text and "@" not in text:
+                return text
+    handle = (getattr(user, "handle", "") or "").strip()
+    if handle and "@" not in handle:
+        return handle
+    return f"User {user.user_id}"
+
+
+def _visible_messages(thread: ChatThread, me_id: int, since_id: int | None = None, limit: int = DEFAULT_MSG_LIMIT):
+    """Return messages visible to this user, applying broadcast visibility rules."""
+    q = ChatMessage.query.filter_by(thread_id=thread.thread_id)
+    if since_id is not None:
+        q = q.filter(ChatMessage.message_id > since_id)
+
+    if thread.thread_type == "broadcast" and me_id != thread.created_by:
+        q = q.filter(
+            or_(
+                ChatMessage.sender_id == thread.created_by,
+                ChatMessage.sender_id == me_id,
+            )
+        )
+
+    return q.order_by(ChatMessage.created_at.asc()).limit(limit).all()
 
 
 def _render_body_html(body: str) -> Markup:
@@ -82,8 +118,11 @@ def _users_by_ids(user_ids: list[int]) -> dict[int, RBUser]:
     enriched = {}
     for u in users:
         prof = profiles.get(u.user_id)
+        label = _user_label(u, prof)
+        u.display_label = label
         if prof:
-            u.handle = getattr(prof, "handle", None)
+            h = (getattr(prof, "handle", "") or "").strip()
+            u.handle = h if h and "@" not in h else None
         enriched[u.user_id] = u
     return enriched
 
@@ -130,6 +169,7 @@ def _serialize_message(m: ChatMessage) -> dict:
         "thread_id": m.thread_id,
         "sender_id": m.sender_id,
         "body": m.body,
+        "reply_to_message_id": m.reply_to_message_id,
         "created_at": m.created_at.isoformat(),
     }
 
@@ -173,6 +213,12 @@ def index():
 def new_chat():
     me_id = get_current_user_id()
     users = RBUser.query.filter(RBUser.user_id != me_id).order_by(RBUser.email.asc()).all()
+    if users:
+        ids = [u.user_id for u in users]
+        profiles = {p.user_id: p for p in RBUserProfile.query.filter(RBUserProfile.user_id.in_(ids)).all()}
+        for u in users:
+            prof = profiles.get(u.user_id)
+            u.display_label = _user_label(u, prof)
     return render_template("chat/new_chat.html", users=users, me_id=me_id)
 
 @chat_bp.post("/new")
@@ -181,6 +227,7 @@ def new_chat():
 def create_chat():
     me_id = get_current_user_id()
 
+    chat_type = (request.form.get("chat_type") or "auto").strip().lower()
     user_ids = request.form.getlist("user_ids")
     user_ids = [int(x) for x in user_ids if str(x).isdigit()]
     user_ids = sorted(list(set(user_ids)))
@@ -192,8 +239,22 @@ def create_chat():
     if len(existing) != len(user_ids):
         abort(400, "One or more users not found")
 
+    # Broadcast (owner posts; subscribers can reply)
+    if chat_type == "broadcast":
+        name = (request.form.get("group_name") or "").strip() or "Broadcast"
+        thread = ChatThread(thread_type="broadcast", name=name, created_by=me_id)
+        db.session.add(thread)
+        db.session.flush()
+
+        now = datetime.utcnow()
+        db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=me_id, role="owner", last_read_at=now))
+        for uid in user_ids:
+            db.session.add(ChatThreadMember(thread_id=thread.thread_id, user_id=uid, role="member", last_read_at=now))
+        db.session.commit()
+        return redirect(url_for("chat.thread", thread_id=thread.thread_id))
+
     # DM
-    if len(user_ids) == 1:
+    if chat_type in ("dm", "auto") and len(user_ids) == 1:
         other_id = user_ids[0]
 
         dm_threads = (
@@ -225,6 +286,9 @@ def create_chat():
         return redirect(url_for("chat.thread", thread_id=thread.thread_id))
 
     # Group
+    if chat_type == "group" and len(user_ids) < 2:
+        abort(400, "Select at least 2 users for a group")
+
     name = (request.form.get("group_name") or "").strip() or "New Group"
 
     thread = ChatThread(thread_type="group", name=name, created_by=me_id)
@@ -355,13 +419,20 @@ def thread(thread_id: int):
     message_counts = _message_counts(thread_ids)
     unread_counts = _unread_counts(thread_ids, me_id)
 
-    msgs = (
-        ChatMessage.query
-        .filter_by(thread_id=thread_id)
-        .order_by(ChatMessage.created_at.asc())
-        .limit(200)
-        .all()
-    )
+    msgs = _visible_messages(t, me_id)
+
+    manage_members = t.thread_type in ("group", "broadcast") and t.created_by == me_id
+    available_users = []
+    if manage_members:
+        member_ids = {m.user_id for m in members_by_thread.get(thread_id, [])}
+        all_users = RBUser.query.filter(RBUser.user_id != me_id).order_by(RBUser.email.asc()).all()
+        if all_users:
+            ids = [u.user_id for u in all_users]
+            profiles = {p.user_id: p for p in RBUserProfile.query.filter(RBUserProfile.user_id.in_(ids)).all()}
+            for u in all_users:
+                prof = profiles.get(u.user_id)
+                u.display_label = _user_label(u, prof)
+        available_users = [u for u in all_users if u.user_id not in member_ids]
 
     my_members = members_by_thread.get(thread_id, [])
     display_name = t.display_name_for(me_id, my_members, users_by_id)
@@ -375,6 +446,8 @@ def thread(thread_id: int):
         active_thread_display_name=display_name,
         messages=msgs,
         me_id=me_id,
+        manage_members=manage_members,
+        available_users=available_users,
         message_counts=message_counts,
         unread_counts=unread_counts,
     )
@@ -387,18 +460,36 @@ def send_message_http(thread_id: int):
     require_thread_member(thread_id, me_id)
 
     payload = request.get_json(silent=True) if request.is_json else request.form
+    reply_to_raw = (payload.get("reply_to_message_id") if payload else None) or (payload.get("reply_to") if payload else None)
+    reply_to_id = int(reply_to_raw) if reply_to_raw and str(reply_to_raw).isdigit() else None
     body = ((payload.get("body") if payload else None) or "").strip()
     if not body:
         if request.is_json:
             return jsonify({"ok": False, "error": "Message required"}), 400
         return redirect(url_for("chat.thread", thread_id=thread_id))
 
-    msg = ChatMessage(thread_id=thread_id, sender_id=me_id, body=body)
+    t = ChatThread.query.get_or_404(thread_id)
+    is_broadcast = t.thread_type == "broadcast"
+    is_owner = t.created_by == me_id
+
+    if is_broadcast and not is_owner:
+        if not reply_to_id:
+            latest_owner = (
+                ChatMessage.query.filter_by(thread_id=thread_id, sender_id=t.created_by)
+                .order_by(ChatMessage.message_id.desc())
+                .first()
+            )
+            reply_to_id = latest_owner.message_id if latest_owner else None
+        if not reply_to_id:
+            if request.is_json:
+                return jsonify({"ok": False, "error": "No broadcast message to reply to"}), 400
+            flash("You can only reply to existing broadcast messages.", "danger")
+            return redirect(url_for("chat.thread", thread_id=thread_id))
+
+    msg = ChatMessage(thread_id=thread_id, sender_id=me_id, body=body, reply_to_message_id=reply_to_id)
     db.session.add(msg)
 
-    t = ChatThread.query.get(thread_id)
-    if t:
-        t.updated_at = datetime.utcnow()
+    t.updated_at = datetime.utcnow()
 
     my_member = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=me_id).first()
     if my_member:
@@ -471,6 +562,68 @@ def delete_thread(thread_id: int):
     flash("Chat deleted.", "info")
     return redirect(url_for("chat.index"))
 
+
+@chat_bp.post("/t/<int:thread_id>/members/add")
+@login_required
+@module_required("chat")
+def add_members(thread_id: int):
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    thread = ChatThread.query.get_or_404(thread_id)
+    if thread.thread_type not in ("group", "broadcast"):
+        abort(400, "Cannot add members to this chat type")
+    if thread.created_by != me_id:
+        abort(403, "Only the owner can add members")
+
+    user_ids = request.form.getlist("user_ids")
+    user_ids = [int(x) for x in user_ids if str(x).isdigit()]
+    user_ids = sorted(list(set(user_ids)))
+    if not user_ids:
+        abort(400, "Select at least one user to add")
+
+    existing_ids = {
+        m.user_id
+        for m in ChatThreadMember.query.filter(ChatThreadMember.thread_id == thread_id).all()
+    }
+    now = datetime.utcnow()
+    added = 0
+    for uid in user_ids:
+        if uid in existing_ids:
+            continue
+        db.session.add(ChatThreadMember(thread_id=thread_id, user_id=uid, role="member", last_read_at=now))
+        added += 1
+
+    if added:
+        db.session.commit()
+        flash(f"Added {added} member(s).", "success")
+    else:
+        flash("No new members added.", "info")
+    return redirect(url_for("chat.thread", thread_id=thread_id))
+
+
+@chat_bp.post("/t/<int:thread_id>/members/<int:user_id>/remove")
+@login_required
+@module_required("chat")
+def remove_member(thread_id: int, user_id: int):
+    me_id = get_current_user_id()
+    require_thread_member(thread_id, me_id)
+    thread = ChatThread.query.get_or_404(thread_id)
+    if thread.thread_type not in ("group", "broadcast"):
+        abort(400, "Cannot remove members from this chat type")
+    if thread.created_by != me_id:
+        abort(403, "Only the owner can remove members")
+    if user_id == thread.created_by:
+        abort(400, "Cannot remove the owner")
+
+    mem = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=user_id).first()
+    if mem:
+        db.session.delete(mem)
+        db.session.commit()
+        flash("Member removed.", "info")
+    else:
+        flash("Member not found.", "warning")
+    return redirect(url_for("chat.thread", thread_id=thread_id))
+
 @chat_bp.get("/api/thread/<int:thread_id>/messages")
 @login_required
 @module_required("chat")
@@ -478,14 +631,8 @@ def api_messages(thread_id: int):
     me_id = get_current_user_id()
     require_thread_member(thread_id, me_id)
 
-    msgs = (
-        ChatMessage.query
-        .filter_by(thread_id=thread_id)
-        .order_by(ChatMessage.created_at.asc())
-        .limit(200)
-        .all()
-    )
-
+    thread = ChatThread.query.get_or_404(thread_id)
+    msgs = _visible_messages(thread, me_id)
     return jsonify([_serialize_message(m) for m in msgs])
 
 
@@ -498,15 +645,30 @@ def api_send(thread_id: int):
     require_thread_member(thread_id, me_id)
     data = request.get_json(silent=True) or {}
     body = (data.get("body") or "").strip()
+    reply_to_raw = data.get("reply_to_message_id") or data.get("reply_to")
+    reply_to_id = int(reply_to_raw) if reply_to_raw and str(reply_to_raw).isdigit() else None
     if not body:
         return jsonify({"ok": False, "error": "Message required"}), 400
 
-    msg = ChatMessage(thread_id=thread_id, sender_id=me_id, body=body)
+    t = ChatThread.query.get_or_404(thread_id)
+    is_broadcast = t.thread_type == "broadcast"
+    is_owner = t.created_by == me_id
+
+    if is_broadcast and not is_owner:
+        if not reply_to_id:
+            latest_owner = (
+                ChatMessage.query.filter_by(thread_id=thread_id, sender_id=t.created_by)
+                .order_by(ChatMessage.message_id.desc())
+                .first()
+            )
+            reply_to_id = latest_owner.message_id if latest_owner else None
+        if not reply_to_id:
+            return jsonify({"ok": False, "error": "No broadcast message to reply to"}), 400
+
+    msg = ChatMessage(thread_id=thread_id, sender_id=me_id, body=body, reply_to_message_id=reply_to_id)
     db.session.add(msg)
 
-    t = ChatThread.query.get(thread_id)
-    if t:
-        t.updated_at = datetime.utcnow()
+    t.updated_at = datetime.utcnow()
 
     mem = ChatThreadMember.query.filter_by(thread_id=thread_id, user_id=me_id).first()
     if mem:
@@ -529,13 +691,10 @@ def api_poll(thread_id: int):
         since = 0
 
     deadline = time.time() + POLL_TIMEOUT_SEC
+    thread = ChatThread.query.get_or_404(thread_id)
     while True:
         new_msgs = (
-            ChatMessage.query
-            .filter(ChatMessage.thread_id == thread_id, ChatMessage.message_id > since)
-            .order_by(ChatMessage.message_id.asc())
-            .limit(POLL_MAX_RETURN)
-            .all()
+            _visible_messages(thread, me_id, since_id=since, limit=POLL_MAX_RETURN)
         )
         if new_msgs:
             # touch last_read for requester

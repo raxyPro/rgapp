@@ -9,10 +9,10 @@ class ChatThread(db.Model):
 
     thread_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
 
-    # 'dm' or 'group'
-    thread_type = db.Column(db.Enum("dm", "group"), nullable=False, default="dm")
+    # 'dm' or 'group' or 'broadcast'
+    thread_type = db.Column(db.Enum("dm", "group", "broadcast"), nullable=False, default="dm")
 
-    # Only used for group chats (optional for dm)
+    # Only used for group/broadcast
     name = db.Column(db.String(120), nullable=True)
 
     created_by = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id"), nullable=False)
@@ -26,7 +26,7 @@ class ChatThread(db.Model):
     )
 
     def display_name_for(self, me_user_id: int, members: list["ChatThreadMember"], users_by_id: dict):
-        """If group has a name, show it. Else show other user(s) emails."""
+        """If group has a name, show it. Else show other user(s) handles (never email)."""
         if self.thread_type == "group" and self.name:
             return self.name
 
@@ -37,9 +37,9 @@ class ChatThread(db.Model):
         names = []
         for uid in other_ids:
             u = users_by_id.get(uid)
-            handle = getattr(u, "handle", None)
-            names.append(handle or getattr(u, "email", f"User {uid}"))
-        return ", ".join(names[:3]) + ("…" if len(names) > 3 else "")
+            label = getattr(u, "display_label", None) or getattr(u, "handle", None)
+            names.append(label or f"User {uid}")
+        return ", ".join(names[:3]) + (" +more" if len(names) > 3 else "")
 
 
 class ChatThreadMember(db.Model):
@@ -68,6 +68,7 @@ class ChatMessage(db.Model):
 
     sender_id = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id"), nullable=False)
     body = db.Column(db.Text, nullable=False)
+    reply_to_message_id = db.Column(db.BigInteger, db.ForeignKey("rb_chat_message.message_id"), nullable=True)
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
