@@ -6,6 +6,7 @@
   const bodyEl = document.getElementById("chat-body");
   const sendBtn = document.getElementById("chat-send");
   let lastId = 0;
+  let fbRef = null;
 
   function scrollToBottom() {
     if (!msgsEl) return;
@@ -36,7 +37,7 @@
   function appendMessage(m) {
     if (!msgsEl) return;
     const recvTs = Date.now();
-    const sentTs = new Date(m.created_at).getTime();
+    const sentTs = m?.created_at ? new Date(m.created_at).getTime() : NaN;
     const latencyMs = isNaN(sentTs) ? null : Math.max(0, recvTs - sentTs);
     const latencyLabel = (() => {
       if (latencyMs === null) return "";
@@ -73,6 +74,22 @@
     scrollToBottom();
   }
 
+  function publishToFirebase(m) {
+    if (!fbRef || !m?.message_id) return;
+    try {
+      const payload = {
+        ...m,
+        // Add legacy-friendly fields some RTDB rules expect.
+        text: m.body ?? "",
+        ts: m.created_at ?? new Date().toISOString(),
+        name: m.sender_id ?? cfg.currentUserId ?? "anon",
+      };
+      fbRef.child(String(m.message_id)).set(payload);
+    } catch (err) {
+      console.warn("Firebase publish failed", err);
+    }
+  }
+
   async function sendMessage() {
     const body = (bodyEl?.value || "").trim();
     if (!body) return;
@@ -87,6 +104,7 @@
       const data = await res.json();
       if (data?.message) {
         appendMessage(data.message);
+        publishToFirebase(data.message);
       }
     } catch (err) {
       console.error("Send failed", err);
@@ -105,6 +123,41 @@
         console.warn("Poll error", err);
         await new Promise((r) => setTimeout(r, 1500));
       }
+    }
+  }
+
+  async function startFirebase() {
+    if (!cfg.firebase?.config || !window.firebase || !firebase.initializeApp) {
+      return false;
+    }
+    try {
+      const app = firebase.apps?.length ? firebase.app() : firebase.initializeApp(cfg.firebase.config);
+
+      // Ensure we're signed in (anonymous) so RTDB rules requiring auth will pass.
+      if (firebase.auth) {
+        const auth = firebase.auth();
+        if (!auth.currentUser) {
+          await auth.signInAnonymously();
+        }
+      }
+
+      const db = firebase.database(app);
+      const path = cfg.firebase.rtdbPath || `threads/${cfg.threadId}/messages`;
+      fbRef = db.ref(path);
+      fbRef.on("child_added", (snap) => {
+        const m = snap.val() || {};
+        if (m.message_id === undefined && snap.key) {
+          m.message_id = Number(snap.key) || snap.key;
+        }
+        // Skip messages we've already rendered (initial seed).
+        if (m.message_id && Number(m.message_id) <= lastId) return;
+        appendMessage(m);
+      });
+      return true;
+    } catch (err) {
+      console.warn("Firebase init failed", err);
+      fbRef = null;
+      return false;
     }
   }
 
@@ -132,6 +185,9 @@
     }
 
     scrollToBottom();
+    startFirebase();
+    // Keep polling as a safety net so messages still flow even if Firebase is blocked
+    // (e.g., permission errors, SDK load failure, or offline clients).
     pollLoop();
   }
 

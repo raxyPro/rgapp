@@ -59,6 +59,19 @@
       currentUserId: {{ me_id }},
       sendUrl: "{{ url_for('chat.api_send', thread_id=active_thread.thread_id) }}",
       pollUrl: "{{ url_for('chat.api_poll', thread_id=active_thread.thread_id) }}",
+      firebase: {
+        config: {
+          apiKey: "AIzaSyAjUxVqxoRRp7piqzYTZIzlaAV2qQO-ROU",
+          authDomain: "raxstock.firebaseapp.com",
+          databaseURL: "https://raxstock-default-rtdb.firebaseio.com",
+          projectId: "raxstock",
+          storageBucket: "raxstock.firebasestorage.app",
+          messagingSenderId: "921096785459",
+          appId: "1:921096785459:web:add9c5cde8160fd2b09d46",
+          measurementId: "G-7QY7XCD1CR"
+        },
+        rtdbPath: "threads/{{ active_thread.thread_id }}/messages"
+      },
       senderEmails: {
         {% for uid, user in users_by_id.items() %}
           "{{ uid }}": {"email": "{{ user.email }}", "handle": "{{ user.handle or '' }}"}{% if not loop.last %},{% endif %}
@@ -66,6 +79,9 @@
       }
     };
   </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-database-compat.js"></script>
   <script src="{{ url_for('chat.static', filename='chat.js') }}"></script>
   <script>
     function insertEmoji(e) {
