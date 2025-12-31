@@ -26,9 +26,11 @@ class ChatThread(db.Model):
     )
 
     def display_name_for(self, me_user_id: int, members: list["ChatThreadMember"], users_by_id: dict):
-        """If group has a name, show it. Else show other user(s) handles (never email)."""
-        if self.thread_type == "group" and self.name:
-            return self.name
+        """If named (group/broadcast), show name; else show other user handles."""
+        if self.thread_type in ("group", "broadcast") and self.name:
+            owner = users_by_id.get(self.created_by)
+            owner_label = getattr(owner, "display_label", None) or getattr(owner, "handle", None) or f"User {self.created_by}"
+            return f"{self.name} by {owner_label}" if self.thread_type == "broadcast" else self.name
 
         other_ids = [m.user_id for m in members if m.user_id != me_user_id]
         if not other_ids:

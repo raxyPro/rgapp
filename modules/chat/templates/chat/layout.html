@@ -59,6 +59,38 @@
         <div style="padding:12px;opacity:.7">No chats yet. Click <b>New</b>.</div>
       {% endfor %}
     </div>
+    <div style="border-top:1px solid #eee; padding:10px 8px;">
+      <div style="font-weight:700; font-size:13px; margin-bottom:6px;">Broadcasts</div>
+      {% if broadcasts %}
+        {% for b in broadcasts %}
+          {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
+          {% set is_owner = (b.created_by == me_id) %}
+          {% set is_subscribed = b.thread_id in my_broadcast_member_ids %}
+          <div style="padding:8px;border-radius:8px;border:1px solid #eee; margin-bottom:6px;">
+            <div style="font-weight:600;">{{ title }}</div>
+            <div style="font-size:12px;opacity:.7;">Broadcast</div>
+            <div class="d-flex gap-2 mt-2">
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('chat.thread', thread_id=b.thread_id) }}">Open</a>
+              {% if not is_owner %}
+                {% if is_subscribed %}
+                  <form method="post" action="{{ url_for('chat.unsubscribe_broadcast', thread_id=b.thread_id) }}">
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Unsubscribe</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('chat.subscribe_broadcast', thread_id=b.thread_id) }}">
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Subscribe</button>
+                  </form>
+                {% endif %}
+              {% else %}
+                <span class="badge bg-light text-dark">Owner</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="font-size:12px; opacity:.7;">No broadcasts yet.</div>
+      {% endif %}
+    </div>
   </div>
 
   <div class="chat-main">

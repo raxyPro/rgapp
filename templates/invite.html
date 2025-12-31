@@ -3,7 +3,7 @@
 <div class="row justify-content-center">
   <div class="col-md-6">
     <div class="card p-4">
-      <h3 class="mb-3">Invite User</h3>
+      <h3 class="mb-3">Add User</h3>
       <form method="post">
         <label class="form-label">Email</label>
         <input name="email" class="form-control" required value="{{ email or '' }}">
@@ -12,16 +12,16 @@
         <input name="full_name" class="form-control" required value="{{ full_name or '' }}">
 
         <label class="form-label mt-3">Display Name</label>
-        <input name="display_name" class="form-control" required value="{{ display_name or '' }}">
+        <input name="display_name" class="form-control" required value="{{ display_name or full_name or '' }}">
 
-        <label class="form-label mt-3">Handle (optional)</label>
-        <input name="handle" class="form-control" placeholder="e.g., username">
+        <label class="form-label mt-3">Handle</label>
+        <input name="handle" class="form-control" required value="{{ handle or '' }}" placeholder="e.g., username">
 
-        <button class="btn btn-primary w-100 mt-4">Send Invitation</button>
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-secondary" type="button" onclick="window.history.back()">Back</button>
+          <button class="btn btn-primary flex-grow-1" type="submit">Save</button>
+        </div>
       </form>
-      <div class="text-muted small mt-3">
-        In dev mode (SMTP not set), the invite link will print to console.
-      </div>
     </div>
   </div>
 </div>

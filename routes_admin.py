@@ -137,13 +137,22 @@ def user_modules(user_id):
 def invite():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
-        full_name = request.form.get("full_name", "").strip()
-        display_name = request.form.get("display_name", "").strip()
-        handle_base = request.form.get("handle", "").strip() or display_name or full_name or email
+        full_name = (request.form.get("full_name", "") or "").strip()
+        display_name = (request.form.get("display_name", "") or "").strip()
+        handle_raw = (request.form.get("handle", "") or "").strip()
 
-        if not email or not full_name or not display_name:
-            flash("Email, full name, and display name are required.", "danger")
-            return render_template("invite.html", email=email, full_name=full_name, display_name=display_name)
+        if not full_name:
+            flash("Name is required.", "danger")
+            return render_template("invite.html", email=email, full_name=full_name, display_name=display_name, handle=handle_raw)
+        if not email:
+            flash("Email is required.", "danger")
+            return render_template("invite.html", email=email, full_name=full_name, display_name=display_name, handle=handle_raw)
+
+        if not display_name:
+            display_name = full_name
+
+        handle_base = handle_raw or display_name or full_name or email
+        handle_base = handle_base.replace(" ", "")
 
         existing = RBUser.query.filter_by(email=email).first()
         if existing and existing.status != "deleted":
@@ -202,12 +211,7 @@ def invite():
 
         db.session.commit()
 
-        token = generate_invite_token(email)
-        base_url = current_app.config.get("REGISTER_BASE_URL") or current_app.config.get("APP_BASE_URL")
-        invite_url = f"{base_url.rstrip('/')}/register/{token}"
-        send_invite_email(email, invite_url)
-
-        flash("Invitation sent.", "success")
+        flash("User saved. Send invite from the list when ready.", "success")
         return redirect(url_for("admin.dashboard"))
 
     return render_template("invite.html")
