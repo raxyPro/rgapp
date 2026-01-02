@@ -125,3 +125,173 @@
 2026-01-02 12:48:19,352 REQ method=GET path=/login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
 2026-01-02 12:48:19,353 RES status=200 path=/login bytes=2189 duration_ms=0 user=- remote=127.0.0.1
 2026-01-02 12:48:43,544 REQ method=GET path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:48:43,582 RES status=200 path=/dev-login bytes=3642 duration_ms=37 user=- remote=127.0.0.1
+2026-01-02 12:48:48,088 REQ method=POST path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:48:48,094 RES status=302 path=/dev-login bytes=203 duration_ms=6 user=- remote=127.0.0.1
+2026-01-02 12:48:48,109 REQ method=GET path=/welcome qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:48:48,146 RES status=200 path=/welcome bytes=3212 duration_ms=36 user=3 remote=127.0.0.1
+2026-01-02 12:48:48,212 REQ method=GET path=/static/bridge.css qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:48:48,314 RES status=200 path=/static/bridge.css bytes=- duration_ms=102 user=3 remote=127.0.0.1
+2026-01-02 12:49:14,046 REQ method=GET path=/cv/ qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:14,144 RES status=200 path=/cv/ bytes=19800 duration_ms=97 user=3 remote=127.0.0.1
+2026-01-02 12:49:14,185 REQ method=GET path=/static/bridge.css qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:14,186 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=3 remote=127.0.0.1
+2026-01-02 12:49:17,923 REQ method=GET path=/chat/ qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:17,985 RES status=200 path=/chat/ bytes=6991 duration_ms=62 user=3 remote=127.0.0.1
+2026-01-02 12:49:18,018 REQ method=GET path=/static/bridge.css qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:18,020 RES status=200 path=/static/bridge.css bytes=- duration_ms=2 user=3 remote=127.0.0.1
+2026-01-02 12:49:25,278 REQ method=GET path=/chat/t/6 qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:25,336 RES status=200 path=/chat/t/6 bytes=12414 duration_ms=57 user=3 remote=127.0.0.1
+2026-01-02 12:49:25,362 REQ method=GET path=/static/bridge.css qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:25,363 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=3 remote=127.0.0.1
+2026-01-02 12:49:25,369 REQ method=GET path=/chat/static/chat.js qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:25,370 RES status=200 path=/chat/static/chat.js bytes=- duration_ms=0 user=3 remote=127.0.0.1
+2026-01-02 12:49:25,493 REQ method=GET path=/chat/api/thread/6/poll qs=since=0 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:30,082 REQ method=POST path=/chat/api/thread/6/send qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:30,096 RES status=200 path=/chat/api/thread/6/send bytes=244 duration_ms=13 user=3 remote=127.0.0.1
+2026-01-02 12:49:50,588 RES status=200 path=/chat/api/thread/6/poll bytes=21 duration_ms=25094 user=3 remote=127.0.0.1
+2026-01-02 12:49:50,594 REQ method=GET path=/chat/api/thread/6/poll qs=since=58 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:54,032 REQ method=GET path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:54,037 RES status=200 path=/dev-login bytes=3642 duration_ms=5 user=- remote=127.0.0.1
+2026-01-02 12:49:54,256 REQ method=GET path=/favicon.ico qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:54,256 RES status=404 path=/favicon.ico bytes=207 duration_ms=0 user=- remote=127.0.0.1
+2026-01-02 12:49:57,700 REQ method=POST path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:57,702 RES status=302 path=/dev-login bytes=203 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:49:57,706 REQ method=GET path=/welcome qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:57,707 RES status=302 path=/welcome bytes=231 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:49:57,712 REQ method=GET path=/login qs=next=%2Fwelcome user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:57,714 RES status=200 path=/login bytes=2384 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:49:57,776 REQ method=GET path=/favicon.ico qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:57,778 RES status=404 path=/favicon.ico bytes=207 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:49:58,874 REQ method=GET path=/cv/ qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:58,876 RES status=302 path=/cv/ bytes=227 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:49:58,884 REQ method=GET path=/login qs=next=%2Fcv%2F user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:58,884 RES status=200 path=/login bytes=2298 duration_ms=0 user=- remote=127.0.0.1
+2026-01-02 12:49:58,935 REQ method=GET path=/favicon.ico qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:49:58,936 RES status=404 path=/favicon.ico bytes=207 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:50:03,221 REQ method=GET path=/login qs=next=%2Fwelcome user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:03,221 RES status=200 path=/login bytes=2189 duration_ms=0 user=- remote=127.0.0.1
+2026-01-02 12:50:06,802 REQ method=GET path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:06,806 RES status=200 path=/dev-login bytes=3642 duration_ms=3 user=- remote=127.0.0.1
+2026-01-02 12:50:09,746 REQ method=POST path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:09,749 RES status=302 path=/dev-login bytes=203 duration_ms=3 user=- remote=127.0.0.1
+2026-01-02 12:50:09,754 REQ method=GET path=/welcome qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:09,754 RES status=302 path=/welcome bytes=231 duration_ms=0 user=- remote=127.0.0.1
+2026-01-02 12:50:09,757 REQ method=GET path=/login qs=next=%2Fwelcome user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:09,758 RES status=200 path=/login bytes=2384 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:50:09,802 REQ method=GET path=/favicon.ico qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:09,802 RES status=404 path=/favicon.ico bytes=207 duration_ms=0 user=- remote=127.0.0.1
+2026-01-02 12:50:15,670 RES status=200 path=/chat/api/thread/6/poll bytes=21 duration_ms=25075 user=3 remote=127.0.0.1
+2026-01-02 12:50:15,677 REQ method=GET path=/chat/api/thread/6/poll qs=since=58 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:25,916 REQ method=GET path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:25,922 RES status=200 path=/dev-login bytes=3642 duration_ms=6 user=- remote=127.0.0.1
+2026-01-02 12:50:26,086 REQ method=GET path=/favicon.ico qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:26,087 RES status=404 path=/favicon.ico bytes=207 duration_ms=0 user=- remote=127.0.0.1
+2026-01-02 12:50:29,145 REQ method=POST path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:29,148 RES status=302 path=/dev-login bytes=203 duration_ms=2 user=- remote=127.0.0.1
+2026-01-02 12:50:29,163 REQ method=GET path=/welcome qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:29,164 RES status=302 path=/welcome bytes=231 duration_ms=1 user=- remote=127.0.0.1
+2026-01-02 12:50:29,180 REQ method=GET path=/login qs=next=%2Fwelcome user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:29,182 RES status=200 path=/login bytes=2384 duration_ms=2 user=- remote=127.0.0.1
+2026-01-02 12:50:35,856 REQ method=GET path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:35,861 RES status=200 path=/dev-login bytes=3642 duration_ms=5 user=- remote=127.0.0.1
+2026-01-02 12:50:40,726 RES status=200 path=/chat/api/thread/6/poll bytes=21 duration_ms=25048 user=3 remote=127.0.0.1
+2026-01-02 12:50:40,735 REQ method=GET path=/chat/api/thread/6/poll qs=since=58 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:50:43,688 REQ method=POST path=/dev-login qs= user=- remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:43,693 RES status=302 path=/dev-login bytes=203 duration_ms=5 user=- remote=127.0.0.1
+2026-01-02 12:50:43,708 REQ method=GET path=/welcome qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:43,716 RES status=200 path=/welcome bytes=3213 duration_ms=7 user=5 remote=127.0.0.1
+2026-01-02 12:50:43,758 REQ method=GET path=/static/bridge.css qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:43,760 RES status=200 path=/static/bridge.css bytes=- duration_ms=2 user=5 remote=127.0.0.1
+2026-01-02 12:50:58,052 REQ method=GET path=/cv/ qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:58,066 RES status=200 path=/cv/ bytes=8636 duration_ms=14 user=5 remote=127.0.0.1
+2026-01-02 12:50:58,081 REQ method=GET path=/static/bridge.css qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:58,082 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=5 remote=127.0.0.1
+2026-01-02 12:50:59,650 REQ method=GET path=/chat/ qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:59,668 RES status=200 path=/chat/ bytes=6946 duration_ms=17 user=5 remote=127.0.0.1
+2026-01-02 12:50:59,682 REQ method=GET path=/static/bridge.css qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:50:59,684 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=5 remote=127.0.0.1
+2026-01-02 12:51:05,813 RES status=200 path=/chat/api/thread/6/poll bytes=21 duration_ms=25079 user=3 remote=127.0.0.1
+2026-01-02 12:51:05,820 REQ method=GET path=/chat/api/thread/6/poll qs=since=58 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:10,175 REQ method=GET path=/chat/new qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:10,195 RES status=200 path=/chat/new bytes=6988 duration_ms=19 user=5 remote=127.0.0.1
+2026-01-02 12:51:19,133 REQ method=POST path=/chat/new qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:19,154 RES status=302 path=/chat/new bytes=207 duration_ms=21 user=5 remote=127.0.0.1
+2026-01-02 12:51:19,165 REQ method=GET path=/chat/t/12 qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:19,194 RES status=200 path=/chat/t/12 bytes=12736 duration_ms=29 user=5 remote=127.0.0.1
+2026-01-02 12:51:19,227 REQ method=GET path=/static/bridge.css qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:19,228 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=5 remote=127.0.0.1
+2026-01-02 12:51:19,237 REQ method=GET path=/chat/static/chat.js qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:19,238 RES status=200 path=/chat/static/chat.js bytes=- duration_ms=0 user=5 remote=127.0.0.1
+2026-01-02 12:51:19,279 REQ method=GET path=/chat/api/thread/12/poll qs=since=0 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:21,888 REQ method=POST path=/chat/api/thread/12/send qs= user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:21,902 RES status=200 path=/chat/api/thread/12/send bytes=239 duration_ms=13 user=5 remote=127.0.0.1
+2026-01-02 12:51:24,182 REQ method=GET path=/chat/ qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:24,195 RES status=200 path=/chat/ bytes=7422 duration_ms=13 user=3 remote=127.0.0.1
+2026-01-02 12:51:24,247 REQ method=GET path=/static/bridge.css qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:24,248 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=3 remote=127.0.0.1
+2026-01-02 12:51:25,762 REQ method=GET path=/chat/t/12 qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:25,796 RES status=200 path=/chat/t/12 bytes=16390 duration_ms=33 user=3 remote=127.0.0.1
+2026-01-02 12:51:25,823 REQ method=GET path=/static/bridge.css qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:25,824 RES status=200 path=/static/bridge.css bytes=- duration_ms=1 user=3 remote=127.0.0.1
+2026-01-02 12:51:25,834 REQ method=GET path=/chat/static/chat.js qs= user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:25,835 RES status=200 path=/chat/static/chat.js bytes=- duration_ms=1 user=3 remote=127.0.0.1
+2026-01-02 12:51:25,853 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:51:30,843 RES status=200 path=/chat/api/thread/6/poll bytes=21 duration_ms=25023 user=3 remote=127.0.0.1
+2026-01-02 12:51:44,337 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25058 user=5 remote=127.0.0.1
+2026-01-02 12:51:44,344 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:51:50,873 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25020 user=3 remote=127.0.0.1
+2026-01-02 12:51:50,879 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:52:09,441 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25096 user=5 remote=127.0.0.1
+2026-01-02 12:52:09,449 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:52:15,962 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25082 user=3 remote=127.0.0.1
+2026-01-02 12:52:15,969 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:52:34,463 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25013 user=5 remote=127.0.0.1
+2026-01-02 12:52:34,469 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:52:41,008 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25038 user=3 remote=127.0.0.1
+2026-01-02 12:52:41,013 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:52:59,484 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25015 user=5 remote=127.0.0.1
+2026-01-02 12:52:59,492 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:53:06,109 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25096 user=3 remote=127.0.0.1
+2026-01-02 12:53:06,121 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:53:24,503 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25010 user=5 remote=127.0.0.1
+2026-01-02 12:53:24,510 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:53:31,144 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25022 user=3 remote=127.0.0.1
+2026-01-02 12:53:31,151 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:53:49,591 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25081 user=5 remote=127.0.0.1
+2026-01-02 12:53:49,598 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:53:56,227 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25075 user=3 remote=127.0.0.1
+2026-01-02 12:53:56,234 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:54:14,621 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25023 user=5 remote=127.0.0.1
+2026-01-02 12:54:14,628 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:54:21,260 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25025 user=3 remote=127.0.0.1
+2026-01-02 12:54:21,266 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:54:39,664 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25037 user=5 remote=127.0.0.1
+2026-01-02 12:54:39,672 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:54:46,289 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25023 user=3 remote=127.0.0.1
+2026-01-02 12:54:46,296 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:55:04,704 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25032 user=5 remote=127.0.0.1
+2026-01-02 12:55:04,709 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:55:11,341 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25044 user=3 remote=127.0.0.1
+2026-01-02 12:55:11,347 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:55:29,733 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25024 user=5 remote=127.0.0.1
+2026-01-02 12:55:29,740 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:55:36,392 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25043 user=3 remote=127.0.0.1
+2026-01-02 12:55:36,398 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:55:54,802 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25062 user=5 remote=127.0.0.1
+2026-01-02 12:55:54,810 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:56:01,445 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25046 user=3 remote=127.0.0.1
+2026-01-02 12:56:01,457 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:56:19,900 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25089 user=5 remote=127.0.0.1
+2026-01-02 12:56:19,908 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:56:26,462 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25005 user=3 remote=127.0.0.1
+2026-01-02 12:56:26,478 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:56:32,292 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:56:32,298 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:56:57,398 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25100 user=3 remote=127.0.0.1
+2026-01-02 12:56:57,406 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25114 user=5 remote=127.0.0.1
+2026-01-02 12:56:57,413 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:56:57,427 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=5 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2026-01-02 12:57:22,428 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25014 user=3 remote=127.0.0.1
+2026-01-02 12:57:22,442 REQ method=GET path=/chat/api/thread/12/poll qs=since=59 user=3 remote=127.0.0.1 ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0
+2026-01-02 12:57:22,519 RES status=200 path=/chat/api/thread/12/poll bytes=21 duration_ms=25091 user=5 remote=127.0.0.1
