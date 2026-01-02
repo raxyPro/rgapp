@@ -2,6 +2,7 @@
 from datetime import datetime
 from sqlalchemy import UniqueConstraint, Index
 from extensions import db
+from sqlalchemy.orm import backref
 
 
 class ChatThread(db.Model):
@@ -77,4 +78,29 @@ class ChatMessage(db.Model):
     __table_args__ = (
         Index("ix_chat_message_thread_created", "thread_id", "created_at"),
         Index("ix_chat_msg_sender", "sender_id"),
+    )
+
+
+class ChatMessageReaction(db.Model):
+    __tablename__ = "rb_chat_message_reaction"
+
+    reaction_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    message_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("rb_chat_message.message_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id"), nullable=False)
+    emoji = db.Column(db.String(32), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    message = db.relationship(
+        "ChatMessage",
+        backref=backref("reactions", cascade="all, delete-orphan"),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("message_id", "user_id", name="uq_chat_message_reaction"),
+        Index("ix_chat_reaction_message", "message_id"),
+        Index("ix_chat_reaction_user", "user_id"),
     )

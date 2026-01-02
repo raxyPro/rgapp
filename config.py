@@ -21,6 +21,7 @@ class Config:
     APP_SUBPATH = config.get("app", "app_subpath", fallback="")
     APP_ENFORCE_SUBPATH = config.getboolean("app", "app_enforce_subpath", fallback=False)
     REGISTER_BASE_URL = config.get("app", "register_base_url", fallback=APP_BASE_URL)
+    DEV_LOGIN_ENABLED = config.getboolean("app", "dev_login", fallback=False)
 
     # --- Database ---
     SQLALCHEMY_DATABASE_URI = config.get(
@@ -53,4 +54,10 @@ class Config:
     SMTP_AUTH = config.getboolean("email", "smtp_auth", fallback=True)
     SMTP_TIMEOUT = config.getint("email", "smtp_timeout", fallback=30)
     SMTP_DEBUG = config.getboolean("email", "smtp_debug", fallback=False)
+
+    # --- HTTP logging ---
+    HTTP_LOG_ENABLED = config.getboolean("logging", "http_log_enabled", fallback=False)
+    HTTP_LOG_PATH = config.get("logging", "http_log_path", fallback=str(BASE_DIR / "http.log"))
+    HTTP_LOG_DIR = config.get("logging", "http_log_dir", fallback=str(BASE_DIR / "logs"))
+    HTTP_LOG_BASENAME = config.get("logging", "http_log_basename", fallback="http.log")
 

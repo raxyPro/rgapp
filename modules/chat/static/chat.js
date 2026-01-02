@@ -5,6 +5,7 @@
   const msgsEl = document.getElementById("chat-msgs");
   const bodyEl = document.getElementById("chat-body");
   const sendBtn = document.getElementById("chat-send");
+  const replyInput = document.getElementById("reply_to");
   let lastId = 0;
   let fbRef = null;
 
@@ -32,6 +33,42 @@
     } catch (e) {
       return ts || "";
     }
+  }
+
+  function renderReactions(m) {
+    const counts = m?.reactions || {};
+    const topCount = Object.values(counts).reduce((acc, n) => Math.max(acc, Number(n) || 0), 0);
+    const chips = Object.entries(counts).map(([emoji, cnt]) => {
+      const highlight = (Number(cnt) || 0) === topCount && topCount > 0 ? 'unread' : '';
+      return `<span class="pill ${highlight}" data-emoji="${emoji}">${escapeHtml(emoji)} ${cnt}</span>`;
+    });
+
+    const buttons = [];
+    if (cfg.canReact) {
+      const choices = Array.isArray(cfg.reactionChoices) ? cfg.reactionChoices : [];
+      choices.forEach((e) => {
+        const active = m?.user_reaction === e ? "btn-primary" : "btn-outline-primary";
+        const url = `/chat/t/${cfg.threadId}/m/${m.message_id}/react`;
+        buttons.push(
+          `<form method="post" action="${url}">
+             <input type="hidden" name="emoji" value="${escapeHtml(e)}">
+             <button class="btn btn-sm ${active}" type="submit">${escapeHtml(e)}</button>
+           </form>`
+        );
+      });
+      const clearUrl = `/chat/t/${cfg.threadId}/m/${m.message_id}/react`;
+      buttons.push(
+        `<form method="post" action="${clearUrl}">
+           <input type="hidden" name="emoji" value="">
+           <button class="btn btn-sm btn-outline-secondary" type="submit">Clear</button>
+         </form>`
+      );
+    }
+
+    const chipRow = chips.length ? `<div class="reaction-row" style="font-size:12px;">${chips.join("")}</div>` : "";
+    const actionRow = buttons.length ? `<div class="reaction-actions" style="font-size:12px;">${buttons.join("")}</div>` : "";
+    if (!chipRow && !actionRow) return "";
+    return `<div class="mt-2">${chipRow}${actionRow}</div>`;
   }
 
   function appendMessage(m) {
@@ -62,12 +99,16 @@
     const div = document.createElement("div");
     div.className = "chat-msg";
     div.dataset.mid = m.message_id;
+    const replyLabel = m.reply_to_message_id ? `(reply to #${escapeHtml(String(m.reply_to_message_id))})` : "";
+    const reactHtml = renderReactions(m);
     div.innerHTML = `
       <div class="meta">
         <span><b>${escapeHtml(senderLabel(m.sender_id))}</b></span>
         <span style="margin-left:6px;">${escapeHtml(fmtTime(m.created_at))}${escapeHtml(latencyLabel)}</span>
+        ${replyLabel ? `<span class="text-muted" style="margin-left:8px;">${replyLabel}</span>` : ""}
       </div>
       <div class="body">${escapeHtml(m.body || "")}</div>
+      ${reactHtml}
     `;
     msgsEl.appendChild(div);
     lastId = Math.max(lastId, Number(m.message_id) || 0);
@@ -94,17 +135,23 @@
     const body = (bodyEl?.value || "").trim();
     if (!body) return;
     if (bodyEl) bodyEl.value = "";
+    const replyToId = replyInput && replyInput.value ? Number(replyInput.value) : null;
     try {
       const res = await fetch(cfg.sendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ body, reply_to_message_id: replyToId || undefined }),
       });
       const data = await res.json();
       if (data?.message) {
         appendMessage(data.message);
         publishToFirebase(data.message);
+        if (typeof clearReply === "function") {
+          clearReply();
+        } else if (replyInput) {
+          replyInput.value = "";
+        }
       }
     } catch (err) {
       console.error("Send failed", err);

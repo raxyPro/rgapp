@@ -12,7 +12,7 @@ from sqlalchemy import or_
 
 from extensions import db
 from models import RBUser, RBUserProfile
-from modules.chat.models import ChatThread, ChatThreadMember, ChatMessage
+from modules.chat.models import ChatThread, ChatThreadMember, ChatMessage, ChatMessageReaction
 from modules.chat.permissions import module_required, require_thread_member
 from modules.chat.util import get_current_user_id
 
@@ -27,6 +27,7 @@ chat_bp = Blueprint(
 _URL_RE = re.compile(r"(https?://[^\s]+)", re.IGNORECASE)
 _IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
 DEFAULT_MSG_LIMIT = 200
+ALLOWED_EMOJIS = [":)", ":D", "<3", ";)", ":P", "👍", "❤️", "😂", "🎉"]
 
 
 def _user_label(user: RBUser, profile: RBUserProfile | None = None) -> str:
@@ -163,7 +164,41 @@ def _unread_counts(thread_ids: list[int], me_id: int) -> dict[int, int]:
     return {tid: cnt for tid, cnt in rows}
 
 
-def _serialize_message(m: ChatMessage) -> dict:
+def _reaction_summaries(message_ids: list[int], me_id: int) -> dict[int, dict]:
+    """Return reaction counts and the current user's selection for each message."""
+    if not message_ids:
+        return {}
+
+    rows = (
+        db.session.query(
+            ChatMessageReaction.message_id,
+            ChatMessageReaction.emoji,
+            db.func.count(ChatMessageReaction.reaction_id),
+        )
+        .filter(ChatMessageReaction.message_id.in_(message_ids))
+        .group_by(ChatMessageReaction.message_id, ChatMessageReaction.emoji)
+        .all()
+    )
+    counts: dict[int, dict[str, int]] = {}
+    for mid, emoji, cnt in rows:
+        counts.setdefault(mid, {})[emoji] = cnt
+
+    my_rows = (
+        db.session.query(ChatMessageReaction.message_id, ChatMessageReaction.emoji)
+        .filter(ChatMessageReaction.message_id.in_(message_ids))
+        .filter(ChatMessageReaction.user_id == me_id)
+        .all()
+    )
+    user_reactions = {mid: emoji for mid, emoji in my_rows}
+
+    return {
+        mid: {"counts": counts.get(mid, {}), "user_reaction": user_reactions.get(mid)}
+        for mid in message_ids
+    }
+
+
+def _serialize_message(m: ChatMessage, reaction_summary: dict | None = None) -> dict:
+    summary = reaction_summary or {}
     return {
         "message_id": m.message_id,
         "thread_id": m.thread_id,
@@ -171,6 +206,8 @@ def _serialize_message(m: ChatMessage) -> dict:
         "body": m.body,
         "reply_to_message_id": m.reply_to_message_id,
         "created_at": m.created_at.isoformat(),
+        "reactions": summary.get("counts", {}),
+        "user_reaction": summary.get("user_reaction"),
     }
 
 
@@ -216,6 +253,14 @@ def index():
 
     message_counts = _message_counts(thread_ids)
     unread_counts = _unread_counts(thread_ids, me_id)
+    broadcast_counts = _message_counts(broadcast_ids)
+
+    owned_broadcasts = [b for b in broadcasts if b.created_by == me_id]
+    subscribed_broadcasts = [b for b in broadcasts if b.thread_id in my_broadcast_member_ids and b.created_by != me_id]
+    available_broadcasts = [
+        b for b in broadcasts
+        if b.created_by != me_id and b.thread_id not in my_broadcast_member_ids
+    ]
 
     return render_template(
         "chat/index.html",
@@ -228,6 +273,11 @@ def index():
         unread_counts=unread_counts,
         broadcasts=broadcasts,
         my_broadcast_member_ids=my_broadcast_member_ids,
+        owned_broadcasts=owned_broadcasts,
+        subscribed_broadcasts=subscribed_broadcasts,
+        available_broadcasts=available_broadcasts,
+        broadcast_counts=broadcast_counts,
+        reaction_choices=ALLOWED_EMOJIS,
     )
 
 @chat_bp.get("/new")
@@ -250,19 +300,21 @@ def new_chat():
 def create_chat():
     me_id = get_current_user_id()
 
-    chat_type = (request.form.get("chat_type") or "auto").strip().lower()
+    chat_type = (request.form.get("chat_type") or "dm").strip().lower()
+    if chat_type not in ("dm", "group", "broadcast"):
+        chat_type = "dm"
     user_ids = request.form.getlist("user_ids")
     user_ids = [int(x) for x in user_ids if str(x).isdigit()]
     user_ids = sorted(list(set(user_ids)))
 
-    if chat_type != "broadcast" and not user_ids:
-        abort(400, "Select at least 1 user")
+    if chat_type != "broadcast":
+        if not user_ids:
+            abort(400, "Select at least 1 user")
+        existing = RBUser.query.filter(RBUser.user_id.in_(user_ids)).all()
+        if len(existing) != len(user_ids):
+            abort(400, "One or more users not found")
 
-    existing = RBUser.query.filter(RBUser.user_id.in_(user_ids)).all()
-    if len(existing) != len(user_ids):
-        abort(400, "One or more users not found")
-
-    # Broadcast (owner posts; subscribers can reply)
+    # Broadcast (owner posts; subscribers can react)
     if chat_type == "broadcast":
         name = (request.form.get("group_name") or "").strip()
         if not name:
@@ -295,14 +347,11 @@ def create_chat():
         flash("Select exactly 1 user for a direct chat.", "danger")
         return redirect(url_for("chat.new_chat"))
     if chat_type == "group" and len(user_ids) < 2:
-        flash("Select 2 or more users for a group chat.", "danger")
-        return redirect(url_for("chat.new_chat"))
-    if chat_type == "auto" and len(user_ids) == 0:
-        flash("Select at least 1 user.", "danger")
+        flash("Select at least 2 users for a group chat.", "danger")
         return redirect(url_for("chat.new_chat"))
 
     # DM
-    if chat_type in ("dm", "auto") and len(user_ids) == 1:
+    if chat_type == "dm" and len(user_ids) == 1:
         other_id = user_ids[0]
 
         dm_threads = (
@@ -501,8 +550,15 @@ def thread(thread_id: int):
 
     message_counts = _message_counts(thread_ids)
     unread_counts = _unread_counts(thread_ids, me_id)
+    broadcast_counts = _message_counts(broadcast_ids)
 
     msgs = _visible_messages(t, me_id)
+    reaction_data = _reaction_summaries([m.message_id for m in msgs], me_id)
+    reply_lookup = {}
+    for m in msgs:
+        u = users_by_id.get(m.sender_id)
+        label = getattr(u, "display_label", None) or getattr(u, "handle", None) or f"User {m.sender_id}"
+        reply_lookup[m.message_id] = label
 
     manage_members = t.thread_type == "group" and t.created_by == me_id
     available_users = []
@@ -520,6 +576,13 @@ def thread(thread_id: int):
     my_members = members_by_thread.get(thread_id, [])
     display_name = t.display_name_for(me_id, my_members, users_by_id)
 
+    owned_broadcasts = [b for b in broadcasts if b.created_by == me_id]
+    subscribed_broadcasts = [b for b in broadcasts if b.thread_id in my_broadcast_member_ids and b.created_by != me_id]
+    available_broadcasts = [
+        b for b in broadcasts
+        if b.created_by != me_id and b.thread_id not in my_broadcast_member_ids
+    ]
+
     return render_template(
         "chat/thread.html",
         threads=threads,
@@ -528,6 +591,8 @@ def thread(thread_id: int):
         active_thread=t,
         active_thread_display_name=display_name,
         messages=msgs,
+        reaction_data=reaction_data,
+        reply_lookup=reply_lookup,
         me_id=me_id,
         is_broadcast=is_broadcast,
         is_member=is_member,
@@ -538,6 +603,11 @@ def thread(thread_id: int):
         unread_counts=unread_counts,
         broadcasts=broadcasts,
         my_broadcast_member_ids=my_broadcast_member_ids,
+        broadcast_counts=broadcast_counts,
+        owned_broadcasts=owned_broadcasts,
+        subscribed_broadcasts=subscribed_broadcasts,
+        available_broadcasts=available_broadcasts,
+        reaction_choices=ALLOWED_EMOJIS,
     )
 
 @chat_bp.post("/t/<int:thread_id>/send")
@@ -582,8 +652,9 @@ def send_message_http(thread_id: int):
 
     db.session.commit()
 
+    reaction_summary = {"counts": {}, "user_reaction": None}
     if request.is_json:
-        return jsonify({"ok": True, "message": _serialize_message(msg)})
+        return jsonify({"ok": True, "message": _serialize_message(msg, reaction_summary)})
     return redirect(url_for("chat.thread", thread_id=thread_id))
 
 
@@ -628,6 +699,63 @@ def delete_message(thread_id: int, message_id: int):
     return redirect(url_for("chat.thread", thread_id=thread_id))
 
 
+@chat_bp.post("/t/<int:thread_id>/m/<int:message_id>/react")
+@login_required
+@module_required("chat")
+def react_message(thread_id: int, message_id: int):
+    me_id = get_current_user_id()
+    thread = ChatThread.query.get_or_404(thread_id)
+    is_broadcast = thread.thread_type == "broadcast"
+    is_owner = thread.created_by == me_id
+    is_member = _is_member(thread_id, me_id)
+
+    if not is_broadcast:
+        require_thread_member(thread_id, me_id)
+    elif not (is_owner or is_member):
+        msg = "Subscribe to react to this broadcast."
+        if request.is_json:
+            return jsonify({"ok": False, "error": msg}), 403
+        flash(msg, "warning")
+        return redirect(url_for("chat.thread", thread_id=thread_id))
+
+    msg_obj = ChatMessage.query.get_or_404(message_id)
+    if msg_obj.thread_id != thread_id:
+        abort(404)
+
+    payload = request.get_json(silent=True) if request.is_json else request.form
+    emoji_raw = (payload.get("emoji") if payload else None) or ""
+    emoji = emoji_raw.strip()
+    if emoji and emoji not in ALLOWED_EMOJIS:
+        if request.is_json:
+            return jsonify({"ok": False, "error": "Unsupported emoji"}), 400
+        flash("Choose a valid emoji reaction.", "warning")
+        return redirect(url_for("chat.thread", thread_id=thread_id))
+
+    existing = ChatMessageReaction.query.filter_by(message_id=message_id, user_id=me_id).first()
+    if not emoji:
+        if existing:
+            db.session.delete(existing)
+            db.session.commit()
+        if request.is_json:
+            summary = _reaction_summaries([message_id], me_id).get(message_id, {"counts": {}, "user_reaction": None})
+            return jsonify({"ok": True, "reactions": summary.get("counts", {}), "user_reaction": summary.get("user_reaction")})
+        flash("Reaction removed." if existing else "No reaction to remove.", "info")
+        return redirect(url_for("chat.thread", thread_id=thread_id))
+
+    if existing:
+        existing.emoji = emoji
+        db.session.add(existing)
+    else:
+        db.session.add(ChatMessageReaction(message_id=message_id, user_id=me_id, emoji=emoji))
+    db.session.commit()
+
+    summary = _reaction_summaries([message_id], me_id).get(message_id, {"counts": {}, "user_reaction": None})
+    if request.is_json:
+        return jsonify({"ok": True, "reactions": summary.get("counts", {}), "user_reaction": summary.get("user_reaction")})
+    flash("Reaction saved.", "success")
+    return redirect(url_for("chat.thread", thread_id=thread_id))
+
+
 @chat_bp.post("/t/<int:thread_id>/delete")
 @login_required
 @module_required("chat")
@@ -636,9 +764,9 @@ def delete_thread(thread_id: int):
     require_thread_member(thread_id, me_id)
     t = ChatThread.query.get_or_404(thread_id)
     me_user = current_user.get_user() if hasattr(current_user, "get_user") else None
-    if not (me_user and getattr(me_user, "is_admin", False)):
-        # Allow any member to delete their personal window and messages
-        pass
+    is_admin = bool(me_user and getattr(me_user, "is_admin", False))
+    if not is_admin and t.created_by != me_id:
+        abort(403, "Only the creator or an admin can delete this chat.")
 
     # Cascades remove members/messages
     db.session.delete(t)
@@ -753,7 +881,8 @@ def api_messages(thread_id: int):
     if thread.thread_type != "broadcast":
         require_thread_member(thread_id, me_id)
     msgs = _visible_messages(thread, me_id)
-    return jsonify([_serialize_message(m) for m in msgs])
+    reaction_map = _reaction_summaries([m.message_id for m in msgs], me_id)
+    return jsonify([_serialize_message(m, reaction_map.get(m.message_id, {})) for m in msgs])
 
 
 @chat_bp.post("/api/thread/<int:thread_id>/send")
@@ -791,7 +920,8 @@ def api_send(thread_id: int):
         db.session.add(mem)
 
     db.session.commit()
-    return jsonify({"ok": True, "message": _serialize_message(msg)})
+    reaction_summary = {"counts": {}, "user_reaction": None}
+    return jsonify({"ok": True, "message": _serialize_message(msg, reaction_summary)})
 
 
 @chat_bp.get("/api/thread/<int:thread_id>/poll")
@@ -819,7 +949,8 @@ def api_poll(thread_id: int):
                 mem.last_read_at = datetime.utcnow()
                 db.session.add(mem)
                 db.session.commit()
-            return jsonify({"messages": [_serialize_message(m) for m in new_msgs]})
+            reaction_map = _reaction_summaries([m.message_id for m in new_msgs], me_id)
+            return jsonify({"messages": [_serialize_message(m, reaction_map.get(m.message_id, {})) for m in new_msgs]})
 
         if time.time() >= deadline:
             return jsonify({"messages": []})

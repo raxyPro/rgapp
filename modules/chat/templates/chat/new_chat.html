@@ -8,16 +8,16 @@
     <label class="form-label">Chat type</label>
     <div class="d-flex gap-3">
       <div class="form-check">
-        <input class="form-check-input" type="radio" name="chat_type" id="type_auto" value="auto" checked>
-        <label class="form-check-label" for="type_auto">Direct (1) / Group (2+)</label>
+        <input class="form-check-input" type="radio" name="chat_type" id="type_dm" value="dm" checked>
+        <label class="form-check-label" for="type_dm">O2O (one-to-one)</label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" name="chat_type" id="type_group" value="group">
-        <label class="form-check-label" for="type_group">Group</label>
+        <label class="form-check-label" for="type_group">GC (group chat)</label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" name="chat_type" id="type_broadcast" value="broadcast">
-        <label class="form-check-label" for="type_broadcast">Broadcast</label>
+        <label class="form-check-label" for="type_broadcast">BC (broadcast)</label>
       </div>
     </div>
   </div>
@@ -40,7 +40,7 @@
         </div>
       {% endfor %}
     </div>
-    <div class="form-text js-users-help">Select 1 user for direct chat, or 2+ for a group.</div>
+    <div class="form-text js-users-help">Select exactly 1 user for O2O, or 2+ for GC.</div>
   </div>
 
   <div class="d-flex gap-2">
@@ -63,28 +63,27 @@
     function applyType(type) {
       const isBroadcast = type === 'broadcast';
       const isGroup = type === 'group';
-      const isAuto = type === 'auto';
+      const isDm = type === 'dm';
 
       if (nameRow) {
         nameRow.style.display = (isBroadcast || isGroup) ? 'block' : 'none';
         nameInput.required = isBroadcast || isGroup;
+        nameInput.placeholder = isBroadcast ? 'e.g., Product Updates' : 'e.g., Finance';
         nameLabel.textContent = isBroadcast ? 'Broadcast name' : 'Group name';
         nameHelp.textContent = isBroadcast
-          ? 'Required; unique for you (e.g., Finance).'
-          : 'Required; unique for you.';
+          ? 'Required; unique for you (subscribers will see “name by creator”).'
+          : 'Required; unique for you; add at least two people to start.';
       }
 
       if (usersRow) {
         usersRow.style.display = isBroadcast ? 'none' : 'block';
-        usersHelp.textContent = isBroadcast ? 'Broadcast does not require selecting users.' : (isGroup ? 'Select 2 or more users.' : 'Select exactly 1 user.');
+        usersHelp.textContent = isBroadcast
+          ? 'Broadcast does not require selecting users.'
+          : (isGroup ? 'Select 2 or more users.' : 'Select exactly 1 user.');
       }
 
-      if (isAuto) {
-        // default behavior: allow 1 for DM or 2+ for group; we’ll limit to 1 unless user picks 2+
-      }
-
-      // For DM (auto with 1 user) enforce single select feel: if only one should be checked
-      const singleMode = isAuto; // DM/auto path
+      // For DM enforce single select feel
+      const singleMode = isDm;
       userChecks.forEach((cb) => {
         cb.onclick = () => {
           if (singleMode && cb.checked) {
@@ -100,7 +99,7 @@
     });
     // initial
     const checked = Array.from(typeRadios).find(r => r.checked);
-    applyType(checked ? checked.value : 'auto');
+    applyType(checked ? checked.value : 'dm');
   })();
 </script>
 {% endblock %}

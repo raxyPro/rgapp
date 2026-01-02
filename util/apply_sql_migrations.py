@@ -51,8 +51,10 @@ def apply_migrations():
         if not sql:
             continue
 
-        # Execute the file as one block (safer than naive split-on-semicolon).
-        db.session.execute(text(sql))
+        # Execute statements sequentially to allow multi-statement files.
+        statements = [s.strip() for s in sql.split(";") if s.strip()]
+        for stmt in statements:
+            db.session.execute(text(stmt))
         db.session.execute(
             text("INSERT INTO rb_schema_migrations (filename, applied_at) VALUES (:f, :t)"),
             {"f": fname, "t": datetime.utcnow()},

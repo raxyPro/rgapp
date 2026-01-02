@@ -1,41 +1,671 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sample Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        header {
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        main {
-            background-color: white;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>RayGrow Consulting Pvt. Ltd. | Collaboration • Talent • Project Management</title>
+  <meta name="description" content="RayGrow Consulting Pvt. Ltd. (Founded 2024) helps IT companies collaborate, hire senior consultants, and deliver project management services & training (Agile, PMP). India & Middle East." />
+  <meta name="keywords" content="RayGrow Consulting, collaboration, senior consultant hire, project management services, project management training, Agile, PMP, India, Dubai, Qatar, Saudi" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://raygrowcs.com/" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="RayGrow Consulting Pvt. Ltd." />
+  <meta property="og:description" content="Collaboration • Senior Consultants • Project Management Services & Training (Agile, PMP). India & Middle East." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://raygrowcs.com/" />
+  <meta property="og:image" content="https://raygrowcs.com/assets/img/raygrow-icon.svg" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/img/raygrow-icon.svg" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Optional: Bootstrap icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root{
+      --rg-blue: #0b4aa2;
+      --rg-blue-2:#0a2f66;
+      --rg-white:#ffffff;
+      --rg-orange:#ff7a18;
+      --rg-bg:#f6f9ff;
+      --rg-text:#0b1220;
+    }
+
+    body { color: var(--rg-text); background: var(--rg-bg); }
+    .navbar { background: rgba(255,255,255,.92); backdrop-filter: blur(8px); }
+    .brand-dot { color: var(--rg-orange); }
+
+    .btn-rg {
+      background: var(--rg-blue);
+      color: #fff;
+      border: 0;
+    }
+    .btn-rg:hover { background: var(--rg-blue-2); color:#fff; }
+    .btn-rg-outline {
+      border: 2px solid var(--rg-blue);
+      color: var(--rg-blue);
+      background: transparent;
+    }
+    .btn-rg-outline:hover { background: var(--rg-blue); color:#fff; }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(11,74,162,.10), rgba(255,122,24,.08));
+      border-bottom: 1px solid rgba(11,74,162,.12);
+    }
+    .hero-badge {
+      border: 1px solid rgba(11,74,162,.25);
+      background: rgba(255,255,255,.75);
+    }
+    .accent-bar { height: 4px; background: linear-gradient(90deg, var(--rg-blue), var(--rg-orange)); }
+
+    .card { border: 1px solid rgba(11,74,162,.12); box-shadow: 0 10px 30px rgba(11,74,162,.06); }
+    .card .icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display:flex; align-items:center; justify-content:center;
+      background: rgba(11,74,162,.10);
+      color: var(--rg-blue);
+      font-size: 1.25rem;
+    }
+
+    .section-title small { color: var(--rg-blue); letter-spacing: .08em; text-transform: uppercase; }
+
+    .collab-banner {
+      background: linear-gradient(135deg, var(--rg-blue), var(--rg-blue-2));
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .collab-banner::after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 40%, rgba(255,122,24,.35), transparent 55%),
+                  radial-gradient(circle at 70% 60%, rgba(255,255,255,.18), transparent 55%);
+      transform: rotate(-8deg);
+    }
+    .collab-banner .content { position: relative; z-index: 1; }
+
+    a.skip-link {
+      position:absolute; left:-999px; top:auto; width:1px; height:1px; overflow:hidden;
+    }
+    a.skip-link:focus {
+      position:fixed; left:1rem; top:1rem; width:auto; height:auto; padding:.75rem 1rem;
+      background:#fff; border:2px solid var(--rg-orange); z-index:9999;
+    }
+
+    footer { background:#fff; border-top: 1px solid rgba(11,74,162,.12); }
+  </style>
+
+  <!-- Structured data (Organization) -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Organization",
+    "name":"RayGrow Consulting Private Limited",
+    "url":"https://raygrowcs.com/",
+    "foundingDate":"2024",
+    "address":{
+      "@type":"PostalAddress",
+      "addressLocality":"Noida",
+      "addressCountry":"IN"
+    },
+    "areaServed":["IN","AE","QA","SA"],
+    "sameAs":[]
+  }
+  </script>
 </head>
+
 <body>
-    <header>
-        <h1>Welcome to rgapp</h1>
-    </header>
-    <main>
-        <p>This is a sample HTML page.</p>
-        <ul>
-            <li>Item 1</li>
-            <li>Item 2</li>
-            <li>Item 3</li>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg sticky-top border-bottom">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" href="#top" aria-label="RayGrow home">
+        <img src="assets/img/raygrow-icon.svg" alt="RayGrow icon" width="28" height="28" />
+        RayGrow<span class="brand-dot">.</span>CS
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+        aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-2">
+          <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+          <li class="nav-item"><a class="nav-link" href="#training">Training</a></li>
+          <li class="nav-item"><a class="nav-link" href="#blog">Blog</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
         </ul>
-    </main>
+        <div class="ms-lg-3 d-grid d-lg-block">
+          <a class="btn btn-rg" href="#contact">Get a Callback</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="accent-bar"></div>
+
+  <main id="main">
+    <!-- Hero -->
+    <header id="top" class="hero py-5">
+      <div class="container py-2 py-lg-4">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill hero-badge mb-3">
+              <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i>
+              <span class="small">Lead generation • India & Middle East</span>
+            </div>
+
+            <h1 class="display-5 fw-bold lh-sm">
+              Collaboration that delivers.
+              <span class="d-block" style="color:var(--rg-blue)">Consulting • Talent • Project Management</span>
+            </h1>
+
+            <p class="lead mt-3">
+              RayGrow Consulting Pvt. Ltd. (Founded 2024) partners with IT companies to collaborate on delivery,
+              provide senior consultants on hire, and enable project management excellence through services and training.
+            </p>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <a class="btn btn-rg btn-lg" href="#contact">
+                Request a proposal <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+              </a>
+              <a class="btn btn-rg-outline btn-lg" href="#services">Explore services</a>
+            </div>
+
+            <div class="mt-4 d-flex flex-wrap gap-3 small text-secondary">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                <span>Noida • Dubai • Qatar • Saudi</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check" aria-hidden="true"></i>
+                <span>Quality-first delivery</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-people" aria-hidden="true"></i>
+                <span>Collaboration-ready teams</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card p-4">
+              <div class="d-flex align-items-center justify-content-between">
+                <h2 class="h5 fw-bold mb-0">Delivery Partnerships</h2>
+                <span class="badge text-bg-light border" style="border-color:rgba(11,74,162,.2) !important;">
+                  HTML5 • Bootstrap
+                </span>
+              </div>
+              <p class="text-secondary mt-2 mb-3">
+                A static website designed to generate leads for collaboration, senior consultants, and PM training.
+              </p>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="d-flex gap-3">
+                    <div class="icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></div>
+                    <div>
+                      <div class="fw-semibold">Collaboration banner</div>
+                      <div class="small text-secondary">Partner with IT companies</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex gap-3">
+                    <div class="icon"><i class="bi bi-person-badge" aria-hidden="true"></i></div>
+                    <div>
+                      <div class="fw-semibold">Senior consultants</div>
+                      <div class="small text-secondary">On-hire expertise</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex gap-3">
+                    <div class="icon"><i class="bi bi-kanban" aria-hidden="true"></i></div>
+                    <div>
+                      <div class="fw-semibold">PM services</div>
+                      <div class="small text-secondary">Governance & delivery</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex gap-3">
+                    <div class="icon"><i class="bi bi-mortarboard" aria-hidden="true"></i></div>
+                    <div>
+                      <div class="fw-semibold">Training</div>
+                      <div class="small text-secondary">Agile • PMP</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-4"/>
+
+              <div class="d-flex flex-column flex-sm-row gap-2">
+                <a class="btn btn-rg w-100" href="#contact">Talk to us</a>
+                <a class="btn btn-rg-outline w-100" href="#blog">Read insights</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Collaboration Banner -->
+    <section class="collab-banner py-5">
+      <div class="container content">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <h2 class="fw-bold mb-2">Let’s collaborate on delivery.</h2>
+            <p class="mb-0 opacity-90">
+              We support IT companies seeking collaboration, skilled professionals, and project delivery leadership.
+              Serving India and the Middle East (Dubai, Qatar, Saudi Arabia).
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a class="btn btn-light btn-lg" href="#contact" aria-label="Contact RayGrow for collaboration">
+              Start collaboration <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="py-5">
+      <div class="container">
+        <div class="section-title mb-4">
+          <small>About</small>
+          <h2 class="fw-bold">RayGrow Consulting Private Limited</h2>
+          <p class="text-secondary mb-0">
+            Formed in <strong>2024</strong>, headquartered in <strong>Noida</strong>, with offices in
+            <strong>Dubai</strong>, <strong>Qatar</strong>, and <strong>Saudi Arabia</strong>.
+          </p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-7">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">What we do</h3>
+              <p class="text-secondary">
+                We help organizations deliver with confidence—through collaboration models, senior consultants on hire,
+                structured project management services, and hands-on training for individuals and teams.
+              </p>
+
+              <ul class="list-unstyled mb-0">
+                <li class="d-flex gap-2 mb-2">
+                  <i class="bi bi-check-circle-fill" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>Partnering with IT companies for joint delivery and long-term collaboration</span>
+                </li>
+                <li class="d-flex gap-2 mb-2">
+                  <i class="bi bi-check-circle-fill" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>Senior consultants available on hire for critical programs and transformations</span>
+                </li>
+                <li class="d-flex gap-2 mb-2">
+                  <i class="bi bi-check-circle-fill" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>Project governance, PMO setup, delivery cadence, and stakeholder management</span>
+                </li>
+                <li class="d-flex gap-2">
+                  <i class="bi bi-check-circle-fill" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>Training for Agile and PMP-aligned project management practices</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">Quick facts</h3>
+              <dl class="row mb-0">
+                <dt class="col-5 text-secondary">Founded</dt>
+                <dd class="col-7 mb-2">2024</dd>
+
+                <dt class="col-5 text-secondary">HQ</dt>
+                <dd class="col-7 mb-2">Noida, India</dd>
+
+                <dt class="col-5 text-secondary">Offices</dt>
+                <dd class="col-7 mb-2">Dubai • Qatar • Saudi</dd>
+
+                <dt class="col-5 text-secondary">Audience</dt>
+                <dd class="col-7 mb-2">IT Companies • Professionals</dd>
+
+                <dt class="col-5 text-secondary">Focus</dt>
+                <dd class="col-7 mb-0">Collaboration • Delivery • Training</dd>
+              </dl>
+
+              <hr class="my-4" />
+              <p class="small text-secondary mb-0">
+                Tip: Replace these details with your exact addresses/phone once finalized.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section id="services" class="py-5 bg-white border-top border-bottom">
+      <div class="container">
+        <div class="section-title mb-4">
+          <small>Services</small>
+          <h2 class="fw-bold">What we offer</h2>
+          <p class="text-secondary mb-0">
+            Built for IT companies seeking collaboration and organizations needing project leadership.
+          </p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-4 h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="icon"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
+                <h3 class="h5 fw-bold mb-0">Collaboration for Delivery</h3>
+              </div>
+              <p class="text-secondary mt-3 mb-0">
+                Partner with us for co-delivery, shared accountability, and scalable execution for client outcomes.
+              </p>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-4 h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="icon"><i class="bi bi-person-workspace" aria-hidden="true"></i></div>
+                <h3 class="h5 fw-bold mb-0">Senior Consultant on Hire</h3>
+              </div>
+              <p class="text-secondary mt-3 mb-0">
+                Bring in leadership for critical programs—delivery management, transformation, PMO leadership, and more.
+              </p>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4">
+            <div class="card p-4 h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="icon"><i class="bi bi-clipboard-data" aria-hidden="true"></i></div>
+                <h3 class="h5 fw-bold mb-0">Project Management Services</h3>
+              </div>
+              <p class="text-secondary mt-3 mb-0">
+                Delivery governance, planning, risk & issue management, stakeholder communication, and execution support.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Training -->
+    <section id="training" class="py-5">
+      <div class="container">
+        <div class="section-title mb-4">
+          <small>Training</small>
+          <h2 class="fw-bold">Project Management Training</h2>
+          <p class="text-secondary mb-0">
+            Practical sessions for professionals and teams—aligned to industry expectations.
+          </p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">Agile (Scrum/Kanban practices)</h3>
+              <p class="text-secondary mb-0">
+                Agile mindset, ceremonies, backlog management, estimation, and continuous improvement.
+              </p>
+              <div class="mt-3 small">
+                <span class="badge text-bg-light border me-1">Workshops</span>
+                <span class="badge text-bg-light border me-1">Coaching</span>
+                <span class="badge text-bg-light border">Team enablement</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">PMP-aligned Training</h3>
+              <p class="text-secondary mb-0">
+                PM fundamentals, planning, schedule/cost, risk, stakeholder and communication approaches.
+              </p>
+              <div class="mt-3 small">
+                <span class="badge text-bg-light border me-1">Concepts</span>
+                <span class="badge text-bg-light border me-1">Templates</span>
+                <span class="badge text-bg-light border">Case studies</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-4 mt-4">
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+              <h3 class="h5 fw-bold mb-1">Need a customized training plan?</h3>
+              <p class="text-secondary mb-0">Tell us your audience, duration, and goals—we’ll propose an agenda.</p>
+            </div>
+            <a class="btn btn-rg" href="#contact">Request training proposal</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Blog -->
+    <section id="blog" class="py-5 bg-white border-top border-bottom">
+      <div class="container">
+        <div class="section-title mb-4">
+          <small>Blog</small>
+          <h2 class="fw-bold">Insights & Updates</h2>
+          <p class="text-secondary mb-0">Short reads on delivery, collaboration, Agile, and PMP-aligned practices.</p>
+        </div>
+
+        <div class="row g-4">
+          <!-- Blog post 1 -->
+          <article class="col-md-6 col-lg-4">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">How collaboration reduces delivery risk</h3>
+              <p class="text-secondary">
+                A simple framework to align scope, ownership, cadence, and communication across partner teams.
+              </p>
+              <a class="stretched-link" href="#" aria-label="Read blog: How collaboration reduces delivery risk">Read more</a>
+            </div>
+          </article>
+
+          <!-- Blog post 2 -->
+          <article class="col-md-6 col-lg-4">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">PMO essentials for fast-moving IT teams</h3>
+              <p class="text-secondary">
+                Lightweight governance that supports speed without losing control—metrics, rituals, and templates.
+              </p>
+              <a class="stretched-link" href="#" aria-label="Read blog: PMO essentials for fast-moving IT teams">Read more</a>
+            </div>
+          </article>
+
+          <!-- Blog post 3 -->
+          <article class="col-md-6 col-lg-4">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">Agile vs PMP: choosing what fits</h3>
+              <p class="text-secondary">
+                Where Agile shines, where predictive planning helps, and how to combine both for real-world delivery.
+              </p>
+              <a class="stretched-link" href="#" aria-label="Read blog: Agile vs PMP: choosing what fits">Read more</a>
+            </div>
+          </article>
+        </div>
+
+        <p class="small text-secondary mt-4 mb-0">
+          Note: These are placeholders. You can link to separate static pages later (e.g., /blog/post-1.html).
+        </p>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="py-5">
+      <div class="container">
+        <div class="section-title mb-4">
+          <small>Contact</small>
+          <h2 class="fw-bold">Contact us</h2>
+          <p class="text-secondary mb-0">
+            Share your requirement and the best time to connect back. We’ll respond as soon as possible.
+          </p>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-lg-5">
+            <div class="card p-4 h-100">
+              <h3 class="h5 fw-bold">Reach us</h3>
+              <p class="text-secondary mb-3">
+                India & Middle East: Noida (HQ), Dubai, Qatar, Saudi Arabia.
+              </p>
+
+              <ul class="list-unstyled mb-0">
+                <li class="d-flex gap-2 mb-2">
+                  <i class="bi bi-envelope" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>
+                    Email: <a href="mailto:info@raygrowcs.com">info@raygrowcs.com</a>
+                  </span>
+                </li>
+                <li class="d-flex gap-2 mb-2">
+                  <i class="bi bi-telephone" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>Phone: <a href="tel:+910000000000">+91 00000 00000</a></span>
+                </li>
+                <li class="d-flex gap-2">
+                  <i class="bi bi-clock" style="color:var(--rg-orange)" aria-hidden="true"></i>
+                  <span>Business hours: Mon–Sat, 10:00–18:00</span>
+                </li>
+              </ul>
+
+              <hr class="my-4"/>
+              <p class="small text-secondary mb-0">
+                Replace email/phone with your real details. For a static form submission, connect the form to a service
+                (examples: Formspree / Netlify Forms) or a backend endpoint.
+              </p>
+            </div>
+          </div>
+
+          <div class="col-lg-7">
+            <div class="card p-4">
+              <h3 class="h5 fw-bold">Get a callback</h3>
+
+              <!-- Static front-end form -->
+              <form class="mt-3 needs-validation" novalidate action="#" method="post" aria-label="Contact form">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                    <input id="name" name="name" type="text" class="form-control" required autocomplete="name" />
+                    <div class="invalid-feedback">Please enter your name.</div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input id="email" name="email" type="email" class="form-control" required autocomplete="email" />
+                    <div class="invalid-feedback">Please enter a valid email.</div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="phone" class="form-label">Phone (optional)</label>
+                    <input id="phone" name="phone" type="tel" class="form-control" autocomplete="tel"
+                           inputmode="tel" pattern="^[0-9+()\\s-]{7,}$"
+                           aria-describedby="phoneHelp" />
+                    <div id="phoneHelp" class="form-text">Include country code if outside India.</div>
+                    <div class="invalid-feedback">Please enter a valid phone number.</div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label for="bestTime" class="form-label">Best time to connect back <span class="text-danger">*</span></label>
+                    <select id="bestTime" name="bestTime" class="form-select" required>
+                      <option value="" selected disabled>Choose…</option>
+                      <option>Morning (10:00–12:00)</option>
+                      <option>Afternoon (12:00–15:00)</option>
+                      <option>Evening (15:00–18:00)</option>
+                      <option>Anytime</option>
+                    </select>
+                    <div class="invalid-feedback">Please select a preferred time.</div>
+                  </div>
+
+                  <div class="col-12">
+                    <label for="message" class="form-label">Message <span class="text-danger">*</span></label>
+                    <textarea id="message" name="message" class="form-control" rows="5" required
+                              placeholder="Tell us about collaboration, hiring a senior consultant, PM services, or training needs..."></textarea>
+                    <div class="invalid-feedback">Please enter your message.</div>
+                  </div>
+
+                  <div class="col-12 d-flex flex-column flex-sm-row gap-2 align-items-sm-center justify-content-between">
+                    <button class="btn btn-rg btn-lg" type="submit">
+                      Submit <i class="bi bi-send ms-1" aria-hidden="true"></i>
+                    </button>
+                    <p class="small text-secondary mb-0">
+                      By submitting, you agree to be contacted by RayGrow.
+                    </p>
+                  </div>
+                </div>
+              </form>
+
+              <noscript>
+                <div class="alert alert-warning mt-3 mb-0">
+                  JavaScript is disabled. Form validation may be limited.
+                </div>
+              </noscript>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-4">
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <img src="assets/img/raygrow-icon.svg" alt="RayGrow icon" width="22" height="22" />
+          <span class="fw-semibold">RayGrow Consulting Private Limited</span>
+        </div>
+        <div class="small text-secondary">
+          © <span id="year"></span> RayGrow. All rights reserved.
+        </div>
+      </div>
+
+      <hr class="my-3" />
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-2 small">
+        <div class="text-secondary">
+          Headquartered in Noida • Offices in Dubai, Qatar, Saudi Arabia
+        </div>
+        <div class="d-flex gap-3">
+          <a href="#top">Back to top</a>
+          <a href="#contact">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Footer year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Bootstrap client-side validation (accessibility-friendly)
+    (() => {
+      'use strict';
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+  </script>
 </body>
 </html>

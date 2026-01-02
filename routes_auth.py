@@ -4,7 +4,8 @@ from security import hash_password, verify_password
 from flask import current_app
 
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from pathlib import Path
 from flask_login import login_user, logout_user, current_user
 from security import verify_password, hash_password
 
@@ -96,6 +97,54 @@ def login():
         return redirect(url_for("admin.dashboard" if u.is_admin else "user.welcome"))
 
     return render_template("login.html")
+
+
+def _dev_login_allowed():
+    if not current_app.config.get("DEV_LOGIN_ENABLED"):
+        return False
+    # Only allow on explicit dev host
+    host = request.host.split("//")[-1]
+    if host != "127.0.0.1:5000":
+        return False
+    tpl_path = Path(current_app.root_path) / "templates" / "dev_login.html"
+    return tpl_path.exists()
+
+
+@auth_bp.route("/dev-login", methods=["GET", "POST"])
+def dev_login():
+    if not _dev_login_allowed():
+        abort(404)
+
+    if request.method == "POST":
+        user_id_raw = request.form.get("user_id")
+        if not user_id_raw or not str(user_id_raw).isdigit():
+            flash("Choose a user to log in as.", "warning")
+            return redirect(url_for("auth.dev_login"))
+        u = RBUser.query.get(int(user_id_raw))
+        if not u:
+            flash("User not found.", "danger")
+            return redirect(url_for("auth.dev_login"))
+        login_user(UserLoginAdapter(u))
+        flash(f"Logged in as {u.email}", "success")
+        return redirect(url_for("admin.dashboard" if u.is_admin else "user.welcome"))
+
+    users = (
+        db.session.query(RBUser, RBUserProfile)
+        .outerjoin(RBUserProfile, RBUserProfile.user_id == RBUser.user_id)
+        .order_by(RBUser.email.asc())
+        .all()
+    )
+    items = []
+    for u, prof in users:
+        items.append({
+            "id": u.user_id,
+            "email": u.email,
+            "name": getattr(prof, "display_name", None) or getattr(prof, "full_name", None),
+            "handle": getattr(prof, "handle", None) or getattr(u, "handle", None),
+            "status": u.status,
+            "is_admin": getattr(u, "is_admin", False),
+        })
+    return render_template("dev_login.html", users=items)
 
 @auth_bp.route("/logout")
 def logout():

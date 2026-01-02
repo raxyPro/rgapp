@@ -2,13 +2,14 @@
 {% extends "chat/layout.html" %}
 
 {% block chat_main %}
+  {% set can_react = (not is_broadcast) or is_owner or is_member %}
   <div class="chat-main-top">
     <strong>{{ active_thread_display_name }}</strong>
     <div style="font-size:12px;opacity:.7">
       {% if active_thread.thread_type == "group" %}
         Group chat
       {% elif active_thread.thread_type == "broadcast" %}
-        Broadcast chat (owner posts; subscribers reply)
+        Broadcast chat (owner posts; subscribers react)
       {% else %}
         Direct chat
       {% endif %}
@@ -63,13 +64,20 @@
 
   <div class="chat-msgs" id="chat-msgs">
     {% for m in messages %}
+      {% set summary = reaction_data.get(m.message_id, {}) %}
+      {% set counts = summary.get('counts', {}) %}
+      {% set top_count = counts.values()|list|max if counts else 0 %}
       <div class="chat-msg" data-mid="{{ m.message_id }}">
         <div class="meta">
           {% set u = users_by_id.get(m.sender_id) %}
           <span><b>{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}</b></span>
-          AA§ <span>{{ m.created_at }}</span>
+          <span style="margin-left:6px;">{{ m.created_at }}</span>
           {% if m.reply_to_message_id %}
-            <span class="text-muted" style="margin-left:8px;">(reply to #{{ m.reply_to_message_id }})</span>
+            {% set replied_user = reply_lookup.get(m.reply_to_message_id) %}
+            <span class="text-muted" style="margin-left:8px;">(reply to {{ replied_user or ("#" ~ m.reply_to_message_id) }})</span>
+          {% endif %}
+          {% if active_thread.thread_type != "broadcast" or is_owner %}
+            <button class="btn btn-sm btn-outline-primary" type="button" style="margin-left:6px;padding:2px 6px;font-size:11px;" onclick="setReply('{{ m.message_id }}', '{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}')">Reply</button>
           {% endif %}
           {% if m.sender_id == me_id %}
           <form method="post" action="{{ url_for('chat.delete_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:inline;">
@@ -86,11 +94,40 @@
             <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ m.message_id }}')">Cancel</button>
           </div>
         </form>
+
+        {% if counts %}
+          <div class="reaction-row" style="font-size:12px;">
+            {% for emoji, cnt in counts.items() %}
+              <span class="pill {% if cnt == top_count and top_count > 0 %}unread{% endif %}" data-emoji="{{ emoji }}">{{ emoji }} {{ cnt }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if can_react %}
+          <div class="reaction-actions" style="font-size:12px;">
+            {% for e in reaction_choices %}
+              <form method="post" action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}">
+                <input type="hidden" name="emoji" value="{{ e }}">
+                <button class="btn btn-sm {% if summary.get('user_reaction') == e %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">{{ e }}</button>
+              </form>
+            {% endfor %}
+            <form method="post" action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}">
+              <input type="hidden" name="emoji" value="">
+              <button class="btn btn-sm btn-outline-secondary" type="submit">Clear</button>
+            </form>
+          </div>
+        {% endif %}
       </div>
     {% endfor %}
   </div>
 
   <form class="chat-compose" method="post" action="{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}">
+    <input type="hidden" name="reply_to" id="reply_to">
+    <div id="reply-banner" style="display:none; flex:1; border:1px dashed #ccc; border-radius:8px; padding:8px; margin-right:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div style="font-size:12px;">Replying to <span id="reply-target"></span></div>
+        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="clearReply()">Cancel</button>
+      </div>
+    </div>
     <textarea class="form-control" rows="2" name="body" id="chat-body" placeholder="{% if active_thread.thread_type == 'broadcast' and not is_owner %}Replies disabled for subscribers{% else %}Type a message...{% endif %}" {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}></textarea>
     <button class="btn btn-primary" id="chat-send" type="submit" {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}>Send</button>
   </form>
@@ -98,8 +135,7 @@
   <div style="padding:8px 12px;">
     <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Top emojis</div>
     <div id="emoji-bar" style="display:flex; gap:8px; flex-wrap:wrap;">
-      {% set emoji_list = [':)', ':D', '<3', '¯\\_(ツ)_/¯', ';)', ':P'] %}
-      {% for e in emoji_list %}
+      {% for e in reaction_choices %}
         <button type="button" class="btn btn-sm" style="padding:4px 8px;" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
       {% endfor %}
     </div>
@@ -128,7 +164,9 @@
         {% for uid, user in users_by_id.items() %}
           "{{ uid }}": {"label": "{{ user.display_label or '' }}"}{% if not loop.last %},{% endif %}
         {% endfor %}
-      }
+      },
+      canReact: {{ 'true' if can_react else 'false' }},
+      reactionChoices: {{ reaction_choices | tojson }},
     };
   </script>
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
@@ -159,6 +197,25 @@
       if (!box) return;
       const visible = box.style.display === 'block';
       box.style.display = visible ? 'none' : 'block';
+    }
+    function setReply(id, label) {
+      const input = document.getElementById('reply_to');
+      if (!input) return;
+      input.value = id;
+      const banner = document.getElementById('reply-banner');
+      const target = document.getElementById('reply-target');
+      if (banner) banner.style.display = 'flex';
+      if (target) target.textContent = label || ('#' + id);
+      const body = document.getElementById('chat-body');
+      if (body) body.focus();
+    }
+    function clearReply() {
+      const input = document.getElementById('reply_to');
+      if (input) input.value = '';
+      const banner = document.getElementById('reply-banner');
+      if (banner) banner.style.display = 'none';
+      const target = document.getElementById('reply-target');
+      if (target) target.textContent = '';
     }
   </script>
 {% endblock %}

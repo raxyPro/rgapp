@@ -6,6 +6,94 @@ CREATE TABLE `alembic_version` (
   PRIMARY KEY (`version_num`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- admin and user management , security and audit
+
+-- ---- rb_user ----
+-- ---- rb_invitation ----
+CREATE TABLE `rb_invitation` (
+  `invitation_id` bigint NOT NULL AUTO_INCREMENT,
+  `email` varchar(320) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`invitation_id`),
+  UNIQUE KEY `uq_invite_token` (`token`),
+  KEY `ix_invite_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_module ----
+CREATE TABLE `rb_module` (
+  `module_key` varchar(50) NOT NULL,
+  `name` varchar(120) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `is_enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`module_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `rb_user` (
+  `user_id` bigint NOT NULL AUTO_INCREMENT,
+  `email` varchar(320) NOT NULL,
+  `password_hash` varchar(255) DEFAULT NULL,
+  `status` enum('invited','active','blocked','deleted') NOT NULL DEFAULT 'invited',
+  `is_admin` tinyint(1) NOT NULL DEFAULT '0',
+  `invited_at` datetime DEFAULT NULL,
+  `invited_by` bigint DEFAULT NULL,
+  `registered_at` datetime DEFAULT NULL,
+  `last_login_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `uq_rb_user_email` (`email`),
+  KEY `ix_rb_user_email` (`email`),
+  KEY `ix_rb_user_status` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_user_module ----
+CREATE TABLE `rb_user_module` (
+  `user_id` bigint NOT NULL,
+  `module_key` varchar(50) NOT NULL,
+  `has_access` tinyint(1) NOT NULL DEFAULT '1',
+  `granted_by` bigint DEFAULT NULL,
+  `granted_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`,`module_key`),
+  KEY `fk_um_module` (`module_key`),
+  CONSTRAINT `fk_um_module` FOREIGN KEY (`module_key`) REFERENCES `rb_module` (`module_key`) ON DELETE CASCADE,
+  CONSTRAINT `fk_um_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_user_profile ----
+CREATE TABLE `rb_user_profile` (
+  `user_id` bigint NOT NULL,
+  `handle` varchar(64) DEFAULT NULL,
+  `rgDisplay` varchar(200) NOT NULL,
+  `full_name` varchar(200) DEFAULT NULL,
+  `display_name` varchar(120) DEFAULT NULL,
+  `rgData` json DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `handle` (`handle`),
+  UNIQUE KEY `uq_rb_profile_handle` (`handle`),
+  CONSTRAINT `fk_profile_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_password_reset ----
+CREATE TABLE `rb_password_reset` (
+  `reset_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`reset_id`),
+  UNIQUE KEY `uq_reset_token` (`token`),
+  KEY `fk_reset_user` (`user_id`),
+  CONSTRAINT `fk_reset_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 -- ---- rb_audit ----
 CREATE TABLE `rb_audit` (
   `audit_id` bigint NOT NULL AUTO_INCREMENT,
@@ -22,6 +110,8 @@ CREATE TABLE `rb_audit` (
   KEY `ix_rb_audit_event_id` (`event_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=83 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+
+-- chat module
 -- ---- rb_chat_message ----
 CREATE TABLE `rb_chat_message` (
   `message_id` bigint NOT NULL AUTO_INCREMENT,
@@ -38,6 +128,21 @@ CREATE TABLE `rb_chat_message` (
   CONSTRAINT `fk_chat_msg_sender` FOREIGN KEY (`sender_id`) REFERENCES `rb_user` (`user_id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_chat_msg_thread` FOREIGN KEY (`thread_id`) REFERENCES `rb_chat_thread` (`thread_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_chat_message_reaction ----
+CREATE TABLE `rb_chat_message_reaction` (
+  `reaction_id` bigint NOT NULL AUTO_INCREMENT,
+  `message_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  `emoji` varchar(32) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`reaction_id`),
+  UNIQUE KEY `uq_chat_message_reaction` (`message_id`,`user_id`),
+  KEY `ix_chat_reaction_message` (`message_id`),
+  KEY `ix_chat_reaction_user` (`user_id`),
+  CONSTRAINT `fk_chat_reaction_message` FOREIGN KEY (`message_id`) REFERENCES `rb_chat_message` (`message_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_chat_reaction_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ---- rb_chat_thread ----
 CREATE TABLE `rb_chat_thread` (
@@ -70,6 +175,7 @@ CREATE TABLE `rb_chat_thread_member` (
   CONSTRAINT `fk_chat_member_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- CV MODULE
 -- ---- rb_cv_pair ----
 CREATE TABLE `rb_cv_pair` (
   `cv_id` bigint NOT NULL AUTO_INCREMENT,
@@ -145,24 +251,6 @@ CREATE TABLE `rb_cv_public_link` (
   CONSTRAINT `fk_cv_public_profile` FOREIGN KEY (`cvfile_id`) REFERENCES `rb_cv_profile` (`profile_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- ---- rb_cv_share ----
-CREATE TABLE `rb_cv_share` (
-  `share_id` bigint NOT NULL AUTO_INCREMENT,
-  `cv_id` bigint NOT NULL,
-  `owner_user_id` bigint NOT NULL,
-  `target_user_id` bigint DEFAULT NULL,
-  `target_email` varchar(200) DEFAULT NULL,
-  `share_token` varchar(64) NOT NULL,
-  `is_public` tinyint(1) NOT NULL DEFAULT '0',
-  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`share_id`),
-  UNIQUE KEY `uk_share_token` (`share_token`),
-  KEY `idx_share_cv` (`cv_id`),
-  KEY `idx_share_owner` (`owner_user_id`),
-  KEY `idx_share_target_user` (`target_user_id`),
-  KEY `idx_share_target_email` (`target_email`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ---- rb_cvfile_share ----
 CREATE TABLE `rb_cvfile_share` (
@@ -183,43 +271,7 @@ CREATE TABLE `rb_cvfile_share` (
   KEY `idx_rb_cvfile_share_target_email` (`target_email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- ---- rb_invitation ----
-CREATE TABLE `rb_invitation` (
-  `invitation_id` bigint NOT NULL AUTO_INCREMENT,
-  `email` varchar(320) NOT NULL,
-  `token` varchar(255) NOT NULL,
-  `expires_at` datetime NOT NULL,
-  `used` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`invitation_id`),
-  UNIQUE KEY `uq_invite_token` (`token`),
-  KEY `ix_invite_email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- ---- rb_module ----
-CREATE TABLE `rb_module` (
-  `module_key` varchar(50) NOT NULL,
-  `name` varchar(120) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `is_enabled` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`module_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- ---- rb_password_reset ----
-CREATE TABLE `rb_password_reset` (
-  `reset_id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL,
-  `token` varchar(255) NOT NULL,
-  `expires_at` datetime NOT NULL,
-  `used` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`reset_id`),
-  UNIQUE KEY `uq_reset_token` (`token`),
-  KEY `fk_reset_user` (`user_id`),
-  CONSTRAINT `fk_reset_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ---- rb_schema_migrations ----
 CREATE TABLE `rb_schema_migrations` (
@@ -260,52 +312,7 @@ CREATE TABLE `rb_social_post` (
   CONSTRAINT `fk_social_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- ---- rb_user ----
-CREATE TABLE `rb_user` (
-  `user_id` bigint NOT NULL AUTO_INCREMENT,
-  `email` varchar(320) NOT NULL,
-  `password_hash` varchar(255) DEFAULT NULL,
-  `status` enum('invited','active','blocked','deleted') NOT NULL DEFAULT 'invited',
-  `is_admin` tinyint(1) NOT NULL DEFAULT '0',
-  `invited_at` datetime DEFAULT NULL,
-  `invited_by` bigint DEFAULT NULL,
-  `registered_at` datetime DEFAULT NULL,
-  `last_login_at` datetime DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`),
-  UNIQUE KEY `uq_rb_user_email` (`email`),
-  KEY `ix_rb_user_email` (`email`),
-  KEY `ix_rb_user_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- ---- rb_user_module ----
-CREATE TABLE `rb_user_module` (
-  `user_id` bigint NOT NULL,
-  `module_key` varchar(50) NOT NULL,
-  `has_access` tinyint(1) NOT NULL DEFAULT '1',
-  `granted_by` bigint DEFAULT NULL,
-  `granted_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`,`module_key`),
-  KEY `fk_um_module` (`module_key`),
-  CONSTRAINT `fk_um_module` FOREIGN KEY (`module_key`) REFERENCES `rb_module` (`module_key`) ON DELETE CASCADE,
-  CONSTRAINT `fk_um_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- ---- rb_user_profile ----
-CREATE TABLE `rb_user_profile` (
-  `user_id` bigint NOT NULL,
-  `handle` varchar(64) DEFAULT NULL,
-  `rgDisplay` varchar(200) NOT NULL,
-  `full_name` varchar(200) DEFAULT NULL,
-  `display_name` varchar(120) DEFAULT NULL,
-  `rgData` json DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`),
-  UNIQUE KEY `handle` (`handle`),
-  UNIQUE KEY `uq_rb_profile_handle` (`handle`),
-  CONSTRAINT `fk_profile_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ---- rb_vcard_share ----
 CREATE TABLE `rb_vcard_share` (
@@ -325,3 +332,22 @@ CREATE TABLE `rb_vcard_share` (
   KEY `idx_rb_vcard_share_target_user` (`target_user_id`),
   KEY `idx_rb_vcard_share_target_email` (`target_email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_cv_share ----
+CREATE TABLE `rb_cv_share` (
+  `share_id` bigint NOT NULL AUTO_INCREMENT,
+  `cv_id` bigint NOT NULL,
+  `owner_user_id` bigint NOT NULL,
+  `target_user_id` bigint DEFAULT NULL,
+  `target_email` varchar(200) DEFAULT NULL,
+  `share_token` varchar(64) NOT NULL,
+  `is_public` tinyint(1) NOT NULL DEFAULT '0',
+  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`share_id`),
+  UNIQUE KEY `uk_share_token` (`share_token`),
+  KEY `idx_share_cv` (`cv_id`),
+  KEY `idx_share_owner` (`owner_user_id`),
+  KEY `idx_share_target_user` (`target_user_id`),
+  KEY `idx_share_target_email` (`target_email`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

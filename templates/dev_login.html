@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Developer Login</h3>
+  <p class="text-muted">Select a user to log in as (dev-only).</p>
+  <form method="post" class="card p-3">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th></th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Handle</th>
+            <th>Status</th>
+            <th>Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td><input type="radio" name="user_id" value="{{ u.id }}"></td>
+            <td>{{ u.name or "N/A" }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.handle or "-" }}</td>
+            <td>{{ u.status }}</td>
+            <td>{{ "Yes" if u.is_admin else "No" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-primary" type="submit">Login as selected</button>
+  </form>
+</div>
+{% endblock %}

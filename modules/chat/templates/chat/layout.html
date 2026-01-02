@@ -3,15 +3,14 @@
 {% block content %}
 <style>
   .chat-shell{display:flex;height:calc(100vh - 120px);gap:12px}
-  .chat-left{width:320px;border:1px solid #ddd;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
-  .chat-left-top{padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+  .chat-left{width:340px;border:1px solid #ddd;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .chat-left-top{padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .chat-left-list{overflow:auto;padding:8px}
-  .chat-item{display:block;padding:10px;border-radius:8px;color:inherit;text-decoration:none;border:1px solid transparent}
+  .chat-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;color:inherit;text-decoration:none;border:1px solid transparent}
   .chat-item:hover{background:#f6f6f6}
   .chat-item.active{background:#eef3ff;border-color:#d9e5ff}
-  .chat-item .row1{display:flex;justify-content:space-between;gap:8px;align-items:center}
-  .chat-item .row1 .title{font-weight:600;flex:1;min-width:0}
-  .chat-item .row2{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:12px;opacity:.8;flex-wrap:wrap}
+  .chat-item .title{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chat-item .meta{display:flex;gap:6px;align-items:center;font-size:12px;opacity:.8;white-space:nowrap}
   .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#f2f4f8;font-weight:600;font-size:12px;color:#444}
   .pill.unread{background:#e8f0ff;color:#264a9f}
   .chat-main{flex:1;border:1px solid #ddd;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
@@ -21,6 +20,17 @@
   .chat-msg .meta{font-size:12px;opacity:.7}
   .chat-compose{padding:12px;border-top:1px solid #eee;display:flex;gap:8px}
   .chat-compose textarea{flex:1;resize:none}
+  .chat-left-section{border-top:1px solid #eee;padding:10px 8px;}
+  .section-title{font-weight:700;font-size:13px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .broadcast-card{padding:8px;border-radius:8px;border:1px solid #eee;margin-bottom:6px;}
+  .broadcast-card .title{font-weight:600;}
+  .broadcast-card .meta{font-size:12px;opacity:.75;}
+  .empty-note{font-size:12px;opacity:.7;}
+  .reaction-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .reaction-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;opacity:0;pointer-events:none;transition:opacity .15s ease;}
+  .chat-msg:hover .reaction-actions{opacity:1;pointer-events:auto;}
+  .icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid #ccc;background:#f8f9fb;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1;text-decoration:none;color:inherit;}
+  .icon-btn:hover{background:#eef3ff;border-color:#d0dcff;color:#1f4fbf;text-decoration:none;}
 
   @media (max-width: 900px) {
     .chat-shell{flex-direction:column;height:auto}
@@ -34,62 +44,98 @@
   <div class="chat-left">
     <div class="chat-left-top">
       <div><strong>Chat</strong></div>
-      <a class="btn btn-sm btn-primary" href="{{ url_for('chat.new_chat') }}">+ New</a>
+      <a class="icon-btn" href="{{ url_for('chat.new_chat') }}" title="Add new chat" aria-label="Add new chat">＋</a>
     </div>
     <div class="chat-left-list">
+      {% set ns = namespace(count=0) %}
       {% for t in threads %}
-        {% set members = members_by_thread.get(t.thread_id, []) %}
-        {% set title = t.display_name_for(me_id, members, users_by_id) %}
-        {% set total = message_counts.get(t.thread_id, 0) if message_counts else 0 %}
-        {% set unread = unread_counts.get(t.thread_id, 0) if unread_counts else 0 %}
-        <a class="chat-item {% if active_thread and active_thread.thread_id == t.thread_id %}active{% endif %}"
-           href="{{ url_for('chat.thread', thread_id=t.thread_id) }}">
-          <div class="row1">
+        {% if t.thread_type != "broadcast" %}
+          {% set ns.count = ns.count + 1 %}
+          {% set members = members_by_thread.get(t.thread_id, []) %}
+          {% set title = t.display_name_for(me_id, members, users_by_id) %}
+          {% set total = message_counts.get(t.thread_id, 0) if message_counts else 0 %}
+          {% set unread = unread_counts.get(t.thread_id, 0) if unread_counts else 0 %}
+          <a class="chat-item {% if active_thread and active_thread.thread_id == t.thread_id %}active{% endif %}"
+             href="{{ url_for('chat.thread', thread_id=t.thread_id) }}">
             <div class="title">{{ title }}</div>
-            <div style="font-size:12px;opacity:.7;">{{ "Group" if t.thread_type == "group" else "Direct" }}</div>
-          </div>
-          <div class="row2">
-            <span class="pill">{{ total }} msgs</span>
-            {% if unread %}
-              <span class="pill unread">{{ unread }} unread</span>
-            {% endif %}
-          </div>
-        </a>
-      {% else %}
-        <div style="padding:12px;opacity:.7">No chats yet. Click <b>New</b>.</div>
-      {% endfor %}
-    </div>
-    <div style="border-top:1px solid #eee; padding:10px 8px;">
-      <div style="font-weight:700; font-size:13px; margin-bottom:6px;">Broadcasts</div>
-      {% if broadcasts %}
-        {% for b in broadcasts %}
-          {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
-          {% set is_owner = (b.created_by == me_id) %}
-          {% set is_subscribed = b.thread_id in my_broadcast_member_ids %}
-          <div style="padding:8px;border-radius:8px;border:1px solid #eee; margin-bottom:6px;">
-            <div style="font-weight:600;">{{ title }}</div>
-            <div style="font-size:12px;opacity:.7;">Broadcast</div>
-            <div class="d-flex gap-2 mt-2">
-              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('chat.thread', thread_id=b.thread_id) }}">Open</a>
-              {% if not is_owner %}
-                {% if is_subscribed %}
-                  <form method="post" action="{{ url_for('chat.unsubscribe_broadcast', thread_id=b.thread_id) }}">
-                    <button class="btn btn-sm btn-outline-danger" type="submit">Unsubscribe</button>
-                  </form>
-                {% else %}
-                  <form method="post" action="{{ url_for('chat.subscribe_broadcast', thread_id=b.thread_id) }}">
-                    <button class="btn btn-sm btn-outline-primary" type="submit">Subscribe</button>
-                  </form>
-                {% endif %}
-              {% else %}
-                <span class="badge bg-light text-dark">Owner</span>
+            <div class="meta">
+              <span class="pill">{{ "GC" if t.thread_type == "group" else "O2O" }}</span>
+              <span class="pill">{{ total }} msgs</span>
+              {% if unread %}
+                <span class="pill unread">{{ unread }} unread</span>
               {% endif %}
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+      {% if ns.count == 0 %}
+        <div style="padding:12px;opacity:.7">No chats yet. Click <b>Add New Chat</b>.</div>
+      {% endif %}
+    </div>
+
+    <div class="chat-left-section">
+      <div class="section-title">My Broadcasts</div>
+      {% if owned_broadcasts %}
+        {% for b in owned_broadcasts %}
+          {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
+          {% set total = broadcast_counts.get(b.thread_id, 0) if broadcast_counts else 0 %}
+          <div class="broadcast-card">
+            <div class="title">{{ title }}</div>
+            <div class="meta">({{ total }} msgs)</div>
+            <div class="d-flex gap-2 mt-2">
+              <a class="icon-btn" href="{{ url_for('chat.thread', thread_id=b.thread_id) }}" title="Open broadcast" aria-label="Open broadcast">↗</a>
+              <form method="post" action="{{ url_for('chat.delete_thread', thread_id=b.thread_id) }}" onsubmit="return confirm('Delete this broadcast and its messages?');">
+                <button class="icon-btn" type="submit" title="Delete broadcast" aria-label="Delete broadcast">✕</button>
+              </form>
             </div>
           </div>
         {% endfor %}
       {% else %}
-        <div style="font-size:12px; opacity:.7;">No broadcasts yet.</div>
+        <div class="empty-note">No broadcasts created yet.</div>
       {% endif %}
+    </div>
+
+    <div class="chat-left-section">
+      <div class="section-title">
+        <span>My Subscribed Broadcasts</span>
+        <button class="icon-btn" type="button" onclick="toggleAvailableBroadcasts()" title="Add broadcast" aria-label="Add broadcast">＋</button>
+      </div>
+      {% if subscribed_broadcasts %}
+        {% for b in subscribed_broadcasts %}
+          {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
+          {% set total = broadcast_counts.get(b.thread_id, 0) if broadcast_counts else 0 %}
+          <div class="broadcast-card">
+            <div class="title">{{ title }}</div>
+            <div class="meta">({{ total }} msgs)</div>
+            <div class="d-flex gap-2 mt-2">
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('chat.thread', thread_id=b.thread_id) }}">Open</a>
+              <form method="post" action="{{ url_for('chat.unsubscribe_broadcast', thread_id=b.thread_id) }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Unsubscribe</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-note">No subscriptions yet.</div>
+      {% endif %}
+
+      <div id="availableBroadcasts" style="display:none; margin-top:8px;">
+        {% if available_broadcasts %}
+          <div class="empty-note" style="margin-bottom:6px;">Available broadcasts</div>
+          {% for b in available_broadcasts %}
+            {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
+            <div class="broadcast-card">
+              <div class="title">{{ title }}</div>
+              <div class="meta">Subscribe to view and react.</div>
+              <form class="mt-2" method="post" action="{{ url_for('chat.subscribe_broadcast', thread_id=b.thread_id) }}">
+                <button class="icon-btn" type="submit" title="Subscribe" aria-label="Subscribe">＋</button>
+              </form>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-note">No other broadcasts available.</div>
+        {% endif %}
+      </div>
     </div>
   </div>
 
@@ -97,4 +143,12 @@
     {% block chat_main %}{% endblock %}
   </div>
 </div>
+<script>
+  function toggleAvailableBroadcasts() {
+    const box = document.getElementById('availableBroadcasts');
+    if (!box) return;
+    const visible = box.style.display === 'block';
+    box.style.display = visible ? 'none' : 'block';
+  }
+</script>
 {% endblock %}
