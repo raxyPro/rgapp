@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RayGrow Services</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 60%);
+      border-bottom: 1px solid #eee;
+    }
+    .tag {
+      font-size: 0.75rem;
+    }
+    .consultant-img {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #f1f1f1;
+    }
+    .section-title {
+      letter-spacing: 0.2px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+    <div class="container">
+      <a class="navbar-brand fw-semibold" href="#">RayGrow</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+          <li class="nav-item"><a class="nav-link" href="#details">Details</a></li>
+          <li class="nav-item"><a class="nav-link" href="#consultants">Consultants</a></li>
+          <li class="nav-item"><a class="nav-link" href="#engagement">Engagement</a></li>
+          <li class="nav-item"><a class="btn btn-primary ms-lg-2" href="#contact">Hire a Consultant</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero py-5">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+          <h1 class="display-6 fw-bold mb-3">RayGrow Professional Services</h1>
+          <p class="lead text-secondary mb-4">
+            Agile Project Management, Application Development & Expert Consultants for short-term and long-term roles.
+          </p>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="#services" class="btn btn-primary btn-lg">View Our Services</a>
+            <a href="#consultants" class="btn btn-outline-primary btn-lg">Hire a Consultant</a>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="p-4 bg-white border rounded-4 shadow-sm">
+            <h5 class="fw-semibold mb-2">What you’ll get</h5>
+            <ul class="mb-0 text-secondary">
+              <li>Agile delivery support (Scrum / Kanban)</li>
+              <li>Scrum team management & coaching</li>
+              <li>New application development & existing maintenance</li>
+              <li>Consultants with CV access and skill-based matching</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Services Overview -->
+  <section id="services" class="py-5">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between gap-3 mb-4">
+        <div>
+          <h2 class="h3 fw-bold section-title mb-1">Services</h2>
+          <p class="text-secondary mb-0">Choose the support you need — from delivery to development.</p>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Card 1 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="mb-3 fs-3">📌</div>
+              <h5 class="card-title fw-semibold">Project Management (Agile)</h5>
+              <p class="card-text text-secondary">
+                Agile project management, sprint planning, tracking, stakeholder updates and delivery execution.
+              </p>
+              <a class="link-primary text-decoration-none" href="#details">Learn more →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="mb-3 fs-3">🧭</div>
+              <h5 class="card-title fw-semibold">Agile Team Coaching</h5>
+              <p class="card-text text-secondary">
+                Scrum team coaching, process improvement, ceremonies, and agile transformation support.
+              </p>
+              <a class="link-primary text-decoration-none" href="#details">Learn more →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="mb-3 fs-3">🧩</div>
+              <h5 class="card-title fw-semibold">Application Development</h5>
+              <p class="card-text text-secondary">
+                New application development, enhancements, and managing existing development & maintenance.
+              </p>
+              <a class="link-primary text-decoration-none" href="#details">Learn more →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="mb-3 fs-3">👥</div>
+              <h5 class="card-title fw-semibold">Consulting (Short / Long Term)</h5>
+              <p class="card-text text-secondary">
+                Flexible consulting roles with profiles, skills, services, and direct CV access.
+              </p>
+              <a class="link-primary text-decoration-none" href="#consultants">Browse consultants →</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Service Details (Accordion) -->
+  <section id="details" class="py-5 bg-light border-top border-bottom">
+    <div class="container">
+      <h2 class="h3 fw-bold section-title mb-1">Service Details</h2>
+      <p class="text-secondary mb-4">Expandable sections for deeper information without clutter.</p>
+
+      <div class="accordion" id="servicesAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#pm">
+              Project Management (Agile)
+            </button>
+          </h2>
+          <div id="pm" class="accordion-collapse collapse show" data-bs-parent="#servicesAccordion">
+            <div class="accordion-body">
+              <div class="row g-4">
+                <div class="col-md-7">
+                  <h6 class="fw-semibold">What we do</h6>
+                  <ul class="text-secondary mb-0">
+                    <li>Agile project planning & delivery governance</li>
+                    <li>Sprint planning, backlog grooming, and reporting</li>
+                    <li>Risk, dependency and stakeholder management</li>
+                  </ul>
+                </div>
+                <div class="col-md-5">
+                  <h6 class="fw-semibold">Methods & tools</h6>
+                  <p class="text-secondary mb-0">Scrum, Kanban, Jira, Confluence, Azure DevOps (as needed)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coaching">
+              Agile Team Coaching
+            </button>
+          </h2>
+          <div id="coaching" class="accordion-collapse collapse" data-bs-parent="#servicesAccordion">
+            <div class="accordion-body">
+              <div class="row g-4">
+                <div class="col-md-7">
+                  <h6 class="fw-semibold">What we do</h6>
+                  <ul class="text-secondary mb-0">
+                    <li>Coaching Scrum Masters, Product Owners & teams</li>
+                    <li>Improve ceremonies, flow efficiency and team health</li>
+                    <li>Support transformation, scaling and continuous improvement</li>
+                  </ul>
+                </div>
+                <div class="col-md-5">
+                  <h6 class="fw-semibold">Outcomes</h6>
+                  <p class="text-secondary mb-0">Higher delivery predictability, stronger collaboration, better throughput.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#dev">
+              Application Development
+            </button>
+          </h2>
+          <div id="dev" class="accordion-collapse collapse" data-bs-parent="#servicesAccordion">
+            <div class="accordion-body">
+              <div class="row g-4">
+                <div class="col-md-7">
+                  <h6 class="fw-semibold">What we do</h6>
+                  <ul class="text-secondary mb-0">
+                    <li>New application development (web/mobile)</li>
+                    <li>Enhancements, modernization and refactoring</li>
+                    <li>Managing existing development & ongoing support</li>
+                  </ul>
+                </div>
+                <div class="col-md-5">
+                  <h6 class="fw-semibold">Delivery approach</h6>
+                  <p class="text-secondary mb-0">Agile delivery with milestones, QA gates, and documentation.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Consultants -->
+  <section id="consultants" class="py-5">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+          <h2 class="h3 fw-bold section-title mb-1">Consultants</h2>
+          <p class="text-secondary mb-0">Browse by skills, service area, and engagement type.</p>
+        </div>
+        <div class="text-secondary small">
+          Tip: Connect CV links to PDFs or profile pages.
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Search</label>
+          <input type="text" class="form-control" placeholder="Search by name, skill, or role">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Service Area</label>
+          <select class="form-select">
+            <option selected>All Services</option>
+            <option>Project Management</option>
+            <option>Agile Coaching</option>
+            <option>Application Development</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Engagement</label>
+          <select class="form-select">
+            <option selected>Short / Long Term</option>
+            <option>Short Term</option>
+            <option>Long Term</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Consultant Cards -->
+      <div class="row g-4">
+
+        <!-- Consultant 1 -->
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex gap-3">
+                <img class="consultant-img" src="https://via.placeholder.com/120" alt="Consultant photo">
+                <div>
+                  <h5 class="mb-1 fw-semibold">Ravi Kumar</h5>
+                  <p class="text-secondary mb-2">Agile Coach | Scrum Master</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    <span class="badge text-bg-light border tag">Scrum</span>
+                    <span class="badge text-bg-light border tag">SAFe</span>
+                    <span class="badge text-bg-light border tag">Jira</span>
+                    <span class="badge text-bg-light border tag">Coaching</span>
+                  </div>
+                </div>
+              </div>
+
+              <hr>
+              <p class="mb-2"><span class="fw-semibold">Services:</span> Agile Coaching, Scrum Team Management</p>
+
+              <div class="d-flex gap-2">
+                <a href="#" class="btn btn-outline-primary btn-sm">View CV</a>
+                <a href="#contact" class="btn btn-primary btn-sm">Contact</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consultant 2 -->
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex gap-3">
+                <img class="consultant-img" src="https://via.placeholder.com/120" alt="Consultant photo">
+                <div>
+                  <h5 class="mb-1 fw-semibold">Anita Sharma</h5>
+                  <p class="text-secondary mb-2">Agile Project Manager</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    <span class="badge text-bg-light border tag">Agile PM</span>
+                    <span class="badge text-bg-light border tag">Scrum</span>
+                    <span class="badge text-bg-light border tag">Stakeholders</span>
+                    <span class="badge text-bg-light border tag">Delivery</span>
+                  </div>
+                </div>
+              </div>
+
+              <hr>
+              <p class="mb-2"><span class="fw-semibold">Services:</span> Project Management, Scrum Management</p>
+
+              <div class="d-flex gap-2">
+                <a href="#" class="btn btn-outline-primary btn-sm">View CV</a>
+                <a href="#contact" class="btn btn-primary btn-sm">Contact</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Consultant 3 -->
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex gap-3">
+                <img class="consultant-img" src="https://via.placeholder.com/120" alt="Consultant photo">
+                <div>
+                  <h5 class="mb-1 fw-semibold">Mohit Verma</h5>
+                  <p class="text-secondary mb-2">Application Developer</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    <span class="badge text-bg-light border tag">Web Apps</span>
+                    <span class="badge text-bg-light border tag">APIs</span>
+                    <span class="badge text-bg-light border tag">Maintenance</span>
+                    <span class="badge text-bg-light border tag">QA</span>
+                  </div>
+                </div>
+              </div>
+
+              <hr>
+              <p class="mb-2"><span class="fw-semibold">Services:</span> New Development, Existing Development</p>
+
+              <div class="d-flex gap-2">
+                <a href="#" class="btn btn-outline-primary btn-sm">View CV</a>
+                <a href="#contact" class="btn btn-primary btn-sm">Contact</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Engagement Models -->
+  <section id="engagement" class="py-5 bg-light border-top">
+    <div class="container">
+      <h2 class="h3 fw-bold section-title mb-1">Engagement Models</h2>
+      <p class="text-secondary mb-4">Flexible options depending on your timelines and needs.</p>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="fw-semibold">Short-Term Consulting</h5>
+              <p class="text-secondary">Ideal for urgent delivery needs, audits, process fixes, or short projects.</p>
+              <ul class="text-secondary mb-0">
+                <li>Fast onboarding</li>
+                <li>Quick impact (weeks to 3 months)</li>
+                <li>Remote or on-site</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h5 class="fw-semibold">Long-Term Consulting</h5>
+              <p class="text-secondary">Best for product roadmaps, transformation programs, or extended development.</p>
+              <ul class="text-secondary mb-0">
+                <li>Continuity and stability</li>
+                <li>Embedded delivery (3+ months)</li>
+                <li>Scale teams as needed</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CTA / Contact -->
+  <section id="contact" class="py-5">
+    <div class="container">
+      <div class="p-4 p-lg-5 bg-white border rounded-4 shadow-sm">
+        <div class="row g-4 align-items-center">
+          <div class="col-lg-7">
+            <h2 class="h4 fw-bold mb-2">Need the Right Expert for Your Project?</h2>
+            <p class="text-secondary mb-0">
+              Tell us your requirements and we’ll match you with the best consultant for delivery, coaching, or development.
+            </p>
+          </div>
+          <div class="col-lg-5">
+            <form class="row g-2">
+              <div class="col-12">
+                <input class="form-control" type="text" placeholder="Your name">
+              </div>
+              <div class="col-12">
+                <input class="form-control" type="email" placeholder="Email">
+              </div>
+              <div class="col-12">
+                <textarea class="form-control" rows="3" placeholder="What do you need? (service, skills, duration)"></textarea>
+              </div>
+              <div class="col-12 d-grid">
+                <button class="btn btn-primary btn-lg" type="button">Request a Consultant</button>
+              </div>
+              <div class="col-12 text-secondary small">
+                By submitting, you agree to be contacted by RayGrow.
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-4 border-top bg-white">
+    <div class="container">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <div class="fw-semibold">RayGrow Services</div>
+          <div class="text-secondary small">Agile • Coaching • Development • Consulting</div>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <a class="text-decoration-none me-3" href="#services">Services</a>
+          <a class="text-decoration-none me-3" href="#consultants">Consultants</a>
+          <a class="text-decoration-none" href="#contact">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

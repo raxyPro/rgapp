@@ -6,7 +6,7 @@
     <p>Create public links or private shares with quick actions.</p>
   </div>
   <div class="row" style="flex:0 0 auto;">
-    <a class="btn" href="{{ url_for('cv.home') }}">← Back</a>
+    <a class="btn" href="{{ url_for('profiles.home') }}">← Back</a>
   </div>
 </div>
 
@@ -44,7 +44,7 @@
       </div>
     </div>
     <div class="cardBody">
-      <form class="row" method="post" action="{{ url_for('cv.create_public_link', cvfile_id=c.cvfile_id) }}">
+      <form class="row" method="post" action="{{ url_for('profiles.create_public_link', cvfile_id=c.cvfile_id) }}">
         <div>
           <label>Share type</label>
           <select name="share_type" id="share_type" onchange="toggleTarget()">
@@ -107,7 +107,7 @@
                   <td>{{ obj.target or obj.name or '—' }}</td>
                   <td>{{ obj.target or obj.name or '—' }}</td>
                   <td class="mono">
-                    <a href="{{ url_for('cvviewer.view', token=obj.token) }}" target="_blank">{{ url_for('cvviewer.view', token=obj.token, _external=True) }}</a>
+                    <a href="{{ url_for('profileviewer.view', token=obj.token) }}" target="_blank">{{ url_for('profileviewer.view', token=obj.token, _external=True) }}</a>
                   </td>
                   <td>
                     {% if obj.expires_at %}
@@ -127,16 +127,16 @@
                   </td>
                   <td class="text-end">
                     <div class="actions">
-                      <a class="btn btn-sm" href="{{ url_for('cvviewer.view', token=obj.token) }}" target="_blank">View</a>
-                      <form method="post" action="{{ url_for('cv.extend_public_link', link_id=obj.link_id) }}">
+                      <a class="btn btn-sm" href="{{ url_for('profileviewer.view', token=obj.token) }}" target="_blank">View</a>
+                      <form method="post" action="{{ url_for('profiles.extend_public_link', link_id=obj.link_id) }}">
                         <button class="btn btn-sm warn" type="submit">+10m</button>
                       </form>
                       {% if status != "disabled" %}
-                      <form method="post" action="{{ url_for('cv.disable_public_link', link_id=obj.link_id) }}">
+                      <form method="post" action="{{ url_for('profiles.disable_public_link', link_id=obj.link_id) }}">
                         <button class="btn btn-sm btn-outline-danger" type="submit">Disable</button>
                       </form>
                       {% endif %}
-                      <form method="post" action="{{ url_for('cv.delete_public_link', link_id=obj.link_id) }}" onsubmit="return confirm('Delete this share?');">
+                      <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=obj.link_id) }}" onsubmit="return confirm('Delete this share?');">
                         <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                       </form>
                     </div>

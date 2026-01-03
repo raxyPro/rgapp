@@ -3,10 +3,24 @@
 <div class="row justify-content-center">
   <div class="col-md-7">
     <div class="card p-4">
-      <h3 class="mb-3">Profile</h3>
-      <div class="text-muted small mb-3">Account: {{ email }}</div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <h3 class="mb-1">Profile</h3>
+          <div class="text-muted small">Account: {{ email }}</div>
+        </div>
+        <div class="d-flex gap-2">
+          <button id="btnEdit" class="btn btn-outline-secondary btn-sm" type="button">Edit</button>
+          <button id="btnCancel" class="btn btn-outline-secondary btn-sm" type="button" style="display:none;">Cancel</button>
+        </div>
+      </div>
 
-      <form method="post">
+      <div id="viewMode">
+        <div class="mb-2"><strong>Full Name:</strong> {{ profile.full_name or "Not set" }}</div>
+        <div class="mb-2"><strong>Display Name:</strong> {{ profile.display_name or "Not set" }}</div>
+        <div class="mb-2"><strong>Handle:</strong> {{ profile.handle or "Not set" }}</div>
+      </div>
+
+      <form id="editForm" method="post" style="display:none;">
         <label class="form-label">Full Name</label>
         <input name="full_name" class="form-control" value="{{ profile.full_name or '' }}">
 
@@ -17,9 +31,32 @@
         <input name="handle" class="form-control" value="{{ profile.handle or '' }}" placeholder="e.g., yourname">
         <div class="form-text">Must be unique; letters, numbers, dots, underscore allowed.</div>
 
-        <button class="btn btn-primary w-100 mt-4">Save</button>
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-primary flex-grow-1" type="submit">Save</button>
+          <button class="btn btn-outline-secondary" type="button" id="btnCancel2">Cancel</button>
+        </div>
       </form>
     </div>
   </div>
 </div>
+<script>
+  (function() {
+    const view = document.getElementById('viewMode');
+    const form = document.getElementById('editForm');
+    const btnEdit = document.getElementById('btnEdit');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnCancel2 = document.getElementById('btnCancel2');
+
+    function showEdit(show) {
+      if (view) view.style.display = show ? 'none' : 'block';
+      if (form) form.style.display = show ? 'block' : 'none';
+      if (btnEdit) btnEdit.style.display = show ? 'none' : 'inline-flex';
+      if (btnCancel) btnCancel.style.display = show ? 'inline-flex' : 'none';
+    }
+
+    if (btnEdit) btnEdit.addEventListener('click', () => showEdit(true));
+    if (btnCancel) btnCancel.addEventListener('click', () => showEdit(false));
+    if (btnCancel2) btnCancel2.addEventListener('click', () => showEdit(false));
+  })();
+</script>
 {% endblock %}

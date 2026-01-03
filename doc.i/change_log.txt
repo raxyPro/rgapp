@@ -1,0 +1,88 @@
+Unique change ID: e0f24df7-acba-4775-a69c-2dbcc9608a66
+rename cv module to profiles modules
+
+
+if any news files are added then update rbfiles.csv 
+if any change in data base structure then update data_dict.csv
+
+generate a unique id for this change for my record
+
+Unique change ID: be66ef8d-1532-4640-bc0b-057c2886064a.
+
+on top bar make the user picture clickable and on click open a page show detail of user with edit option after edit allow user to save. 
+
+
+if any news files are added then update rbfiles.csv 
+if any change in data base structure then update data_dict.csv
+
+generate a unique id for this change for my record
+
+Unique change ID: fab0f30b-07ba-4291-be2f-f33e011b8ee3There are three section now in Profiles
+my vCard (no change) 
+CV Files
+on top collapse and add cv option is there 
+following columns are shown in list
+4 column
+sno
+cv name
+files 
+
+events
+on add ask for cv name and on save list the cv below. validate the CV name unique in user.
+the in files sections show CV: and button upload cv. and once cv is uploaded show view cv , change cv and delete cv.
+do teh same for coverletter.
+
+in action show edit, preferenes share and delete
+
+\
+csv 
+if any change in data base structure then update data_dict.csv
+
+generate a unique id for this change for my record
+
+Unique change ID: fecc434d-f93f-44c0-a297-cf27271c9521
+from CV Files remove share button
+add a new section "CV Send (share to network)" after CV Files and "CV Shared with me"
+rename the "CV Recieved (CV shared with me)"
+
+code the ""CV Send (share to network)"" section
+on top show new share and once user click new share then show below a form
+allow user to select CV then share option (create link, share to bridge user, share to email)
+when create link and ask for expiry and password (optional)
+when share with handle then ask for handle and on save (just validate the handle valid or not and save)
+on email ask for email id and then generate an link and send email)
+
+Code the "CV Recieved (CV shared with me)"
+CV Shared with me show the CV Name and link to view 
+
+if any news files are added then update rbfiles.csv 
+if any change in data base structure then update data_dict.csv
+
+generate a unique id for this change for my record
+
+
+new change-done
+
+add a new feature called notifications,
+the notification list are displayed on top page 
+now home page will have 3 section notification table (all notifications are displayed)
+top news
+top blog
+
+implement notification
+1. if a cv is shared 
+
+
+new change-done
+
+service module 
+when clicking on chat from services just take to chat box and do not type any default chat.
+profile module
+add chat feature in "CV Shared with me" list of CV and when click on Chat just take to chat page with and open the chat and type nothing
+
+
+new change
+
+chat module
+when hover the  chat message show only picture emoji 
+add a option also for chat along with reply delete edit , add react adn on react do the same like hover

@@ -25,11 +25,46 @@
   .broadcast-card{padding:8px;border-radius:8px;border:1px solid #eee;margin-bottom:6px;}
   .broadcast-card .title{font-weight:600;}
   .broadcast-card .meta{font-size:12px;opacity:.75;}
-  .empty-note{font-size:12px;opacity:.7;}
+.broadcast-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:nowrap;
+}
+
+.broadcast-head .info{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex:1;        /* text takes remaining space */
+  min-width:0;   /* REQUIRED for ellipsis */
+}
+
+.broadcast-head .info .title{
+  flex:1;
+  min-width:0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.broadcast-head .info .meta{
+  flex-shrink:0;
+  white-space:nowrap;
+}
+
+.broadcast-head .d-flex{
+  flex-shrink:0;        /* PREVENT icons from wrapping */
+  display:flex;
+  gap:6px;
+}
+.empty-note{font-size:12px;opacity:.7;}
   .reaction-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
   .reaction-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;opacity:0;pointer-events:none;transition:opacity .15s ease;}
   .chat-msg:hover .reaction-actions{opacity:1;pointer-events:auto;}
+  .msg-actions{display:flex; gap:6px; align-items:center;}
   .icon-btn{width:34px;height:34px;border-radius:50%;border:1px solid #ccc;background:#f8f9fb;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1;text-decoration:none;color:inherit;}
+  .icon-btn-sm{width:30px;height:30px;font-size:14px;}
   .icon-btn:hover{background:#eef3ff;border-color:#d0dcff;color:#1f4fbf;text-decoration:none;}
 
   @media (max-width: 900px) {
@@ -44,7 +79,7 @@
   <div class="chat-left">
     <div class="chat-left-top">
       <div><strong>Chat</strong></div>
-      <a class="icon-btn" href="{{ url_for('chat.new_chat') }}" title="Add new chat" aria-label="Add new chat">＋</a>
+      <a class="icon-btn" href="{{ url_for('chat.new_chat') }}" title="Add new chat" aria-label="Add new chat">+</a>
     </div>
     <div class="chat-left-list">
       {% set ns = namespace(count=0) %}
@@ -80,13 +115,17 @@
           {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
           {% set total = broadcast_counts.get(b.thread_id, 0) if broadcast_counts else 0 %}
           <div class="broadcast-card">
-            <div class="title">{{ title }}</div>
-            <div class="meta">({{ total }} msgs)</div>
-            <div class="d-flex gap-2 mt-2">
-              <a class="icon-btn" href="{{ url_for('chat.thread', thread_id=b.thread_id) }}" title="Open broadcast" aria-label="Open broadcast">↗</a>
-              <form method="post" action="{{ url_for('chat.delete_thread', thread_id=b.thread_id) }}" onsubmit="return confirm('Delete this broadcast and its messages?');">
-                <button class="icon-btn" type="submit" title="Delete broadcast" aria-label="Delete broadcast">✕</button>
-              </form>
+            <div class="broadcast-head">
+              <div class="info">
+                <div class="title">{{ title }}</div>
+                <div class="meta">({{ total }} msgs)</div>
+              </div>
+              <div class="d-flex gap-2">
+                <a class="icon-btn icon-btn-sm" href="{{ url_for('chat.thread', thread_id=b.thread_id) }}" title="Open broadcast" aria-label="Open broadcast">↗</a>
+                <form method="post" action="{{ url_for('chat.delete_thread', thread_id=b.thread_id) }}" onsubmit="return confirm('Delete this broadcast and its messages?');" style="margin:0;">
+                  <button class="icon-btn icon-btn-sm" type="submit" title="Delete broadcast" aria-label="Delete broadcast">🗑</button>
+                </form>
+              </div>
             </div>
           </div>
         {% endfor %}
@@ -98,7 +137,7 @@
     <div class="chat-left-section">
       <div class="section-title">
         <span>My Subscribed Broadcasts</span>
-        <button class="icon-btn" type="button" onclick="toggleAvailableBroadcasts()" title="Add broadcast" aria-label="Add broadcast">＋</button>
+        <button class="icon-btn" type="button" onclick="toggleAvailableBroadcasts()" title="Add broadcast" aria-label="Add broadcast">+</button>
       </div>
       {% if subscribed_broadcasts %}
         {% for b in subscribed_broadcasts %}
@@ -128,7 +167,7 @@
               <div class="title">{{ title }}</div>
               <div class="meta">Subscribe to view and react.</div>
               <form class="mt-2" method="post" action="{{ url_for('chat.subscribe_broadcast', thread_id=b.thread_id) }}">
-                <button class="icon-btn" type="submit" title="Subscribe" aria-label="Subscribe">＋</button>
+                <button class="icon-btn" type="submit" title="Subscribe" aria-label="Subscribe">+</button>
               </form>
             </div>
           {% endfor %}

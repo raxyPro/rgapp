@@ -14,8 +14,9 @@
       <h2>Your services</h2>
       <p>Visible to others. Update via your vCard.</p>
     </div>
+    <button class="btn" type="button" onclick="toggleOwn()">Toggle</button>
   </div>
-  <div class="cardBody" style="overflow-x:auto;">
+  <div class="cardBody" id="ownServicesBody" style="overflow-x:auto; display:none;">
     <table class="table" style="min-width:720px;">
       <thead>
         <tr>
@@ -73,7 +74,7 @@
                 {% for s in p.services %}{{ s.title }}{% if not loop.last %}, {% endif %}{% endfor %}
               {% else %}-{% endif %}
             </td>
-            <td><a class="btn btn-sm primary" href="{{ url_for('chat.dm_with_note', user_id=p.user_id, note=('Inquiry about your services')|urlencode) }}">Chat</a></td>
+            <td><a class="btn btn-sm primary" href="{{ url_for('chat.start_dm', user_id=p.user_id) }}">Chat</a></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -83,4 +84,12 @@
     {% endif %}
   </div>
 </section>
+<script>
+  function toggleOwn(){
+    const body = document.getElementById('ownServicesBody');
+    if(body){
+      body.style.display = body.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+</script>
 {% endblock %}

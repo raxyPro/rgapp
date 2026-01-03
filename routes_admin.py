@@ -193,9 +193,9 @@ def invite():
         if services_mod:
             db.session.add(RBUserModule(user_id=u.user_id, module_key="services", has_access=True, granted_by=admin_user.user_id))
 
-        cv_mod = RBModule.query.filter_by(module_key="cv", is_enabled=True).first()
+        cv_mod = RBModule.query.filter_by(module_key="profiles", is_enabled=True).first()
         if cv_mod:
-            db.session.add(RBUserModule(user_id=u.user_id, module_key="cv", has_access=True, granted_by=admin_user.user_id))
+            db.session.add(RBUserModule(user_id=u.user_id, module_key="profiles", has_access=True, granted_by=admin_user.user_id))
 
         event_id = str(uuid.uuid4())
         db.session.add(RBAudit(

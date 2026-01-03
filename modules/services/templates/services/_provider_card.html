@@ -11,7 +11,7 @@
         {% if p.tagline %}<div style="margin-top:4px;">{{ p.tagline }}</div>{% endif %}
       </div>
       <div>
-        <a class="btn btn-sm primary" href="{{ url_for('chat.dm_with_note', user_id=p.user_id, note=('Inquiry about your services')|urlencode) }}">Chat</a>
+        <a class="btn btn-sm primary" href="{{ url_for('chat.start_dm', user_id=p.user_id) }}">Chat</a>
       </div>
     </div>
     {% if p.skills %}

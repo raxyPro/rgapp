@@ -198,6 +198,12 @@ def create_app():
     @app.context_processor
     def inject_module_access():
         try:
+            def _with_aliases(keys):
+                if "cv" in keys:
+                    keys = set(keys)
+                    keys.add("profiles")
+                return keys
+
             if not current_user.is_authenticated:
                 return {
                     "module_access": set(),
@@ -222,7 +228,7 @@ def create_app():
                     for m in RBModule.query.filter(RBModule.is_enabled == True).all()
                 }
                 return {
-                    "module_access": keys,
+                    "module_access": _with_aliases(keys),
                     "user_obj": u,
                     "user_profile": prof,
                     "user_display": display,
@@ -242,7 +248,7 @@ def create_app():
             }
 
             return {
-                "module_access": keys,
+                "module_access": _with_aliases(keys),
                 "user_obj": u,
                 "user_profile": prof,
                 "user_display": display,
@@ -263,8 +269,8 @@ def create_app():
     from modules.chat import register_chat_module
     register_chat_module(app)
 
-    from modules.cv import register_cv_module
-    register_cv_module(app)
+    from modules.profiles import register_profiles_module
+    register_profiles_module(app)
 
     try:
         from modules.social import register_social_module
@@ -277,6 +283,17 @@ def create_app():
         register_services_module(app)
     except Exception:
         pass
+
+    # Legacy route shims (old CV module paths)
+    @app.route("/cvviewer/<path:rest>")
+    def legacy_cvviewer(rest):
+        return redirect(f"/profileviewer/{rest}", code=302)
+
+    @app.route("/cv/<path:rest>")
+    @app.route("/cv", defaults={"rest": ""})
+    def legacy_cv(rest):
+        suffix = f"/{rest}" if rest else ""
+        return redirect(f"/profiles{suffix}", code=302)
 
     return app
 

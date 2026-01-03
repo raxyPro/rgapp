@@ -10,20 +10,26 @@
   <div class="app">
     <main class="main">
       <header class="topbar">
-        <div class="brand-inline">
+        <div class="topbar-left brand-inline">
           <div class="logo">RG</div>
           <div class="brandTitle">
             <strong>RayGrow Bridge</strong>
-            <span>Talent workflow</span>
+            <span id="topbar-clock">--</span>
           </div>
         </div>
-        <nav class="nav-inline" aria-label="Primary">
+        <nav class="topbar-center nav-inline" aria-label="Primary">
           <a href="{{ url_for('user.welcome') }}" class="{% if request.endpoint and request.endpoint.startswith('user.') %}active{% endif %}">Home</a>
-          <a href="{{ url_for('cv.home') }}" class="{% if request.endpoint and request.endpoint.startswith('cv.') %}active{% endif %}">CVs</a>
-          <a href="{{ url_for('chat.index') }}" class="{% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}">Chat</a>
-          <a href="{{ url_for('social.index') }}" class="{% if request.endpoint and request.endpoint.startswith('social.') %}active{% endif %}">Social</a>
+          {% if 'profiles' in module_access %}
+            <a href="{{ url_for('profiles.home') }}" class="{% if request.endpoint and request.endpoint.startswith('profiles.') %}active{% endif %}">Profiles</a>
+          {% endif %}
+          {% if 'chat' in module_access %}
+            <a href="{{ url_for('chat.index') }}" class="{% if request.endpoint and request.endpoint.startswith('chat.') %}active{% endif %}">Chat</a>
+          {% endif %}
+          {% if 'social' in module_access %}
+            <a href="{{ url_for('social.index') }}" class="{% if request.endpoint and request.endpoint.startswith('social.') %}active{% endif %}">Social</a>
+          {% endif %}
           {% if 'services' in module_access %}
-          <a href="{{ url_for('services.index') }}" class="{% if request.endpoint and request.endpoint.startswith('services.') %}active{% endif %}">Services</a>
+            <a href="{{ url_for('services.index') }}" class="{% if request.endpoint and request.endpoint.startswith('services.') %}active{% endif %}">Services</a>
           {% endif %}
           {% if current_user.is_authenticated and current_user.get_user() and current_user.get_user().is_admin %}
           <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}">Admin</a>
@@ -31,12 +37,15 @@
         </nav>
         {% set user_obj = user_obj or current_user %}
         {% set display_name = user_display or (user_obj.email if user_obj else "User") %}
-        <div class="user">
-          <div class="text-end">
+        {% set handle = (user_profile.handle if user_profile else None) or display_name %}
+        <div class="topbar-right user">
+          <a class="text-end" href="{{ url_for('user.profile') }}" style="text-decoration:none;">
             <small style="display:block; color:var(--muted);">Logged in</small>
-            <strong style="font-size:13px;">{{ display_name }}</strong>
-          </div>
-          <div class="avatar">{{ (display_name[0]|upper) if display_name else "U" }}</div>
+            <strong class="user-handle">{{ handle }}</strong>
+          </a>
+          <a class="avatar" href="{{ url_for('user.profile') }}" title="View profile">
+            {{ (handle[0]|upper) if handle else "U" }}
+          </a>
           <a class="btn" href="{{ url_for('auth.logout') if request.endpoint!='auth.logout' else '/logout' }}">Logout</a>
         </div>
       </header>
@@ -54,5 +63,23 @@
       </div>
     </main>
   </div>
+  <script>
+    (function () {
+      const clockEl = document.getElementById("topbar-clock");
+      if (!clockEl) return;
+      const formatter = new Intl.DateTimeFormat(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const updateClock = () => {
+        clockEl.textContent = formatter.format(new Date());
+      };
+      updateClock();
+      setInterval(updateClock, 15000);
+    })();
+  </script>
 </body>
 </html>

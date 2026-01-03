@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container mt-4">
   <h2>Edit Online CV</h2>
-  <form method="post" action="{{ url_for('cv.pair_save', cv_id=pair.cv_id) }}">
+  <form method="post" action="{{ url_for('profiles.pair_save', cv_id=pair.cv_id) }}">
     <div class="row">
       <div class="col-lg-6">
         <div class="card mb-3">
@@ -100,7 +100,7 @@
       </div>
     </div>
     <div class="d-flex justify-content-between">
-      <a class="btn btn-secondary" href="{{ url_for('cv.home') }}">Cancel</a>
+      <a class="btn btn-secondary" href="{{ url_for('profiles.home') }}">Cancel</a>
       <button class="btn btn-primary" type="submit">Save</button>
     </div>
   </form>

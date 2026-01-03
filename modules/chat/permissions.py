@@ -23,6 +23,12 @@ def _real_user():
     return u
 
 
+_MODULE_ALIASES = {
+    # Legacy key => new key
+    "profiles": ["cv"],
+}
+
+
 def module_required(module_key: str):
     """Enforce module access using rb_user_module.
 
@@ -46,19 +52,24 @@ def module_required(module_key: str):
             if getattr(u, "is_admin", False):
                 return fn(*args, **kwargs)
 
+            keys = [module_key] + _MODULE_ALIASES.get(module_key, [])
+
             has = (
                 db.session.query(RBUserModule)
                 .join(RBModule, RBModule.module_key == RBUserModule.module_key)
-                .filter(
-                    RBUserModule.user_id == u.user_id,
-                    RBUserModule.module_key == module_key,
-                    RBUserModule.has_access.is_(True),
-                    RBModule.is_enabled.is_(True),
-                )
+                .filter(RBUserModule.user_id == u.user_id)
+                .filter(RBUserModule.module_key.in_(keys))
+                .filter(RBUserModule.has_access.is_(True))
+                .filter(RBModule.is_enabled.is_(True))
                 .first()
             )
             if not has:
-                mod = db.session.query(RBModule).filter(RBModule.module_key == module_key).first()
+                mod = (
+                    db.session.query(RBModule)
+                    .filter(RBModule.module_key.in_(keys))
+                    .order_by(RBModule.module_key == module_key)
+                    .first()
+                )
                 mod_name = mod.name if mod and getattr(mod, "name", None) else module_key.upper()
                 flash(f"You do not have access to the {mod_name} module.", "warning")
                 return redirect(url_for("user.welcome"))

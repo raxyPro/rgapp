@@ -12,10 +12,10 @@
       <div class="card h-100">
         <div class="card-header">Share options</div>
         <div class="card-body">
-          <form method="post" action="{{ url_for('cv.share_pair_public', cv_id=pair.cv_id) }}" class="mb-2">
+          <form method="post" action="{{ url_for('profiles.share_pair_public', cv_id=pair.cv_id) }}" class="mb-2">
             <button class="btn btn-outline-primary w-100" type="submit">Generate/Refresh Public Link</button>
           </form>
-          <form method="post" action="{{ url_for('cv.share_pair_user', cv_id=pair.cv_id) }}" class="mb-2">
+          <form method="post" action="{{ url_for('profiles.share_pair_user', cv_id=pair.cv_id) }}" class="mb-2">
             <label class="form-label">Share with user</label>
             <div class="input-group">
               <select class="form-select" name="target_user_id" required>
@@ -27,7 +27,7 @@
               <button class="btn btn-outline-secondary" type="submit">Share</button>
             </div>
           </form>
-          <form method="post" action="{{ url_for('cv.share_pair_email', cv_id=pair.cv_id) }}">
+          <form method="post" action="{{ url_for('profiles.share_pair_email', cv_id=pair.cv_id) }}">
             <label class="form-label">Share via email</label>
             <div class="input-group">
               <input class="form-control" name="target_email" placeholder="person@example.com" required>
@@ -60,7 +60,7 @@
                       </div>
                     </div>
                     {% if s.is_public %}
-                      <a href="{{ url_for('cvviewer.view_pair', token=s.share_token) }}" target="_blank">View</a>
+                      <a href="{{ url_for('profileviewer.view_pair', token=s.share_token) }}" target="_blank">View</a>
                     {% endif %}
                   </div>
                 </li>

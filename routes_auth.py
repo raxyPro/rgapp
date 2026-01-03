@@ -90,7 +90,7 @@ def login():
         # Default: grant social module if enabled
         _ensure_module_access(u.user_id, "social")
         _ensure_module_access(u.user_id, "services")
-        _ensure_module_access(u.user_id, "cv")
+        _ensure_module_access(u.user_id, "profiles")
         db.session.commit()
 
         login_user(UserLoginAdapter(u))
@@ -285,9 +285,14 @@ def reset_password(token):
 
     return render_template("reset_password.html", email=email)
 def _ensure_module_access(user_id: int, module_key: str):
-    mod = RBModule.query.filter_by(module_key=module_key, is_enabled=True).first()
+    target_key = module_key
+    mod = RBModule.query.filter_by(module_key=target_key, is_enabled=True).first()
+    if not mod and module_key == "profiles":
+        # Backward-compat: fall back to legacy CV module key if migration not run yet.
+        target_key = "cv"
+        mod = RBModule.query.filter_by(module_key=target_key, is_enabled=True).first()
     if not mod:
         return
-    exists = RBUserModule.query.filter_by(user_id=user_id, module_key=module_key).first()
+    exists = RBUserModule.query.filter_by(user_id=user_id, module_key=target_key).first()
     if not exists:
-        db.session.add(RBUserModule(user_id=user_id, module_key=module_key, has_access=True))
+        db.session.add(RBUserModule(user_id=user_id, module_key=target_key, has_access=True))

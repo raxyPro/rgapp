@@ -12,7 +12,7 @@ from extensions import db
 from models import RBUser, RBUserProfile
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
-from modules.cv.models import (
+from modules.profiles.models import (
     RBCVProfile,
     RBVCardShare,
     RBCVFileShare,
@@ -20,24 +20,24 @@ from modules.cv.models import (
     RBCVShare,
     RBCVPublicLink,
 )
-from modules.cv.util import make_token, sanitize_filename, allowed_pdf
+from modules.profiles.util import make_token, sanitize_filename, allowed_pdf
 from werkzeug.security import generate_password_hash
 
 
-cv_bp = Blueprint(
-    "cv",
+profiles_bp = Blueprint(
+    "profiles",
     __name__,
     template_folder="templates",
     static_folder="static",
-    url_prefix="/cv",
+    url_prefix="/profiles",
 )
 
-cvviewer_bp = Blueprint(
-    "cvviewer",
+profileviewer_bp = Blueprint(
+    "profileviewer",
     __name__,
     template_folder="templates",
     static_folder="static",
-    url_prefix="/cvviewer",
+    url_prefix="/profileviewer",
 )
 
 vcardviewer_bp = Blueprint(
@@ -55,10 +55,10 @@ def _current_user_email_lower() -> str:
 
 
 def _log_event(kind: str, reason: str, **context) -> None:
-    """Append a structured event to the CV log file."""
+    """Append a structured event to the Profiles log file."""
     try:
         cfg_path = current_app.config.get("CV_FORBIDDEN_LOG") if current_app else None
-        log_path = Path(cfg_path) if cfg_path else Path(__file__).resolve().parent / "cv_forbidden.log"
+        log_path = Path(cfg_path) if cfg_path else Path(__file__).resolve().parent / "profiles_forbidden.log"
         log_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "ts": datetime.utcnow().isoformat() + "Z",
@@ -146,6 +146,26 @@ def _get_cv_profile(cvfile_id: int) -> RBCVProfile:
     return c
 
 
+def _find_user_by_handle(handle: str) -> RBUser | None:
+    if not handle:
+        return None
+    h = handle.strip().lower()
+    prof = RBUserProfile.query.filter(RBUserProfile.handle == h).first()
+    if prof:
+        return RBUser.query.get(prof.user_id)
+    return None
+
+
+def _cv_name_exists(user_id: int, name: str, exclude_id: int | None = None) -> bool:
+    q = RBCVProfile.query.filter_by(user_id=user_id, doc_type="cv", is_archived=False)
+    if exclude_id:
+        q = q.filter(RBCVProfile.cvfile_id != exclude_id)
+    for cv in q.all():
+        if cv.cv_name.lower() == name.lower():
+            return True
+    return False
+
+
 def _render_onepage_html(p: RBCVPair) -> str:
     """Generate a simple one-page HTML snippet from pair fields."""
     sections = [
@@ -173,11 +193,11 @@ def _can_access_share_target(target_user_id: int | None, target_email: str | Non
     return False
 
 
-@cv_bp.get("/")
+@profiles_bp.get("/")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def home():
-    print("CV Home accessed")
+    print("Profiles Home accessed")
     me_id = get_current_user_id()
     me_email = _current_user_email_lower()
 
@@ -239,11 +259,31 @@ def home():
         ).all()
     } if shared_cvfile_ids else {}
 
+    # Shares created by me
+    own_cvfile_ids = [c.cvfile_id for c in cv_files] if cv_files else []
+    my_shares = (
+        RBCVFileShare.query
+        .filter(RBCVFileShare.owner_user_id == me_id)
+        .filter(RBCVFileShare.cvfile_id.in_(own_cvfile_ids) if own_cvfile_ids else False)
+        .order_by(RBCVFileShare.created_at.desc())
+        .all()
+    ) if own_cvfile_ids else []
+    my_public_links = (
+        RBCVPublicLink.query
+        .filter(RBCVPublicLink.created_by == me_id)
+        .filter(RBCVPublicLink.cvfile_id.in_(own_cvfile_ids) if own_cvfile_ids else False)
+        .order_by(RBCVPublicLink.created_at.desc())
+        .all()
+    ) if own_cvfile_ids else []
+    share_user_ids = [s.target_user_id for s in my_shares if s.target_user_id] if my_shares else []
+    share_users = {u.user_id: u for u in RBUser.query.filter(RBUser.user_id.in_(share_user_ids)).all()} if share_user_ids else {}
+    share_profiles = {p.user_id: p for p in RBUserProfile.query.filter(RBUserProfile.user_id.in_(share_user_ids)).all()} if share_user_ids else {}
+
     shared_pair_ids = list({s.cv_id for s in pair_shares})
     shared_pairs = {p.cv_id: p for p in RBCVPair.query.filter(RBCVPair.cv_id.in_(shared_pair_ids)).all()} if shared_pair_ids else {}
 
     return render_template(
-        "cv/home.html",
+        "profiles/home.html",
         vcard=vcard,
         skills=skills,
         services=services,
@@ -255,25 +295,29 @@ def home():
         shared_vcards=shared_vcards,
         shared_cvfiles=shared_cvfiles,
         shared_pairs=shared_pairs,
+        my_shares=my_shares,
+        my_public_links=my_public_links,
+        share_users=share_users,
+        share_profiles=share_profiles,
     )
 
 
 # ─────────────────────────────
 # vCard edit
 # ─────────────────────────────
-@cv_bp.get("/vcard/edit")
+@profiles_bp.get("/vcard/edit")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def edit_vcard():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
     skills, services = _vcard_items(vcard.vcard_id)
-    return render_template("cv/edit_vcard.html", vcard=vcard, skills=skills, services=services)
+    return render_template("profiles/edit_vcard.html", vcard=vcard, skills=skills, services=services)
 
 
-@cv_bp.post("/vcard/edit")
+@profiles_bp.post("/vcard/edit")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def save_vcard():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
@@ -334,12 +378,12 @@ def save_vcard():
     vcard.services = services
 
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.post("/pair/new")
+@profiles_bp.post("/pair/new")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def pair_new():
     me_id = get_current_user_id()
     # Blank online CV
@@ -369,24 +413,24 @@ def pair_new():
     p.onepage_html = _render_onepage_html(p)
     db.session.add(p)
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.get("/pair/<int:cv_id>/edit")
+@profiles_bp.get("/pair/<int:cv_id>/edit")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def pair_edit(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
     if p.user_id != me_id:
         _forbidden("pair_edit_not_owner", cv_id=cv_id, owner=p.user_id, me_id=me_id)
     _log_access("pair_edit_ok", cv_id=cv_id, me_id=me_id)
-    return render_template("cv/edit_pair.html", pair=p)
+    return render_template("profiles/edit_pair.html", pair=p)
 
 
-@cv_bp.post("/pair/<int:cv_id>/edit")
+@profiles_bp.post("/pair/<int:cv_id>/edit")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def pair_save(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -421,12 +465,12 @@ def pair_save(cv_id: int):
     p.updated_at = datetime.utcnow()
     db.session.add(p)
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.post("/pair/<int:cv_id>/archive")
+@profiles_bp.post("/pair/<int:cv_id>/archive")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def pair_archive(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -435,12 +479,12 @@ def pair_archive(cv_id: int):
     p.is_archived = True
     db.session.add(p)
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.post("/pair/<int:cv_id>/unarchive")
+@profiles_bp.post("/pair/<int:cv_id>/unarchive")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def pair_unarchive(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -449,15 +493,15 @@ def pair_unarchive(cv_id: int):
     p.is_archived = False
     db.session.add(p)
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
 # ─────────────────────────────
 # vCard sharing
 # ─────────────────────────────
-@cv_bp.get("/vcard/share")
+@profiles_bp.get("/vcard/share")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_vcard():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
@@ -473,12 +517,12 @@ def share_vcard():
     public_share = next((s for s in shares if s.is_public), None)
     public_link = url_for("vcardviewer.view", token=public_share.share_token, _external=True) if public_share else None
 
-    return render_template("cv/share_vcard.html", vcard=vcard, shares=shares, users=users, public_link=public_link)
+    return render_template("profiles/share_vcard.html", vcard=vcard, shares=shares, users=users, public_link=public_link)
 
 
-@cv_bp.post("/vcard/share/public")
+@profiles_bp.post("/vcard/share/public")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_vcard_public():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
@@ -495,12 +539,12 @@ def share_vcard_public():
         )
         db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_vcard"))
+    return redirect(url_for("profiles.share_vcard"))
 
 
-@cv_bp.post("/vcard/share/user")
+@profiles_bp.post("/vcard/share/user")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_vcard_user():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
@@ -512,7 +556,7 @@ def share_vcard_user():
 
     exists = RBVCardShare.query.filter_by(vcard_id=vcard.vcard_id, owner_user_id=me_id, target_user_id=target_user_id).first()
     if exists:
-        return redirect(url_for("cv.share_vcard"))
+        return redirect(url_for("profiles.share_vcard"))
 
     s = RBVCardShare(
         vcard_id=vcard.vcard_id,
@@ -524,12 +568,12 @@ def share_vcard_user():
     )
     db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_vcard"))
+    return redirect(url_for("profiles.share_vcard"))
 
 
-@cv_bp.post("/vcard/share/email")
+@profiles_bp.post("/vcard/share/email")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_vcard_email():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
@@ -540,7 +584,7 @@ def share_vcard_email():
 
     exists = RBVCardShare.query.filter_by(vcard_id=vcard.vcard_id, owner_user_id=me_id, target_email=email).first()
     if exists:
-        return redirect(url_for("cv.share_vcard"))
+        return redirect(url_for("profiles.share_vcard"))
 
     s = RBVCardShare(
         vcard_id=vcard.vcard_id,
@@ -552,35 +596,38 @@ def share_vcard_email():
     )
     db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_vcard"))
+    return redirect(url_for("profiles.share_vcard"))
 
 
 # ─────────────────────────────
 # CV files (PDF upload)
 # ─────────────────────────────
-@cv_bp.post("/cvfile/new")
+@profiles_bp.post("/cvfile/new")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def cvfile_new():
     me_id = get_current_user_id()
 
     cv_name = (request.form.get("cv_name") or "").strip()
     if not cv_name:
         abort(400, "CV name required")
+    if _cv_name_exists(me_id, cv_name):
+        flash("CV name must be unique.", "warning")
+        return redirect(url_for("profiles.home"))
     vcard = _get_or_create_vcard(me_id)
 
     f = request.files.get("pdf")
-    if not f or not f.filename:
-        abort(400, "PDF required")
-
-    if not allowed_pdf(f.filename, getattr(f, "mimetype", None)):
-        abort(400, "Only PDF files are allowed")
-
-    safe = sanitize_filename(f.filename)
-    pdf_bytes = f.read()
-    size_bytes = len(pdf_bytes) if pdf_bytes else 0
-    if size_bytes == 0:
-        abort(400, "Empty PDF")
+    pdf_bytes = None
+    safe = None
+    size_bytes = None
+    if f and f.filename:
+        if not allowed_pdf(f.filename, getattr(f, "mimetype", None)):
+            abort(400, "Only PDF files are allowed")
+        safe = sanitize_filename(f.filename)
+        pdf_bytes = f.read()
+        size_bytes = len(pdf_bytes) if pdf_bytes else 0
+        if size_bytes == 0:
+            abort(400, "Empty PDF")
 
     # Optional cover letter PDF
     cover_file = request.files.get("cover_pdf")
@@ -620,12 +667,12 @@ def cvfile_new():
     db.session.add(rec)
     db.session.commit()
 
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/edit")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/edit")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def cvfile_edit(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
@@ -635,6 +682,9 @@ def cvfile_edit(cvfile_id: int):
     cv_name = (request.form.get("cv_name") or "").strip()
     if not cv_name:
         abort(400, "CV name required")
+    if _cv_name_exists(me_id, cv_name, exclude_id=cvfile_id):
+        flash("CV name must be unique.", "warning")
+        return redirect(url_for("profiles.home"))
 
     file = request.files.get("pdf")
     if file and file.filename:
@@ -668,12 +718,12 @@ def cvfile_edit(cvfile_id: int):
     c.touch()
     db.session.add(c)
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/delete")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/delete")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def cvfile_delete(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
@@ -685,12 +735,12 @@ def cvfile_delete(cvfile_id: int):
 
     db.session.delete(c)
     db.session.commit()
-    return redirect(url_for("cv.home"))
+    return redirect(url_for("profiles.home"))
 
 
-@cv_bp.get("/cvfile/<int:cvfile_id>/view")
+@profiles_bp.get("/cvfile/<int:cvfile_id>/view")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def cvfile_view(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
@@ -708,9 +758,9 @@ def cvfile_view(cvfile_id: int):
     )
 
 
-@cv_bp.get("/cvfile/<int:cvfile_id>/cover")
+@profiles_bp.get("/cvfile/<int:cvfile_id>/cover")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def cvfile_cover_view(cvfile_id: int):
     me_id = get_current_user_id()
     c = RBCVProfile.query.get_or_404(cvfile_id)
@@ -728,9 +778,9 @@ def cvfile_cover_view(cvfile_id: int):
     )
 
 
-@cv_bp.get("/cvfile/<int:cvfile_id>/share")
+@profiles_bp.get("/cvfile/<int:cvfile_id>/share")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_cvfile(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
@@ -764,12 +814,12 @@ def share_cvfile(cvfile_id: int):
             rem_secs = int((pl.expires_at - now).total_seconds())
         public_links_view.append({"obj": pl, "status": status, "rem_secs": rem_secs})
 
-    return render_template("cv/share_cvfile.html", c=c, shares=shares, users=users, public_links=public_links_view)
+    return render_template("profiles/share_cvfile.html", c=c, shares=shares, users=users, public_links=public_links_view)
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/share/<int:share_id>/delete")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/share/<int:share_id>/delete")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def delete_cvfile_share(cvfile_id: int, share_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
@@ -783,12 +833,12 @@ def delete_cvfile_share(cvfile_id: int, share_id: int):
     db.session.delete(share)
     db.session.commit()
     flash("Share deleted.", "info")
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
 
-@cv_bp.get("/pair/<int:cv_id>/share")
+@profiles_bp.get("/pair/<int:cv_id>/share")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_pair(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -804,14 +854,14 @@ def share_pair(cv_id: int):
     users = RBUser.query.filter(RBUser.user_id != me_id).order_by(RBUser.email.asc()).all()
 
     public_share = next((s for s in shares if s.is_public), None)
-    public_link = url_for("cvviewer.view_pair", token=public_share.share_token, _external=True) if public_share else None
+    public_link = url_for("profileviewer.view_pair", token=public_share.share_token, _external=True) if public_share else None
 
-    return render_template("cv/share_pair.html", pair=p, shares=shares, users=users, public_link=public_link)
+    return render_template("profiles/share_pair.html", pair=p, shares=shares, users=users, public_link=public_link)
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/share/public")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/share/public")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_cvfile_public(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
@@ -830,12 +880,12 @@ def share_cvfile_public(cvfile_id: int):
         )
         db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/public-link")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/public-link")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def create_public_link(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
@@ -868,12 +918,12 @@ def create_public_link(cvfile_id: int):
     db.session.add(link)
     db.session.commit()
     flash("Public link created.", "success")
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
 
-@cv_bp.post("/cvfile/public-link/<int:link_id>/extend")
+@profiles_bp.post("/cvfile/public-link/<int:link_id>/extend")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def extend_public_link(link_id: int):
     me_id = get_current_user_id()
     link = RBCVPublicLink.query.get_or_404(link_id)
@@ -884,12 +934,12 @@ def extend_public_link(link_id: int):
     db.session.add(link)
     db.session.commit()
     flash("Link extended +10 minutes.", "success")
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cv.cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cv.cvfile_id))
 
 
-@cv_bp.post("/cvfile/public-link/<int:link_id>/disable")
+@profiles_bp.post("/cvfile/public-link/<int:link_id>/disable")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def disable_public_link(link_id: int):
     me_id = get_current_user_id()
     link = RBCVPublicLink.query.get_or_404(link_id)
@@ -900,12 +950,12 @@ def disable_public_link(link_id: int):
     db.session.add(link)
     db.session.commit()
     flash("Link disabled.", "info")
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cv.cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cv.cvfile_id))
 
 
-@cv_bp.post("/cvfile/public-link/<int:link_id>/delete")
+@profiles_bp.post("/cvfile/public-link/<int:link_id>/delete")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def delete_public_link(link_id: int):
     me_id = get_current_user_id()
     link = RBCVPublicLink.query.get_or_404(link_id)
@@ -915,12 +965,12 @@ def delete_public_link(link_id: int):
     db.session.delete(link)
     db.session.commit()
     flash("Link deleted.", "info")
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cv.cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cv.cvfile_id))
 
 
-@cv_bp.post("/pair/<int:cv_id>/share/public")
+@profiles_bp.post("/pair/<int:cv_id>/share/public")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_pair_public(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -939,12 +989,12 @@ def share_pair_public(cv_id: int):
         )
         db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_pair", cv_id=cv_id))
+    return redirect(url_for("profiles.share_pair", cv_id=cv_id))
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/share/user")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/share/user")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_cvfile_user(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
@@ -958,7 +1008,7 @@ def share_cvfile_user(cvfile_id: int):
 
     exists = RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id, target_user_id=target_user_id).first()
     if exists:
-        return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+        return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
     s = RBCVFileShare(
         cvfile_id=cvfile_id,
@@ -970,12 +1020,12 @@ def share_cvfile_user(cvfile_id: int):
     )
     db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
 
-@cv_bp.post("/pair/<int:cv_id>/share/user")
+@profiles_bp.post("/pair/<int:cv_id>/share/user")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_pair_user(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -989,7 +1039,7 @@ def share_pair_user(cv_id: int):
 
     exists = RBCVShare.query.filter_by(cv_id=cv_id, owner_user_id=me_id, target_user_id=target_user_id).first()
     if exists:
-        return redirect(url_for("cv.share_pair", cv_id=cv_id))
+        return redirect(url_for("profiles.share_pair", cv_id=cv_id))
 
     s = RBCVShare(
         cv_id=cv_id,
@@ -1001,12 +1051,12 @@ def share_pair_user(cv_id: int):
     )
     db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_pair", cv_id=cv_id))
+    return redirect(url_for("profiles.share_pair", cv_id=cv_id))
 
 
-@cv_bp.post("/cvfile/<int:cvfile_id>/share/email")
+@profiles_bp.post("/cvfile/<int:cvfile_id>/share/email")
 @login_required
-@module_required("cv")
+@module_required("profiles")
 def share_cvfile_email(cvfile_id: int):
     me_id = get_current_user_id()
     c = _get_cv_profile(cvfile_id)
@@ -1019,7 +1069,7 @@ def share_cvfile_email(cvfile_id: int):
 
     exists = RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id, target_email=email).first()
     if exists:
-        return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+        return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
     s = RBCVFileShare(
         cvfile_id=cvfile_id,
@@ -1031,12 +1081,101 @@ def share_cvfile_email(cvfile_id: int):
     )
     db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_cvfile", cvfile_id=cvfile_id))
+    return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
 
 
-@cv_bp.post("/pair/<int:cv_id>/share/email")
+@profiles_bp.post("/cvfile/share-new")
 @login_required
-@module_required("cv")
+@module_required("profiles")
+def share_cvfile_new():
+    me_id = get_current_user_id()
+    cvfile_id = int(request.form.get("cvfile_id") or 0)
+    c = _get_cv_profile(cvfile_id)
+    if c.owner_user_id != me_id:
+        _forbidden("share_cvfile_new_not_owner", cvfile_id=cvfile_id, owner=c.owner_user_id, me_id=me_id)
+
+    share_method = (request.form.get("share_method") or "").strip()
+
+    if share_method == "link":
+        minutes_raw = int(request.form.get("expiry_minutes") or 15)
+        minutes = max(0, min(1440, minutes_raw))
+        pw = (request.form.get("password") or "").strip()
+        pw_hash = generate_password_hash(pw) if pw else None
+        token = make_token()
+        expires_at = datetime.utcnow() + timedelta(minutes=minutes) if minutes > 0 else None
+        link = RBCVPublicLink(
+            cvfile_id=c.cvfile_id,
+            created_by=me_id,
+            name=None,
+            share_type="public",
+            target=None,
+            token=token,
+            allow_download=True,
+            password_hash=pw_hash,
+            expires_at=expires_at,
+            status="active",
+        )
+        db.session.add(link)
+        db.session.commit()
+        flash("Public link created.", "success")
+        return redirect(url_for("profiles.home"))
+
+    if share_method == "handle":
+        handle = (request.form.get("handle") or "").strip()
+        target_user = _find_user_by_handle(handle)
+        if not target_user:
+            flash("Handle not found.", "warning")
+            return redirect(url_for("profiles.home"))
+        if target_user.user_id == me_id:
+            flash("Cannot share with yourself.", "warning")
+            return redirect(url_for("profiles.home"))
+        exists = RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id, target_user_id=target_user.user_id).first()
+        if exists:
+            flash("Already shared with that user.", "info")
+            return redirect(url_for("profiles.home"))
+        s = RBCVFileShare(
+            cvfile_id=cvfile_id,
+            owner_user_id=me_id,
+            target_user_id=target_user.user_id,
+            target_email=None,
+            share_token=make_token(),
+            is_public=False,
+        )
+        db.session.add(s)
+        db.session.commit()
+        flash("Shared with user handle.", "success")
+        return redirect(url_for("profiles.home"))
+
+    if share_method == "email":
+        email = (request.form.get("email") or "").strip().lower()
+        if not email or "@" not in email:
+            flash("Enter a valid email.", "warning")
+            return redirect(url_for("profiles.home"))
+        exists = RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id, target_email=email).first()
+        if exists:
+            flash("Already shared with that email.", "info")
+            return redirect(url_for("profiles.home"))
+        s = RBCVFileShare(
+            cvfile_id=cvfile_id,
+            owner_user_id=me_id,
+            target_user_id=None,
+            target_email=email,
+            share_token=make_token(),
+            is_public=False,
+        )
+        db.session.add(s)
+        db.session.commit()
+        # Email sending not wired; placeholder for integration.
+        flash("Email share created.", "success")
+        return redirect(url_for("profiles.home"))
+
+    flash("Select a share method.", "warning")
+    return redirect(url_for("profiles.home"))
+
+
+@profiles_bp.post("/pair/<int:cv_id>/share/email")
+@login_required
+@module_required("profiles")
 def share_pair_email(cv_id: int):
     me_id = get_current_user_id()
     p = RBCVPair.query.get_or_404(cv_id)
@@ -1049,7 +1188,7 @@ def share_pair_email(cv_id: int):
 
     exists = RBCVShare.query.filter_by(cv_id=cv_id, owner_user_id=me_id, target_email=email).first()
     if exists:
-        return redirect(url_for("cv.share_pair", cv_id=cv_id))
+        return redirect(url_for("profiles.share_pair", cv_id=cv_id))
 
     s = RBCVShare(
         cv_id=cv_id,
@@ -1061,13 +1200,13 @@ def share_pair_email(cv_id: int):
     )
     db.session.add(s)
     db.session.commit()
-    return redirect(url_for("cv.share_pair", cv_id=cv_id))
+    return redirect(url_for("profiles.share_pair", cv_id=cv_id))
 
 
 # ─────────────────────────────
 # Viewers
 # ─────────────────────────────
-@cvviewer_bp.route("/<token>", methods=["GET", "POST"])
+@profileviewer_bp.route("/<token>", methods=["GET", "POST"])
 def view(token: str):
     from flask import session
     s = RBCVFileShare.query.filter_by(share_token=token).first()
@@ -1075,8 +1214,8 @@ def view(token: str):
         # Token grants access whether public or private
         c = _get_cv_profile(s.cvfile_id)
         owner = RBUser.query.get(c.owner_user_id)
-        cv_link = url_for("cvviewer.view", token=s.share_token, _external=True)
-        return render_template("cv/view_public_cv.html", c=c, owner=owner, share=s, cv_link=cv_link)
+        cv_link = url_for("profileviewer.view", token=s.share_token, _external=True)
+        return render_template("profiles/view_public_cv.html", c=c, owner=owner, share=s, cv_link=cv_link)
 
     pl = RBCVPublicLink.query.filter_by(token=token).first_or_404()
     if pl.status != "active":
@@ -1094,16 +1233,16 @@ def view(token: str):
                     session[key] = True
                 else:
                     _log_forbidden("public_link_bad_password", token=token, remote_addr=request.remote_addr)
-                    return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True, error="Invalid password"), 403
+                    return render_template("profiles/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True, error="Invalid password"), 403
             else:
-                return render_template("cv/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True)
+                return render_template("profiles/view_public_cv.html", c=None, owner=None, share=pl, cv_link=None, need_password=True)
     c = _get_cv_profile(pl.cvfile_id)
     owner = RBUser.query.get(c.owner_user_id)
-    cv_link = url_for("cvviewer.view", token=pl.token, _external=True)
-    return render_template("cv/view_public_cv.html", c=c, owner=owner, share=pl, cv_link=cv_link, need_password=False)
+    cv_link = url_for("profileviewer.view", token=pl.token, _external=True)
+    return render_template("profiles/view_public_cv.html", c=c, owner=owner, share=pl, cv_link=cv_link, need_password=False)
 
 
-@cvviewer_bp.get("/file/<token>")
+@profileviewer_bp.get("/file/<token>")
 def file(token: str):
     s = RBCVFileShare.query.filter_by(share_token=token).first()
     if s:
@@ -1130,7 +1269,7 @@ def file(token: str):
     )
 
 
-@cvviewer_bp.get("/cover/<token>")
+@profileviewer_bp.get("/cover/<token>")
 def cover(token: str):
     s = RBCVFileShare.query.filter_by(share_token=token).first()
     if s:
@@ -1155,7 +1294,7 @@ def cover(token: str):
     )
 
 
-@cvviewer_bp.get("/pair/<token>")
+@profileviewer_bp.get("/pair/<token>")
 def view_pair(token: str):
     s = RBCVShare.query.filter_by(share_token=token).first_or_404()
     if not s.is_public:
@@ -1163,7 +1302,7 @@ def view_pair(token: str):
 
     p = RBCVPair.query.get_or_404(s.cv_id)
     owner = RBUser.query.get(p.user_id)
-    return render_template("cv/view_public_pair.html", pair=p, owner=owner, share=s)
+    return render_template("profiles/view_public_pair.html", pair=p, owner=owner, share=s)
 
 
 @vcardviewer_bp.get("/<token>")
@@ -1177,4 +1316,4 @@ def view(token: str):
         abort(404)
     skills, services = _vcard_items(v.vcard_id)
     owner = RBUser.query.get(v.user_id)
-    return render_template("cv/view_public_vcard.html", vcard=v, skills=skills, services=services, owner=owner, share=s)
+    return render_template("profiles/view_public_vcard.html", vcard=v, skills=skills, services=services, owner=owner, share=s)

@@ -6,7 +6,7 @@ from flask_login import login_required
 from models import RBUser, RBUserProfile
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
-from modules.cv.models import RBCVProfile
+from modules.profiles.models import RBCVProfile
 
 services_bp = Blueprint(
     "services",

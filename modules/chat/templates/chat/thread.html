@@ -67,7 +67,7 @@
       {% set summary = reaction_data.get(m.message_id, {}) %}
       {% set counts = summary.get('counts', {}) %}
       {% set top_count = counts.values()|list|max if counts else 0 %}
-      <div class="chat-msg" data-mid="{{ m.message_id }}">
+      <div class="chat-msg" data-mid="{{ m.message_id }}" style="position:relative;">
         <div class="meta">
           {% set u = users_by_id.get(m.sender_id) %}
           <span><b>{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}</b></span>
@@ -76,14 +76,16 @@
             {% set replied_user = reply_lookup.get(m.reply_to_message_id) %}
             <span class="text-muted" style="margin-left:8px;">(reply to {{ replied_user or ("#" ~ m.reply_to_message_id) }})</span>
           {% endif %}
+        </div>
+        <div class="msg-actions" style="position:absolute; right:8px; top:20px; gap:6px; align-items:center;">
           {% if active_thread.thread_type != "broadcast" or is_owner %}
-            <button class="btn btn-sm btn-outline-primary" type="button" style="margin-left:6px;padding:2px 6px;font-size:11px;" onclick="setReply('{{ m.message_id }}', '{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}')">Reply</button>
+            <button class="btn btn-sm btn-outline-primary" type="button" title="Reply" onclick="setReply('{{ m.message_id }}', '{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}')">Reply</button>
+          {% endif %}
+          {% if can_react %}
+            <button class="btn btn-sm btn-outline-secondary" type="button" title="React" onclick="toggleReactions('{{ m.message_id }}')">😊</button>
           {% endif %}
           {% if m.sender_id == me_id %}
-          <form method="post" action="{{ url_for('chat.delete_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:inline;">
-            <button class="btn btn-sm btn-outline-danger" style="margin-left:8px;padding:2px 6px;font-size:11px;" onclick="return confirm('Delete this message?');">Delete</button>
-          </form>
-          <button class="btn btn-sm btn-outline-secondary" type="button" style="margin-left:4px;padding:2px 6px;font-size:11px;" onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit" onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
           {% endif %}
         </div>
         <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | chat_rich }}</div>
@@ -112,7 +114,7 @@
             {% endfor %}
             <form method="post" action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}">
               <input type="hidden" name="emoji" value="">
-              <button class="btn btn-sm btn-outline-secondary" type="submit">Clear</button>
+              <button class="btn btn-sm btn-outline-secondary" type="submit">✕</button>
             </form>
           </div>
         {% endif %}
@@ -197,6 +199,15 @@
       if (!box) return;
       const visible = box.style.display === 'block';
       box.style.display = visible ? 'none' : 'block';
+    }
+    function toggleReactions(id){
+      const msg = document.querySelector(`.chat-msg[data-mid='${id}']`);
+      if(!msg) return;
+      const area = msg.querySelector('.reaction-actions');
+      if(!area) return;
+      const visible = area.style.opacity === '1';
+      area.style.opacity = visible ? '0' : '1';
+      area.style.pointerEvents = visible ? 'none' : 'auto';
     }
     function setReply(id, label) {
       const input = document.getElementById('reply_to');

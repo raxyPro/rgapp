@@ -10,8 +10,8 @@ from flask_login import login_required
 from extensions import db
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
-from modules.cv.models import RBCVProfile
-from modules.cv.util import sanitize_filename
+from modules.profiles.models import RBCVProfile
+from modules.profiles.util import sanitize_filename
 from modules.social.models import SocialLike, SocialPost
 from models import RBUser, RBUserProfile
 

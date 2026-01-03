@@ -3,10 +3,10 @@
 <div class="container mt-4">
   <div class="d-flex justify-content-between align-items-center">
     <h3>Edit vCard</h3>
-    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cv.home') }}">Back</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('profiles.home') }}">Back</a>
   </div>
 
-  <form method="post" action="{{ url_for('cv.save_vcard') }}">
+  <form method="post" action="{{ url_for('profiles.save_vcard') }}">
     <div class="row mt-3">
       <div class="col-md-6">
         <label class="form-label">Name</label>
@@ -116,7 +116,7 @@
 
     <div class="mt-4 d-flex gap-2">
       <button class="btn btn-primary" type="submit">Save</button>
-      <a class="btn btn-outline-secondary" href="{{ url_for('cv.home') }}">Cancel</a>
+      <a class="btn btn-outline-secondary" href="{{ url_for('profiles.home') }}">Cancel</a>
     </div>
   </form>
 </div>
