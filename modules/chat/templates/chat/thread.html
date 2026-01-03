@@ -77,15 +77,15 @@
             <span class="text-muted" style="margin-left:8px;">(reply to {{ replied_user or ("#" ~ m.reply_to_message_id) }})</span>
           {% endif %}
         </div>
-        <div class="msg-actions" style="position:absolute; right:8px; top:20px; gap:6px; align-items:center;">
+        <div class="msg-actions" style="position:absolute; right:8px; top:14px; gap:4px; align-items:center;">
           {% if active_thread.thread_type != "broadcast" or is_owner %}
-            <button class="btn btn-sm btn-outline-primary" type="button" title="Reply" onclick="setReply('{{ m.message_id }}', '{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}')">Reply</button>
+            <button class="btn btn-sm btn-outline-primary" type="button" title="Reply" onclick="setReply('{{ m.message_id }}', '{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}')" style="padding:2px 6px; font-size:11px;">Reply</button>
           {% endif %}
           {% if can_react %}
-            <button class="btn btn-sm btn-outline-secondary" type="button" title="React" onclick="toggleReactions('{{ m.message_id }}')">😊</button>
+            <button class="btn btn-sm btn-outline-secondary react-toggle" type="button" title="React" onclick="toggleReactions('{{ m.message_id }}')" style="padding:2px 6px; font-size:11px;">😊</button>
           {% endif %}
           {% if m.sender_id == me_id %}
-            <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit" onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit" onclick="toggleEdit('{{ m.message_id }}')" style="padding:2px 6px; font-size:11px;">Edit</button>
           {% endif %}
         </div>
         <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | chat_rich }}</div>
@@ -100,22 +100,19 @@
         {% if counts %}
           <div class="reaction-row" style="font-size:12px;">
             {% for emoji, cnt in counts.items() %}
-              <span class="pill {% if cnt == top_count and top_count > 0 %}unread{% endif %}" data-emoji="{{ emoji }}">{{ emoji }} {{ cnt }}</span>
+              <span class="pill {% if cnt == top_count and top_count > 0 %}unread{% endif %}" data-emoji="{{ emoji }}">{{ emoji }}</span>
             {% endfor %}
           </div>
         {% endif %}
         {% if can_react %}
-          <div class="reaction-actions" style="font-size:12px;">
+          <div class="reaction-actions" style="font-size:12px; display:none;">
             {% for e in reaction_choices %}
+              {% set is_mine = summary.get('user_reaction') == e %}
               <form method="post" action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}">
-                <input type="hidden" name="emoji" value="{{ e }}">
-                <button class="btn btn-sm {% if summary.get('user_reaction') == e %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">{{ e }}</button>
+                <input type="hidden" name="emoji" value="{{ '' if is_mine else e }}">
+                <button class="btn btn-sm {% if is_mine %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">{{ e }}</button>
               </form>
             {% endfor %}
-            <form method="post" action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}">
-              <input type="hidden" name="emoji" value="">
-              <button class="btn btn-sm btn-outline-secondary" type="submit">✕</button>
-            </form>
           </div>
         {% endif %}
       </div>
@@ -205,10 +202,18 @@
       if(!msg) return;
       const area = msg.querySelector('.reaction-actions');
       if(!area) return;
-      const visible = area.style.opacity === '1';
-      area.style.opacity = visible ? '0' : '1';
-      area.style.pointerEvents = visible ? 'none' : 'auto';
+      // hide all others first
+      document.querySelectorAll('.reaction-actions').forEach(a => a.style.display = 'none');
+      const visible = area.style.display === 'flex';
+      area.style.display = visible ? 'none' : 'flex';
     }
+    document.addEventListener('click', (ev) => {
+      const inReaction = ev.target.closest('.reaction-actions');
+      const isToggle = ev.target.closest('.react-toggle');
+      if(!inReaction && !isToggle){
+        document.querySelectorAll('.reaction-actions').forEach(a => a.style.display = 'none');
+      }
+    });
     function setReply(id, label) {
       const input = document.getElementById('reply_to');
       if (!input) return;

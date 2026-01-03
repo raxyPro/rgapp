@@ -1,347 +1,369 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="hrow">
+<style>
+  .soft-card { border: 1px solid rgba(0,0,0,.06); box-shadow: 0 1px 0 rgba(0,0,0,.02); }
+  .pill { border-radius: 999px; }
+  .muted { color: #6c757d; }
+  .cv-thumb { width: 44px; height: 44px; border-radius: 12px; background: #f1f3f5; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #495057; }
+</style>
+
+<div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-3">
   <div>
-    <h1>Profiles</h1>
-    <p>Manage your vCard and CV files.</p>
+    <h1 class="h4 fw-bold mb-1">Profiles</h1>
+    <div class="muted small">Manage your vCard and CV files.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary pill" type="button" onclick="showNewCvRow()">+ Add CV</button>
+    <button class="btn btn-outline-primary pill" type="button" onclick="toggleSendForm(true)">New Share</button>
   </div>
 </div>
 
-<!-- vCard section (unchanged) -->
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>My vCard</h2>
-      <p>View mode by default. Collapse if you want more space.</p>
-    </div>
-    <div class="actions">
-      <button class="btn" type="button" onclick="toggleVcard()">Collapse</button>
-      <a class="btn primary" href="{{ url_for('profiles.edit_vcard') }}">Edit</a>
-    </div>
-  </div>
-  <div class="cardBody" id="vcardBody">
-    <div class="row">
-      <div class="col-md-6">
-        <div class="mb-3">
-          <div class="text-muted">Name</div>
-          <div class="fw-bold">{{ vcard.name or "Not set" }}</div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <!-- vCard -->
+    <section class="card soft-card mb-3">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between gap-2">
+          <div>
+            <div class="fw-semibold">My vCard</div>
+            <div class="small muted">Your public profile basics (name, tagline, location).</div>
+          </div>
+          <a class="btn btn-outline-primary btn-sm pill" href="{{ url_for('profiles.edit_vcard') }}">Edit</a>
         </div>
-        <div class="mb-3">
-          <div class="text-muted">Email</div>
-          <div class="fw-bold">{{ vcard.email or "Not set" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted">Phone</div>
-          <div class="fw-bold">{{ vcard.phone or "Not set" }}</div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="mb-3">
-          <div class="text-muted">LinkedIn</div>
-          <div class="fw-bold">{{ vcard.linkedin_url or "Not set" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted">Tagline</div>
-          <div class="fw-bold">{{ vcard.tagline or "Not set" }}</div>
-        </div>
-        <div class="mb-3">
-          <div class="text-muted">Location</div>
-          <div class="fw-bold">{{ vcard.location or "Not set" }}</div>
+        <hr class="my-3">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <dl class="kv mb-0">
+              <dt>Name</dt><dd>{{ vcard.name or "Not set" }}</dd>
+              <dt>Email</dt><dd>{{ vcard.email or "Not set" }}</dd>
+              <dt>Phone</dt><dd class="muted">{{ vcard.phone or "Not set" }}</dd>
+            </dl>
+          </div>
+          <div class="col-md-6">
+            <dl class="kv mb-0">
+              <dt>LinkedIn</dt><dd class="muted">{{ vcard.linkedin_url or "Not set" }}</dd>
+              <dt>Tagline</dt><dd>{{ vcard.tagline or "Not set" }}</dd>
+              <dt>Location</dt><dd>{{ vcard.location or "Not set" }}</dd>
+            </dl>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<div style="height:14px;"></div>
+    <!-- CV Library -->
+    <section class="card soft-card mb-3">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between gap-2">
+          <div>
+            <div class="fw-semibold">CV Library</div>
+            <div class="small muted">Upload or manage CVs and optional cover pages.</div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm pill" type="button" onclick="toggleCvFiles()">Collapse</button>
+            <button class="btn btn-primary btn-sm pill" type="button" onclick="showNewCvRow()">Add CV</button>
+          </div>
+        </div>
 
-<!-- CV files section -->
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>CV Files</h2>
-      <p>Collapse or add a CV entry. Upload CV/cover later if needed.</p>
-    </div>
-    <div class="actions">
-      <button class="btn" type="button" onclick="toggleCvFiles()">Collapse</button>
-      <button class="btn primary" type="button" onclick="showNewCvRow()">Add CV</button>
-    </div>
-  </div>
-  <div class="cardBody" id="cvFilesBody">
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th style="width:40px;">S.No</th>
-            <th>CV Name</th>
-            <th>Files</th>
-            <th>Events</th>
-          </tr>
-        </thead>
-        <tbody id="cvFilesBodyRows">
-          <tr id="newCvRow" style="display:none;">
-            <form method="post" action="{{ url_for('profiles.cvfile_new') }}" enctype="multipart/form-data">
-              <td>New</td>
-              <td colspan="2">
-                <div class="d-flex flex-column gap-2">
-                  <input class="form-control form-control-sm" name="cv_name" placeholder="e.g., Product Manager CV" required>
-                  <div class="text-muted small">You can upload CV/cover after creating.</div>
-                </div>
-              </td>
-              <td class="d-flex gap-2">
-                <button class="btn btn-sm btn-primary" type="submit">Save</button>
-                <button class="btn btn-sm btn-outline-secondary" type="button" onclick="hideNewCvRow()">Cancel</button>
-              </td>
-            </form>
-          </tr>
+        <hr class="my-3">
+
+        <div id="newCvRow" class="p-3 bg-white border rounded-4 mb-3" style="display:none;">
+          <form class="row g-2 align-items-center" method="post" action="{{ url_for('profiles.cvfile_new') }}">
+            <div class="col-md-8">
+              <label class="form-label small mb-1">CV Name</label>
+              <input class="form-control" name="cv_name" placeholder="e.g., Scrum Master CV" required>
+              <div class="form-text">You can upload CV/cover after creating.</div>
+            </div>
+            <div class="col-md-4 d-flex gap-2 justify-content-end align-items-end">
+              <button class="btn btn-primary pill" type="submit">Save</button>
+              <button class="btn btn-outline-secondary pill" type="button" onclick="hideNewCvRow()">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="cvFilesBody" class="vstack gap-3">
           {% for c in cv_files %}
-          <tr>
-            <td>{{ loop.index }}</td>
-            <td class="fw-semibold">{{ c.cv_name }}</td>
-            <td>
-              <div class="d-flex flex-column gap-2">
-                <div class="d-flex align-items-center gap-2">
-                  <strong>CV:</strong>
-                  {% if c.pdf_name %}
-                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('profiles.cvfile_view', cvfile_id=c.cvfile_id) }}" target="_blank">View CV</a>
-                    <form method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data" class="d-flex gap-2 mb-0">
-                      <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
-                      <input class="form-control form-control-sm" type="file" name="pdf" accept="application/pdf" required>
-                      <button class="btn btn-sm btn-outline-secondary" type="submit">Change CV</button>
-                    </form>
-                    <form method="post" action="{{ url_for('profiles.cvfile_delete', cvfile_id=c.cvfile_id) }}" onsubmit="return confirm('Delete this CV file?');">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete CV</button>
-                    </form>
-                  {% else %}
-                    <span class="text-muted small">No CV uploaded</span>
-                    <form class="d-flex gap-2" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data">
-                      <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
-                      <input class="form-control form-control-sm" type="file" name="pdf" accept="application/pdf" required>
-                      <button class="btn btn-sm btn-primary" type="submit">Upload CV</button>
-                    </form>
-                  {% endif %}
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <strong>Cover:</strong>
-                  {% if c.cover_pdf_name %}
-                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('profiles.cvfile_cover_view', cvfile_id=c.cvfile_id) }}" target="_blank">View Cover</a>
-                    <form method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data" class="d-flex gap-2 mb-0">
-                      <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
-                      <input class="form-control form-control-sm" type="file" name="cover_pdf" accept="application/pdf" required>
-                      <button class="btn btn-sm btn-outline-secondary" type="submit">Change Cover</button>
-                    </form>
-                  {% else %}
-                    <span class="text-muted small">No cover uploaded</span>
-                    <form class="d-flex gap-2" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data">
-                      <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
-                      <input class="form-control form-control-sm" type="file" name="cover_pdf" accept="application/pdf" required>
-                      <button class="btn btn-sm btn-primary" type="submit">Upload Cover</button>
-                    </form>
-                  {% endif %}
+          <div class="p-3 bg-white border rounded-4">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+              <div class="d-flex align-items-center gap-3">
+                <div class="cv-thumb">CV</div>
+                <div>
+                  <div class="fw-semibold">{{ c.cv_name }}</div>
+                  <div class="small muted">
+                    CV:
+                    <span class="{{ 'text-success fw-semibold' if c.pdf_name else 'text-muted' }}">{{ 'Uploaded' if c.pdf_name else 'Not uploaded' }}</span>
+                    &bull;
+                    Cover:
+                    <span class="{{ 'text-success fw-semibold' if c.cover_pdf_name else 'text-muted' }}">{{ 'Uploaded' if c.cover_pdf_name else 'Not uploaded' }}</span>
+                  </div>
                 </div>
               </div>
-            </td>
-            <td class="d-flex flex-column gap-2">
-              <form class="d-flex gap-2" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}">
-                <input type="hidden" name="job_pref" value="{{ c.job_pref or '' }}">
-                <input class="form-control form-control-sm" name="cv_name" value="{{ c.cv_name }}" required style="max-width:200px;">
-                <button class="btn btn-sm btn-outline-secondary" type="submit">Edit</button>
-              </form>
-              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Preferences</button>
-              <form method="post" action="{{ url_for('profiles.cvfile_delete', cvfile_id=c.cvfile_id) }}" onsubmit="return confirm('Delete this CV?');">
-                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-              </form>
-              <div id="pref_wrap_{{ c.cvfile_id }}" class="mt-2" style="display:none; text-align:left;">
-                <form method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" onsubmit="return buildPref('{{ c.cvfile_id }}')">
+
+              <div class="d-flex gap-2 flex-wrap justify-content-end">
+                {% if c.pdf_name %}
+                  <a class="btn btn-outline-primary btn-sm pill" href="{{ url_for('profiles.cvfile_view', cvfile_id=c.cvfile_id) }}" target="_blank">View</a>
+                  <label class="btn btn-outline-secondary btn-sm pill mb-0" for="cv_file_{{ c.cvfile_id }}">Replace CV</label>
+                {% else %}
+                  <label class="btn btn-primary btn-sm pill mb-0" for="cv_file_{{ c.cvfile_id }}">Upload CV</label>
+                {% endif %}
+                <form id="cv_upload_form_{{ c.cvfile_id }}" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data">
                   <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
+                  <input class="d-none" type="file" name="pdf" id="cv_file_{{ c.cvfile_id }}" accept="application/pdf" onchange="document.getElementById('cv_upload_form_{{ c.cvfile_id }}').submit();">
+                </form>
+
+                {% if c.cover_pdf_name %}
+                  <a class="btn btn-outline-primary btn-sm pill" href="{{ url_for('profiles.cvfile_cover_view', cvfile_id=c.cvfile_id) }}" target="_blank">View Cover</a>
+                  <label class="btn btn-outline-secondary btn-sm pill mb-0" for="cover_file_{{ c.cvfile_id }}">Replace Cover</label>
+                {% else %}
+                  <label class="btn btn-outline-secondary btn-sm pill mb-0" for="cover_file_{{ c.cvfile_id }}">Upload Cover</label>
+                {% endif %}
+                <form id="cover_upload_form_{{ c.cvfile_id }}" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data">
+                  <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
+                  <input class="d-none" type="file" name="cover_pdf" id="cover_file_{{ c.cvfile_id }}" accept="application/pdf" onchange="document.getElementById('cover_upload_form_{{ c.cvfile_id }}').submit();">
+                </form>
+
+                <button class="btn btn-outline-secondary btn-sm pill" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Preferences</button>
+                <form method="post" action="{{ url_for('profiles.cvfile_delete', cvfile_id=c.cvfile_id) }}" onsubmit="return confirm('Delete this CV?');">
+                  <button class="btn btn-outline-danger btn-sm pill" type="submit">Delete</button>
+                </form>
+              </div>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="small muted">Events / Tags</div>
+              <div class="d-flex gap-2 flex-wrap">
+                {% set tags = (c.job_pref or '').split(';') if c.job_pref else [] %}
+                {% if tags %}
+                  {% for t in tags %}
+                    {% if t.strip() %}
+                      <span class="badge text-bg-light border">{{ t.strip() }}</span>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted small">No preferences added yet.</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div id="pref_wrap_{{ c.cvfile_id }}" class="mt-3" style="display:none; text-align:left;">
+              <div class="p-3 bg-light border rounded-4">
+                <form class="row g-3" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" onsubmit="return buildPref('{{ c.cvfile_id }}')">
                   <input type="hidden" name="job_pref" id="job_pref_hidden_{{ c.cvfile_id }}" value="{{ c.job_pref or '' }}">
-                  <div class="mb-2">
-                    <label class="form-label mb-1">Preferred location</label>
-                    <input class="form-control form-control-sm" id="pref_loc_{{ c.cvfile_id }}" placeholder="e.g., Remote" value="{{ c.details.job_pref_loc if c.details and c.details.job_pref_loc else '' }}">
+                  <div class="col-md-6">
+                    <label class="form-label">CV Name</label>
+                    <input class="form-control" name="cv_name" value="{{ c.cv_name }}" required>
                   </div>
-                  <div class="mb-2">
-                    <label class="form-label mb-1">Work mode</label>
-                    <select class="form-select form-select-sm" id="pref_mode_{{ c.cvfile_id }}">
+                  <div class="col-md-6">
+                    <label class="form-label">Preferred location</label>
+                    <input class="form-control" id="pref_loc_{{ c.cvfile_id }}" placeholder="e.g., Remote" value="{{ c.details.job_pref_loc if c.details and c.details.job_pref_loc else '' }}">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Work mode</label>
+                    <select class="form-select" id="pref_mode_{{ c.cvfile_id }}">
                       <option value="">Select</option>
                       <option value="wfo">Work from office</option>
                       <option value="hybrid">Hybrid</option>
                       <option value="remote">Remote</option>
                     </select>
                   </div>
-                  <div class="mb-2">
-                    <label class="form-label mb-1">City</label>
-                    <input class="form-control form-control-sm" id="pref_city_{{ c.cvfile_id }}" placeholder="e.g., Mumbai">
+                  <div class="col-md-6">
+                    <label class="form-label">City</label>
+                    <input class="form-control" id="pref_city_{{ c.cvfile_id }}" placeholder="e.g., Mumbai">
                   </div>
-                  <div class="mb-2">
-                    <label class="form-label mb-1">Available from</label>
-                    <input class="form-control form-control-sm" type="date" id="pref_from_{{ c.cvfile_id }}">
+                  <div class="col-md-6">
+                    <label class="form-label">Available from</label>
+                    <input class="form-control" type="date" id="pref_from_{{ c.cvfile_id }}">
                   </div>
-                  <div class="mb-2">
-                    <label class="form-label mb-1">Hours per day</label>
-                    <input class="form-control form-control-sm" type="number" min="1" max="24" id="pref_hours_{{ c.cvfile_id }}">
+                  <div class="col-md-6">
+                    <label class="form-label">Hours per day</label>
+                    <input class="form-control" type="number" min="1" max="24" id="pref_hours_{{ c.cvfile_id }}">
                   </div>
-                  <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-primary" type="submit">Save preferences</button>
-                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Cancel</button>
+                  <div class="col-12 d-flex gap-2 justify-content-end">
+                    <button class="btn btn-primary pill" type="submit">Save</button>
+                    <button class="btn btn-outline-secondary pill" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Cancel</button>
                   </div>
                 </form>
               </div>
-            </td>
-          </tr>
+            </div>
+          </div>
+          {% else %}
+            <div class="text-muted small">No CVs yet. Use "Add CV" to create one.</div>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<div style="height:14px;"></div>
-
-<!-- CV Send (share to network) -->
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>CV Send (share to network)</h2>
-      <p>Create a link, share to a handle, or email.</p>
-    </div>
-    <div class="actions">
-      <button class="btn" type="button" onclick="toggleSend()">Collapse</button>
-      <button class="btn primary" type="button" onclick="toggleSendForm()">New share</button>
-    </div>
-  </div>
-  <div class="cardBody" id="sendBody">
-    <div id="sendForm" style="display:none;">
-      <form method="post" action="{{ url_for('profiles.share_cvfile_new') }}" class="row gy-3">
-        <div class="col-md-4">
-          <label class="form-label">Select CV</label>
-          <select class="form-select" name="cvfile_id" required>
-            <option value="">Choose</option>
-            {% for c in cv_files %}
-            <option value="{{ c.cvfile_id }}">{{ c.cv_name }}</option>
-            {% endfor %}
-          </select>
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Share option</label>
-          <div class="d-flex gap-3">
-            <label><input type="radio" name="share_method" value="link" checked> Create link</label>
-            <label><input type="radio" name="share_method" value="handle"> Handle</label>
-            <label><input type="radio" name="share_method" value="email"> Email</label>
+      </div>
+    </section>
+
+    <!-- CV Shared with me -->
+    <section class="card soft-card">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between gap-2">
+          <div>
+            <div class="fw-semibold">CV Shared with me</div>
+            <div class="small muted">CVs shared to your account.</div>
           </div>
         </div>
-        <div class="col-md-4" id="linkFields">
-          <label class="form-label">Expiry (minutes)</label>
-          <input class="form-control" type="number" name="expiry_minutes" min="0" max="1440" value="15">
-          <label class="form-label mt-2">Password (optional)</label>
-          <input class="form-control" type="text" name="password" placeholder="Set password (optional)">
-        </div>
-        <div class="col-md-4" id="handleFields" style="display:none;">
-          <label class="form-label">Handle</label>
-          <input class="form-control" type="text" name="handle" placeholder="e.g., user123">
-          <div class="form-text">Must match an existing handle.</div>
-        </div>
-        <div class="col-md-4" id="emailFields" style="display:none;">
-          <label class="form-label">Email</label>
-          <input class="form-control" type="email" name="email" placeholder="name@example.com">
-        </div>
-        <div class="col-12 d-flex gap-2">
-          <button class="btn btn-primary" type="submit">Save share</button>
-          <button class="btn btn-outline-secondary" type="button" onclick="toggleSendForm()">Cancel</button>
-        </div>
-      </form>
-    </div>
-    <div class="mt-3">
-      <h6 class="mb-2">Existing shares</h6>
-      {% if my_shares or my_public_links %}
-        <div class="table-responsive">
-          <table class="table table-sm">
-            <thead>
-              <tr><th>CV</th><th>Type</th><th>Target</th><th>Link</th></tr>
-            </thead>
-            <tbody>
-              {% for s in my_public_links %}
-              <tr>
-                <td>{{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}</td>
-                <td>Link</td>
-                <td>—</td>
-                <td><a href="{{ url_for('profileviewer.view', token=s.token, _external=True) }}" target="_blank">View</a></td>
-              </tr>
-              {% endfor %}
-              {% for s in my_shares %}
-              <tr>
-                <td>{{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}</td>
-                <td>{{ 'Handle' if s.target_user_id else 'Email' }}</td>
-                <td>
-                  {% if s.target_user_id %}
-                    {% set u = share_users.get(s.target_user_id) %}
-                    {% set p = share_profiles.get(s.target_user_id) %}
-                    {{ p.handle or u.email if u else ('User #' ~ s.target_user_id) }}
-                  {% else %}
-                    {{ s.target_email }}
-                  {% endif %}
-                </td>
-                <td><a href="{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}" target="_blank">View</a></td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="text-muted small">No shares yet.</div>
-      {% endif %}
-    </div>
-  </div>
-</section>
 
-<div style="height:14px;"></div>
+        <hr class="my-3">
 
-<!-- CV Shared with me -->
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>CV Shared with me</h2>
-      <p>CVs shared to your account.</p>
-    </div>
-  </div>
-  <div class="cardBody">
-    {% if cvfile_shares %}
-      <div class="table-responsive">
-        <table class="table table-sm">
-          <thead>
-            <tr><th>CV Name</th><th>From</th><th>View</th><th>Chat</th></tr>
-          </thead>
-          <tbody>
-            {% for s in cvfile_shares %}
-              {% set doc = shared_cvfiles.get(s.cvfile_id) if shared_cvfiles else None %}
-              {% set owner = owners.get(s.owner_user_id) if owners else None %}
-              <tr>
-                <td>{{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</td>
-                <td>{{ owner.handle or owner.email if owner else ("User #" ~ s.owner_user_id) }}</td>
-                <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank">View</a></td>
-                <td><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('chat.start_dm', user_id=s.owner_user_id) }}">Chat</a></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        {% if cvfile_shares %}
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>CV Name</th>
+                  <th>From</th>
+                  <th style="width: 180px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in cvfile_shares %}
+                  {% set doc = shared_cvfiles.get(s.cvfile_id) if shared_cvfiles else None %}
+                  {% set owner = owners.get(s.owner_user_id) if owners else None %}
+                  <tr>
+                    <td>{{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</td>
+                    <td>{{ owner.handle or owner.email if owner else ("User #" ~ s.owner_user_id) }}</td>
+                    <td class="d-flex gap-2">
+                      <a class="btn btn-outline-primary btn-sm pill" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank">View</a>
+                      <a class="btn btn-primary btn-sm pill" href="{{ url_for('chat.start_dm', user_id=s.owner_user_id) }}">Chat</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted small">No CVs shared with you yet.</div>
+        {% endif %}
       </div>
-    {% else %}
-      <div class="text-muted small">No CVs shared with you yet.</div>
-    {% endif %}
+    </section>
   </div>
-</section>
+
+  <!-- Right column -->
+  <div class="col-lg-4">
+    <section class="card soft-card mb-3">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-start justify-content-between gap-2">
+          <div>
+            <div class="fw-semibold">CV Send</div>
+            <div class="small muted">Create links or share to handle/email.</div>
+          </div>
+          <button class="btn btn-outline-primary btn-sm pill" type="button" onclick="toggleSendForm(true)">New Share</button>
+        </div>
+
+        <hr class="my-3">
+
+        <div id="sendForm" style="display:none;">
+          <form class="row g-3" method="post" action="{{ url_for('profiles.share_cvfile_new') }}">
+            <div class="col-12">
+              <label class="form-label">Select CV</label>
+              <select class="form-select" name="cvfile_id" required>
+                <option value="">Choose</option>
+                {% for c in cv_files %}
+                <option value="{{ c.cvfile_id }}">{{ c.cv_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Share option</label>
+              <div class="d-flex gap-3">
+                <label class="d-flex align-items-center gap-1"><input type="radio" name="share_method" value="link" checked> Create link</label>
+                <label class="d-flex align-items-center gap-1"><input type="radio" name="share_method" value="handle"> Handle</label>
+                <label class="d-flex align-items-center gap-1"><input type="radio" name="share_method" value="email"> Email</label>
+              </div>
+            </div>
+            <div class="col-12" id="linkFields">
+              <label class="form-label">Expiry (minutes)</label>
+              <input class="form-control" type="number" name="expiry_minutes" min="0" max="1440" value="15">
+              <label class="form-label mt-2">Password (optional)</label>
+              <input class="form-control" type="text" name="password" placeholder="Set password (optional)">
+            </div>
+            <div class="col-12" id="handleFields" style="display:none;">
+              <label class="form-label">Handle</label>
+              <input class="form-control" type="text" name="handle" placeholder="e.g., user123">
+              <div class="form-text">Must match an existing handle.</div>
+            </div>
+            <div class="col-12" id="emailFields" style="display:none;">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" name="email" placeholder="name@example.com">
+            </div>
+            <div class="col-12 d-flex gap-2 justify-content-end">
+              <button class="btn btn-primary pill" type="submit">Save share</button>
+              <button class="btn btn-outline-secondary pill" type="button" onclick="toggleSendForm()">Cancel</button>
+            </div>
+          </form>
+          <hr class="my-3">
+        </div>
+
+        {% if my_shares or my_public_links %}
+          <div class="vstack gap-2">
+            {% for s in my_public_links %}
+            <div class="p-3 bg-white border rounded-4">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <div class="fw-semibold small">{{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}</div>
+                  <div class="small muted">Type: Link - Target: Link</div>
+                  <div class="small text-break">{{ url_for('profileviewer.view', token=s.token, _external=True) }}</div>
+                </div>
+                <a class="btn btn-outline-primary btn-sm pill" href="{{ url_for('profileviewer.view', token=s.token, _external=True) }}" target="_blank">View</a>
+              </div>
+            </div>
+            {% endfor %}
+            {% for s in my_shares %}
+            <div class="p-3 bg-white border rounded-4">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <div class="fw-semibold small">{{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}</div>
+                  <div class="small muted">
+                    Type: {{ 'Handle' if s.target_user_id else 'Email' }} - Target:
+                    {% if s.target_user_id %}
+                      {% set u = share_users.get(s.target_user_id) %}
+                      {% set p = share_profiles.get(s.target_user_id) %}
+                      {{ p.handle or u.email if u else ('User #' ~ s.target_user_id) }}
+                    {% else %}
+                      {{ s.target_email }}
+                    {% endif %}
+                  </div>
+                </div>
+                <a class="btn btn-outline-primary btn-sm pill" href="{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}" target="_blank">View</a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted small">No shares yet.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card soft-card">
+      <div class="card-body p-4">
+        <div class="fw-semibold mb-1">Tips</div>
+        <div class="small muted mb-3">Use preferences to select which CV is default for sharing.</div>
+        <ul class="small muted mb-0">
+          <li>Keep CV names role-based (e.g., Scrum Master, PMO Lead).</li>
+          <li>Upload a cover page only if required by clients.</li>
+          <li>Use share links instead of sending files over chat.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
 
 <script>
-  function toggleVcard(){
-    const el=document.getElementById('vcardBody');
-    if(el) el.style.display=el.style.display==='none'?'block':'none';
-  }
   function toggleCvFiles(){
     const el=document.getElementById('cvFilesBody');
-    if(el) el.style.display=el.style.display==='none'?'block':'none';
+    if(!el) return;
+    const isHidden=getComputedStyle(el).display==='none';
+    el.style.display=isHidden?'block':'none';
+    if(!isHidden){
+      const addRow=document.getElementById('newCvRow');
+      if(addRow) addRow.style.display='none';
+    }
   }
   function showNewCvRow(){
     const row=document.getElementById('newCvRow');
-    if(row) row.style.display='table-row';
+    if(row) row.style.display='block';
   }
   function hideNewCvRow(){
     const row=document.getElementById('newCvRow');
@@ -359,28 +381,26 @@
     const city=document.getElementById('pref_city_'+id)?.value.trim();
     const from=document.getElementById('pref_from_'+id)?.value;
     const hrs=document.getElementById('pref_hours_'+id)?.value;
-    if(loc) parts.push(`Location: ${loc}`);
+    if(loc) parts.push('Location: '+loc);
     if(mode){
       const label=mode==='wfo'?'Work from office':(mode==='hybrid'?'Hybrid':'Remote');
-      parts.push(`Mode: ${label}`);
+      parts.push('Mode: '+label);
     }
-    if(city) parts.push(`City: ${city}`);
-    if(from) parts.push(`Available from: ${from}`);
-    if(hrs) parts.push(`Hours/day: ${hrs}`);
+    if(city) parts.push('City: '+city);
+    if(from) parts.push('Available from: '+from);
+    if(hrs) parts.push('Hours/day: '+hrs);
     const hidden=document.getElementById('job_pref_hidden_'+id);
     if(hidden) hidden.value=parts.join('; ');
     return true;
   }
-  function toggleSend(){
-    const el=document.getElementById('sendBody');
-    if(el) el.style.display=el.style.display==='none'?'block':'none';
-  }
-  function toggleSendForm(){
+  function toggleSendForm(forceShow){
     const el=document.getElementById('sendForm');
-    if(el) el.style.display=el.style.display==='none'?'block':'none';
+    if(!el) return;
+    if(forceShow){ el.style.display='block'; return; }
+    el.style.display = el.style.display==='none' ? 'block' : 'none';
   }
   (function setupShareSwitch(){
-    const radios=document.querySelectorAll('input[name=\"share_method\"]');
+    const radios=document.querySelectorAll('input[name="share_method"]');
     const link=document.getElementById('linkFields');
     const handle=document.getElementById('handleFields');
     const email=document.getElementById('emailFields');

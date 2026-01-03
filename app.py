@@ -48,6 +48,8 @@ def create_app():
     # -------------------------------------------------
     http_logger = None
     if app.config.get("HTTP_LOG_ENABLED"):
+        # Avoid noisy stderr when rotation fails (e.g., on Windows file locks).
+        logging.raiseExceptions = False
         http_logger = logging.getLogger("http_traffic")
         http_logger.setLevel(logging.INFO)
         http_logger.propagate = False

@@ -40,33 +40,26 @@
     const topCount = Object.values(counts).reduce((acc, n) => Math.max(acc, Number(n) || 0), 0);
     const chips = Object.entries(counts).map(([emoji, cnt]) => {
       const highlight = (Number(cnt) || 0) === topCount && topCount > 0 ? 'unread' : '';
-      return `<span class="pill ${highlight}" data-emoji="${emoji}">${escapeHtml(emoji)} ${cnt}</span>`;
+      return `<span class="pill ${highlight}" data-emoji="${emoji}">${escapeHtml(emoji)}</span>`;
     });
 
     const buttons = [];
     if (cfg.canReact) {
       const choices = Array.isArray(cfg.reactionChoices) ? cfg.reactionChoices : [];
       choices.forEach((e) => {
-        const active = m?.user_reaction === e ? "btn-primary" : "btn-outline-primary";
+        const isMine = m?.user_reaction === e;
         const url = `/chat/t/${cfg.threadId}/m/${m.message_id}/react`;
         buttons.push(
           `<form method="post" action="${url}">
-             <input type="hidden" name="emoji" value="${escapeHtml(e)}">
-             <button class="btn btn-sm ${active}" type="submit">${escapeHtml(e)}</button>
+             <input type="hidden" name="emoji" value="${isMine ? '' : escapeHtml(e)}">
+             <button class="btn btn-sm ${isMine ? "btn-primary" : "btn-outline-primary"}" type="submit">${escapeHtml(e)}</button>
            </form>`
         );
       });
-      const clearUrl = `/chat/t/${cfg.threadId}/m/${m.message_id}/react`;
-      buttons.push(
-        `<form method="post" action="${clearUrl}">
-           <input type="hidden" name="emoji" value="">
-           <button class="btn btn-sm btn-outline-secondary" type="submit">Clear</button>
-         </form>`
-      );
     }
 
     const chipRow = chips.length ? `<div class="reaction-row" style="font-size:12px;">${chips.join("")}</div>` : "";
-    const actionRow = buttons.length ? `<div class="reaction-actions" style="font-size:12px;">${buttons.join("")}</div>` : "";
+    const actionRow = buttons.length ? `<div class="reaction-actions" style="font-size:12px; display:none;">${buttons.join("")}</div>` : "";
     if (!chipRow && !actionRow) return "";
     return `<div class="mt-2">${chipRow}${actionRow}</div>`;
   }
@@ -99,15 +92,33 @@
     const div = document.createElement("div");
     div.className = "chat-msg";
     div.dataset.mid = m.message_id;
+    div.style.position = "relative";
     const replyLabel = m.reply_to_message_id ? `(reply to #${escapeHtml(String(m.reply_to_message_id))})` : "";
     const reactHtml = renderReactions(m);
+    const canReact = !!cfg.canReact;
+    const canReply = true;
+    const canEdit = Number(m.sender_id) === Number(cfg.currentUserId);
+    const actionBar = `
+      <div class="msg-actions" style="position:absolute; right:8px; top:14px; gap:4px; align-items:center;">
+        ${canReply ? `<button class="btn btn-sm btn-outline-primary" type="button" style="padding:2px 6px; font-size:11px;" onclick="setReply('${m.message_id}', '${escapeHtml(senderLabel(m.sender_id))}')">Reply</button>` : ""}
+        ${canReact ? `<button class="btn btn-sm btn-outline-secondary react-toggle" type="button" style="padding:2px 6px; font-size:11px;" onclick="toggleReactions('${m.message_id}')">😊</button>` : ""}
+        ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" style="padding:2px 6px; font-size:11px;" onclick="toggleEdit('${m.message_id}')">Edit</button>` : ""}
+      </div>`;
     div.innerHTML = `
       <div class="meta">
         <span><b>${escapeHtml(senderLabel(m.sender_id))}</b></span>
         <span style="margin-left:6px;">${escapeHtml(fmtTime(m.created_at))}${escapeHtml(latencyLabel)}</span>
         ${replyLabel ? `<span class="text-muted" style="margin-left:8px;">${replyLabel}</span>` : ""}
       </div>
-      <div class="body">${escapeHtml(m.body || "")}</div>
+      ${actionBar}
+      <div class="body" id="body_display_${m.message_id}">${escapeHtml(m.body || "")}</div>
+      <form id="edit_form_${m.message_id}" class="mt-2" method="post" action="/chat/t/${cfg.threadId}/m/${m.message_id}/edit" style="display:none;">
+        <textarea class="form-control" name="body" rows="2">${escapeHtml(m.body || "")}</textarea>
+        <div class="mt-2">
+          <button class="btn btn-sm btn-primary" type="submit">Save</button>
+          <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('${m.message_id}')">Cancel</button>
+        </div>
+      </form>
       ${reactHtml}
     `;
     msgsEl.appendChild(div);
