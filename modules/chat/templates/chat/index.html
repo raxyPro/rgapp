@@ -1,14 +1,27 @@
-{# modules/chat/templates/chat/index.html #}
-{% extends "chat/layout.html" %}
+{% extends "chat/chat_reui.html" %}
 {% block chat_main %}
-  <div class="chat-main-top">
-    <strong>Select a chat</strong>
+  <div class="rg-main-head">
+    <div class="left">
+      <div class="title">Select a chat</div>
+      <div class="sub">Choose a chat from the left or start a new one.</div>
+    </div>
   </div>
-  <div class="chat-msgs" style="display:flex;align-items:center;justify-content:center;opacity:.7">
-    Choose a chat from the left or start a new one.
+
+  <div class="rg-divider"></div>
+
+  <div class="rg-main-body">
+    <div class="rg-empty">
+      <div>
+        <div style="font-weight:800;font-size:18px;margin-bottom:6px;">No chat selected</div>
+        <div class="rg-muted">Pick a conversation on the left, or click <b>+ New</b>.</div>
+      </div>
+    </div>
   </div>
-  <div class="chat-compose" style="opacity:.5">
-    <textarea class="form-control" rows="2" disabled placeholder="Select a chat to start messaging..."></textarea>
+
+  <div class="rg-divider"></div>
+
+  <div class="rg-compose" style="opacity:.55">
+    <textarea class="form-control" rows="2" disabled placeholder="Select a chat to start messaging…"></textarea>
     <button class="btn btn-primary" disabled>Send</button>
   </div>
 {% endblock %}

@@ -1,149 +1,252 @@
 {# modules/chat/templates/chat/thread.html #}
-{% extends "chat/layout.html" %}
+{% extends "chat/chat_reui.html" %}
 
 {% block chat_main %}
   {% set can_react = (not is_broadcast) or is_owner or is_member %}
-  <div class="chat-main-top">
-    <strong>{{ active_thread_display_name }}</strong>
-    <div style="font-size:12px;opacity:.7">
-      {% if active_thread.thread_type == "group" %}
-        Group chat
-      {% elif active_thread.thread_type == "broadcast" %}
-        Broadcast chat (owner posts; subscribers react)
-      {% else %}
-        Direct chat
-      {% endif %}
-    </div>
-    <form method="post" action="{{ url_for('chat.delete_thread', thread_id=active_thread.thread_id) }}" style="margin-top:8px;" onsubmit="return confirm('Delete this chat and its messages?');">
-      <button class="btn btn-sm btn-outline-danger" type="submit">Delete chat</button>
-    </form>
-    {% if is_broadcast and not is_owner %}
-      <form method="post" action="{{ url_for(is_member and 'chat.unsubscribe_broadcast' or 'chat.subscribe_broadcast', thread_id=active_thread.thread_id) }}" style="margin-top:8px;">
-        {% if is_member %}
-          <button class="btn btn-sm btn-outline-danger" type="submit">Unsubscribe</button>
+
+  <!-- Header -->
+  <div class="rg-main-head">
+    <div class="left">
+      <div class="title">{{ active_thread_display_name }}</div>
+      <div class="sub">
+        {% if active_thread.thread_type == "group" %}
+          Group chat
+        {% elif active_thread.thread_type == "broadcast" %}
+          Broadcast chat (owner posts; subscribers react)
         {% else %}
-          <button class="btn btn-sm btn-outline-primary" type="submit">Subscribe</button>
-        {% endif %}
-      </form>
-    {% endif %}
-    {% if manage_members %}
-      <div style="margin-top:10px;">
-        <div style="font-weight:600; font-size:13px;">Members</div>
-        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
-          {% for m in members_by_thread.get(active_thread.thread_id, []) %}
-            {% set u = users_by_id.get(m.user_id) %}
-            <div style="background:#f5f5f5; border-radius:20px; padding:4px 10px; display:flex; align-items:center; gap:6px;">
-              <span>{{ u.display_label if u and u.display_label else ("User " ~ m.user_id) }}{% if m.user_id == active_thread.created_by %} (owner){% endif %}</span>
-              {% if m.user_id != active_thread.created_by %}
-                <form method="post" action="{{ url_for('chat.remove_member', thread_id=active_thread.thread_id, user_id=m.user_id) }}" onsubmit="return confirm('Remove this member?');">
-                  <button class="btn btn-sm btn-outline-danger" style="padding:2px 6px;font-size:11px;" type="submit">&times;</button>
-                </form>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
-        {% if available_users %}
-          <form class="mt-2" method="post" action="{{ url_for('chat.add_members', thread_id=active_thread.thread_id) }}">
-            <button class="btn btn-sm btn-outline-primary" type="button" onclick="toggleAddMembers()">Add members</button>
-            <div id="addMembersList" style="display:none; margin-top:8px; border:1px solid #ddd; border-radius:8px; padding:8px; max-height:220px; overflow:auto;">
-              {% for u in available_users %}
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="user_ids" value="{{ u.user_id }}" id="addUser{{ u.user_id }}">
-                  <label class="form-check-label" for="addUser{{ u.user_id }}">{{ u.display_label or ("User " ~ u.user_id) }}</label>
-                </div>
-              {% endfor %}
-              <button class="btn btn-sm btn-primary mt-2" type="submit">Add selected</button>
-            </div>
-          </form>
-        {% else %}
-          <div class="text-muted" style="font-size:12px;margin-top:4px;">No more users to add.</div>
+          Direct chat
         {% endif %}
       </div>
-    {% endif %}
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <!-- Broadcast subscribe/unsubscribe -->
+      {% if is_broadcast and not is_owner %}
+        <form method="post" action="{{ url_for(is_member and 'chat.unsubscribe_broadcast' or 'chat.subscribe_broadcast', thread_id=active_thread.thread_id) }}">
+          {% if is_member %}
+            <button class="btn btn-sm btn-outline-danger pill" type="submit">Unsubscribe</button>
+          {% else %}
+            <button class="btn btn-sm btn-outline-primary pill" type="submit">Subscribe</button>
+          {% endif %}
+        </form>
+      {% endif %}
+
+      <!-- Delete -->
+      <form method="post"
+            action="{{ url_for('chat.delete_thread', thread_id=active_thread.thread_id) }}"
+            onsubmit="return confirm('Delete this chat and its messages?');">
+        <button class="btn btn-sm btn-outline-danger pill" type="submit">Delete</button>
+      </form>
+    </div>
   </div>
 
-  <div class="chat-msgs" id="chat-msgs">
+  <!-- Members (if manage_members) -->
+  {% if manage_members %}
+    <div class="rg-divider"></div>
+    <div style="padding:12px 16px;">
+      <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Members</div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        {% for m in members_by_thread.get(active_thread.thread_id, []) %}
+          {% set u = users_by_id.get(m.user_id) %}
+          <div style="background:#f3f4f6; border:1px solid #eceff5; border-radius:999px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px;">
+              {{ u.display_label if u and u.display_label else ("User " ~ m.user_id) }}
+              {% if m.user_id == active_thread.created_by %}<span class="text-muted">(owner)</span>{% endif %}
+            </span>
+
+            {% if m.user_id != active_thread.created_by %}
+              <form method="post" action="{{ url_for('chat.remove_member', thread_id=active_thread.thread_id, user_id=m.user_id) }}"
+                    onsubmit="return confirm('Remove this member?');" style="margin:0;">
+                <button class="btn btn-sm btn-outline-danger pill" style="padding:2px 10px; font-size:11px;" type="submit">Remove</button>
+              </form>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if available_users %}
+        <form class="mt-2" method="post" action="{{ url_for('chat.add_members', thread_id=active_thread.thread_id) }}">
+          <button class="btn btn-sm btn-outline-primary pill" type="button" onclick="toggleAddMembers()">+ Add members</button>
+
+          <div id="addMembersList"
+               style="display:none; margin-top:10px; border:1px solid #e6e9f0; border-radius:14px; padding:12px; max-height:260px; overflow:auto; background:#fff;">
+            {% for u in available_users %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="user_ids" value="{{ u.user_id }}" id="addUser{{ u.user_id }}">
+                <label class="form-check-label" for="addUser{{ u.user_id }}">
+                  {{ u.display_label or ("User " ~ u.user_id) }}
+                </label>
+              </div>
+            {% endfor %}
+            <button class="btn btn-sm btn-primary pill mt-3" type="submit">Add selected</button>
+          </div>
+        </form>
+      {% else %}
+        <div class="text-muted" style="font-size:12px;margin-top:8px;">No more users to add.</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="rg-divider"></div>
+
+  <!-- Messages -->
+  <div class="rg-main-body" id="chat-msgs">
+
+    {% if not messages %}
+      <div class="rg-empty">
+        <div>
+          <div style="font-weight:800;font-size:16px;margin-bottom:6px;">No messages yet</div>
+          <div class="rg-muted">Say hello to start the conversation.</div>
+        </div>
+      </div>
+    {% endif %}
+
     {% for m in messages %}
       {% set summary = reaction_data.get(m.message_id, {}) %}
       {% set counts = summary.get('counts', {}) %}
       {% set top_count = counts.values()|list|max if counts else 0 %}
-      <div class="chat-msg" data-mid="{{ m.message_id }}" style="position:relative;">
+      {% set u = users_by_id.get(m.sender_id) %}
+      {% set sender_label = u.display_label if u and u.display_label else ("User " ~ m.sender_id) %}
+
+      <div class="chat-msg {% if m.sender_id == me_id %}me{% endif %}" data-mid="{{ m.message_id }}">
+
+        <!-- meta row -->
         <div class="meta">
-          {% set u = users_by_id.get(m.sender_id) %}
-          <span><b>{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}</b></span>
-          <span style="margin-left:6px;">{{ m.created_at }}</span>
+          <span><b>{{ sender_label }}</b></span>
+          <span>·</span>
+          <span>{{ m.created_at }}</span>
+
           {% if m.reply_to_message_id %}
             {% set replied_user = reply_lookup.get(m.reply_to_message_id) %}
-            <span class="text-muted" style="margin-left:8px;">(reply to {{ replied_user or ("#" ~ m.reply_to_message_id) }})</span>
+            <span class="text-muted" style="margin-left:8px;">
+              replying to {{ replied_user or ("#" ~ m.reply_to_message_id) }}
+            </span>
           {% endif %}
-        </div>
-        <div class="msg-actions" style="position:absolute; right:8px; top:14px; gap:4px; align-items:center;">
-          {% if active_thread.thread_type != "broadcast" or is_owner %}
-            <button class="btn btn-sm btn-outline-primary" type="button" title="Reply" onclick="setReply('{{ m.message_id }}', '{{ u.display_label if u and u.display_label else ("User " ~ m.sender_id) }}')" style="padding:2px 6px; font-size:11px;">Reply</button>
-          {% endif %}
-          {% if can_react %}
-            <button class="btn btn-sm btn-outline-secondary react-toggle" type="button" title="React" onclick="toggleReactions('{{ m.message_id }}')" style="padding:2px 6px; font-size:11px;">😊</button>
-          {% endif %}
-          {% if m.sender_id == me_id %}
-            <button class="btn btn-sm btn-outline-secondary" type="button" title="Edit" onclick="toggleEdit('{{ m.message_id }}')" style="padding:2px 6px; font-size:11px;">Edit</button>
-          {% endif %}
-        </div>
-        <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | chat_rich }}</div>
-        <form id="edit_form_{{ m.message_id }}" class="mt-2" method="post" action="{{ url_for('chat.edit_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}" style="display:none;">
-          <textarea class="form-control" name="body" rows="2">{{ m.body }}</textarea>
-          <div class="mt-2">
-            <button class="btn btn-sm btn-primary" type="submit">Save</button>
-            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="toggleEdit('{{ m.message_id }}')">Cancel</button>
-          </div>
-        </form>
 
-        {% if counts %}
-          <div class="reaction-row" style="font-size:12px;">
-            {% for emoji, cnt in counts.items() %}
-              <span class="pill {% if cnt == top_count and top_count > 0 %}unread{% endif %}" data-emoji="{{ emoji }}">{{ emoji }}</span>
-            {% endfor %}
+          <!-- actions (right aligned) -->
+          <div class="actions">
+            {% if active_thread.thread_type != "broadcast" or is_owner %}
+              <button class="btn btn-outline-primary" type="button"
+                      onclick="setReply('{{ m.message_id }}', '{{ sender_label }}')">Reply</button>
+            {% endif %}
+
+            {% if can_react %}
+              <button class="btn btn-outline-secondary react-toggle" type="button"
+                      onclick="toggleReactions('{{ m.message_id }}')">😊</button>
+            {% endif %}
+
+            {% if m.sender_id == me_id %}
+              <button class="btn btn-outline-secondary" type="button"
+                      onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
+            {% endif %}
           </div>
-        {% endif %}
-        {% if can_react %}
-          <div class="reaction-actions" style="font-size:12px; display:none;">
-            {% for e in reaction_choices %}
-              {% set is_mine = summary.get('user_reaction') == e %}
-              <form method="post" action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}">
-                <input type="hidden" name="emoji" value="{{ '' if is_mine else e }}">
-                <button class="btn btn-sm {% if is_mine %}btn-primary{% else %}btn-outline-primary{% endif %}" type="submit">{{ e }}</button>
-              </form>
-            {% endfor %}
-          </div>
-        {% endif %}
+        </div>
+
+        <!-- bubble -->
+        <div class="bubble">
+          <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | chat_rich }}</div>
+
+          <!-- edit form (kept) -->
+          <form id="edit_form_{{ m.message_id }}" class="mt-2"
+                method="post"
+                action="{{ url_for('chat.edit_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}"
+                style="display:none;">
+            <textarea class="form-control" name="body" rows="2">{{ m.body }}</textarea>
+            <div class="mt-2 d-flex gap-2">
+              <button class="btn btn-sm btn-primary pill" type="submit">Save</button>
+              <button class="btn btn-sm btn-outline-secondary pill" type="button" onclick="toggleEdit('{{ m.message_id }}')">Cancel</button>
+            </div>
+          </form>
+
+          <!-- reaction summary -->
+          {% if counts %}
+            <div class="reaction-row mt-2" style="display:flex; gap:6px; flex-wrap:wrap;">
+              {% for emoji, cnt in counts.items() %}
+                <span class="rg-pill {% if cnt == top_count and top_count > 0 %}unread{% endif %}"
+                      style="cursor:default;"
+                      title="{{ cnt }} reactions">
+                  {{ emoji }} <span class="text-muted">{{ cnt }}</span>
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <!-- reaction actions -->
+          {% if can_react %}
+            <div class="reaction-actions mt-2" style="display:none; gap:8px; flex-wrap:wrap;">
+              {% for e in reaction_choices %}
+                {% set is_mine = summary.get('user_reaction') == e %}
+                <form method="post"
+                      action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}"
+                      style="margin:0;">
+                  <input type="hidden" name="emoji" value="{{ '' if is_mine else e }}">
+                  <button class="btn btn-sm {% if is_mine %}btn-primary{% else %}btn-outline-primary{% endif %} pill" type="submit">
+                    {{ e }}
+                  </button>
+                </form>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
       </div>
     {% endfor %}
   </div>
 
-  <form class="chat-compose" method="post" action="{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}">
+  <div class="rg-divider"></div>
+
+  <!-- Composer -->
+  <form class="rg-compose"
+        method="post"
+        action="{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}">
+
     <input type="hidden" name="reply_to" id="reply_to">
-    <div id="reply-banner" style="display:none; flex:1; border:1px dashed #ccc; border-radius:8px; padding:8px; margin-right:8px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <div style="font-size:12px;">Replying to <span id="reply-target"></span></div>
-        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="clearReply()">Cancel</button>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <!-- reply banner -->
+      <div id="reply-banner"
+           style="display:none; border:1px dashed #cfd6e4; border-radius:14px; padding:10px 12px; background:#fbfcff;">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <div style="font-size:12px;">
+            Replying to <b id="reply-target"></b>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary pill" type="button" onclick="clearReply()">Cancel</button>
+        </div>
       </div>
+
+      <textarea class="form-control"
+                rows="2"
+                name="body"
+                id="chat-body"
+                placeholder="{% if active_thread.thread_type == 'broadcast' and not is_owner %}Replies disabled for subscribers{% else %}Type a message...{% endif %}"
+                {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}></textarea>
     </div>
-    <textarea class="form-control" rows="2" name="body" id="chat-body" placeholder="{% if active_thread.thread_type == 'broadcast' and not is_owner %}Replies disabled for subscribers{% else %}Type a message...{% endif %}" {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}></textarea>
-    <button class="btn btn-primary" id="chat-send" type="submit" {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}>Send</button>
+
+    <button class="btn btn-primary"
+            id="chat-send"
+            type="submit"
+            {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}>
+      Send
+    </button>
   </form>
 
-  <div style="padding:8px 12px;">
-    <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Top emojis</div>
-    <div id="emoji-bar" style="display:flex; gap:8px; flex-wrap:wrap;">
+  <!-- Emoji Bar -->
+  <div class="rg-emoji">
+    <div class="label">Top emojis</div>
+    <div id="emoji-bar">
       {% for e in reaction_choices %}
-        <button type="button" class="btn btn-sm" style="padding:4px 8px;" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
       {% endfor %}
     </div>
   </div>
 
+  <!-- JS Config (unchanged structure) -->
   <script>
     window.RG_CHAT = {
       threadId: {{ active_thread.thread_id }},
+      threadType: "{{ active_thread.thread_type }}",
       currentUserId: {{ me_id }},
+      isOwner: {{ 'true' if is_owner else 'false' }},
       sendUrl: "{{ url_for('chat.api_send', thread_id=active_thread.thread_id) }}",
       pollUrl: "{{ url_for('chat.api_poll', thread_id=active_thread.thread_id) }}",
       firebase: {
@@ -168,21 +271,25 @@
       reactionChoices: {{ reaction_choices | tojson }},
     };
   </script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-database-compat.js"></script>
   <script src="{{ url_for('chat.static', filename='chat.js') }}"></script>
+
+  <!-- Local helpers (kept + improved) -->
   <script>
     function insertEmoji(e) {
       const ta = document.getElementById('chat-body');
       if (!ta) return;
       const start = ta.selectionStart || ta.value.length;
       const end = ta.selectionEnd || ta.value.length;
-      const text = ta.value;
+      const text = ta.value || "";
       ta.value = text.slice(0, start) + e + text.slice(end);
       ta.focus();
       ta.selectionStart = ta.selectionEnd = start + e.length;
     }
+
     function toggleEdit(id){
       const form = document.getElementById('edit_form_'+id);
       const body = document.getElementById('body_display_'+id);
@@ -191,22 +298,26 @@
       form.style.display = visible ? 'none' : 'block';
       if(body) body.style.display = visible ? 'block' : 'none';
     }
+
     function toggleAddMembers() {
       const box = document.getElementById('addMembersList');
       if (!box) return;
-      const visible = box.style.display === 'block';
-      box.style.display = visible ? 'none' : 'block';
+      box.style.display = (box.style.display === 'block') ? 'none' : 'block';
     }
+
     function toggleReactions(id){
       const msg = document.querySelector(`.chat-msg[data-mid='${id}']`);
       if(!msg) return;
       const area = msg.querySelector('.reaction-actions');
       if(!area) return;
-      // hide all others first
+
+      // hide all others
       document.querySelectorAll('.reaction-actions').forEach(a => a.style.display = 'none');
-      const visible = area.style.display === 'flex';
+
+      const visible = (area.style.display === 'flex');
       area.style.display = visible ? 'none' : 'flex';
     }
+
     document.addEventListener('click', (ev) => {
       const inReaction = ev.target.closest('.reaction-actions');
       const isToggle = ev.target.closest('.react-toggle');
@@ -214,17 +325,22 @@
         document.querySelectorAll('.reaction-actions').forEach(a => a.style.display = 'none');
       }
     });
+
     function setReply(id, label) {
       const input = document.getElementById('reply_to');
       if (!input) return;
       input.value = id;
+
       const banner = document.getElementById('reply-banner');
       const target = document.getElementById('reply-target');
-      if (banner) banner.style.display = 'flex';
+
+      if (banner) banner.style.display = 'block';
       if (target) target.textContent = label || ('#' + id);
+
       const body = document.getElementById('chat-body');
       if (body) body.focus();
     }
+
     function clearReply() {
       const input = document.getElementById('reply_to');
       if (input) input.value = '';

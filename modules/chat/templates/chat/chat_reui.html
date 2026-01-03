@@ -1,0 +1,126 @@
+{# modules/chat/templates/chat/chat_reui.html #}
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  /* Layout */
+  .rg-chat-wrap{display:grid;grid-template-columns:360px 1fr;gap:16px;min-height:calc(100vh - 140px);}
+  .rg-card{border:1px solid #e6e9f0;border-radius:16px;background:#fff;overflow:hidden;}
+  .rg-muted{color:var(--muted,#6b7280);}
+  .rg-divider{border-top:1px solid #eef1f6;}
+
+  /* Sidebar */
+  .rg-side-head{padding:14px 14px 10px;display:flex;align-items:center;justify-content:space-between;}
+  .rg-side-head h5{margin:0;font-size:16px;}
+  .rg-side-tools{padding:0 14px 12px;display:flex;gap:8px;}
+  .rg-side-tools .form-control{border-radius:12px;}
+  .rg-side-list{padding:10px;max-height:calc(100vh - 260px);overflow:auto;}
+  .rg-chat-item{display:block;padding:12px;border-radius:14px;text-decoration:none;color:inherit;border:1px solid transparent;}
+  .rg-chat-item:hover{background:#f7f9fc;}
+  .rg-chat-item.active{background:#eef3ff;border-color:#d9e5ff;}
+  .rg-chat-item .row1{display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .rg-chat-item .title{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rg-chat-item .meta{font-size:12px;opacity:.75;white-space:nowrap;}
+  .rg-chat-item .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .rg-pill{display:inline-block;padding:3px 10px;border-radius:999px;background:#f2f4f8;font-weight:700;font-size:12px;color:#394150;}
+  .rg-pill.unread{background:#e8f0ff;color:#264a9f;}
+
+  /* Main / Thread */
+  .rg-main-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+  .rg-main-head .left{display:flex;flex-direction:column;gap:2px;}
+  .rg-main-head .title{font-weight:800;font-size:16px;}
+  .rg-main-head .sub{font-size:12px;color:var(--muted,#6b7280);}
+  .rg-main-body{height:calc(100vh - 330px);overflow:auto;padding:14px 16px;background:#fafbff;}
+  .rg-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;color:#6b7280;}
+
+  /* Messages (keeps your current structure but makes it “chat-like”) */
+  .chat-msg{margin-bottom:12px; display:flex; flex-direction:column; gap:6px;}
+  .chat-msg .meta{font-size:12px;color:#6b7280;margin-bottom:6px;display:flex;gap:8px;align-items:center;}
+  .chat-msg .bubble{display:inline-block;max-width:min(760px, 92%);padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #eef1f6;}
+  .chat-msg.me .bubble{background:#eef3ff;border-color:#d9e5ff;}
+  .chat-msg.me .bubble{margin-left:auto;}
+  .chat-msg.me .reaction-row{justify-content:flex-end;}
+  .chat-msg .actions{margin-left:auto;display:flex;gap:6px;align-items:center;}
+  .chat-msg .actions .btn{padding:2px 8px;font-size:11px;border-radius:999px;}
+
+  /* Composer */
+  .rg-compose{padding:12px;display:grid;grid-template-columns:1fr 96px;gap:10px;background:#fff;}
+  .rg-compose textarea{border-radius:14px;resize:none;}
+  .rg-compose .btn{border-radius:14px;font-weight:700;}
+  .rg-emoji{padding:10px 12px 14px;}
+  .rg-emoji .label{font-size:12px;color:var(--muted,#6b7280);margin-bottom:8px;}
+  #emoji-bar{display:flex;gap:8px;flex-wrap:wrap;}
+  #emoji-bar .btn{border-radius:999px;padding:4px 10px;}
+
+  @media (max-width: 992px){
+    .rg-chat-wrap{grid-template-columns:1fr;min-height:auto;}
+    .rg-side-list{max-height:280px;}
+    .rg-main-body{height:55vh;}
+  }
+</style>
+
+<div class="rg-chat-wrap">
+  <!-- LEFT: Threads -->
+  <div class="rg-card">
+    <div class="rg-side-head">
+      <h5>Chat</h5>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('chat.new_chat') }}">+ New</a>
+    </div>
+
+    <div class="rg-side-tools">
+      <input id="rgChatSearch" class="form-control" placeholder="Search chats…" oninput="rgFilterChats(this.value)">
+      <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('rgChatSearch').value='';rgFilterChats('')">
+        Clear
+      </button>
+    </div>
+
+    <div class="rg-divider"></div>
+
+    <div class="rg-side-list" id="rgChatList">
+      {% for t in threads %}
+        {% set members = members_by_thread.get(t.thread_id, []) %}
+        {% set title = t.display_name_for(me_id, members, users_by_id) %}
+        {% set total = message_counts.get(t.thread_id, 0) if message_counts else 0 %}
+        {% set unread = unread_counts.get(t.thread_id, 0) if unread_counts else 0 %}
+
+        <a class="rg-chat-item {% if active_thread and active_thread.thread_id == t.thread_id %}active{% endif %}"
+           data-title="{{ title|lower }}"
+           href="{{ url_for('chat.thread', thread_id=t.thread_id) }}">
+          <div class="row1">
+            <div class="title">{{ title }}</div>
+            <div class="meta">
+              {{ "Broadcast" if t.thread_type == "broadcast" else ("Group" if t.thread_type == "group" else "Direct") }}
+            </div>
+          </div>
+          <div class="row2">
+            <span class="rg-pill">{{ total }} msgs</span>
+            {% if unread %}
+              <span class="rg-pill unread">{{ unread }} unread</span>
+            {% endif %}
+          </div>
+        </a>
+      {% else %}
+        <div class="p-3 rg-muted">No chats yet. Click <b>+ New</b> to start one.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- RIGHT: Main -->
+  <div class="rg-card d-flex flex-column">
+    {% block chat_main %}{% endblock %}
+  </div>
+</div>
+
+<script>
+  function rgFilterChats(q){
+    q = (q || "").toLowerCase().trim();
+    const list = document.getElementById("rgChatList");
+    if(!list) return;
+    list.querySelectorAll(".rg-chat-item").forEach(a=>{
+      const title = a.getAttribute("data-title") || "";
+      a.style.display = (!q || title.includes(q)) ? "" : "none";
+    });
+  }
+</script>
+
+{% endblock %}
