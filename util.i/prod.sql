@@ -28,36 +28,18 @@ CREATE TABLE `rb_chat_message` (
   `thread_id` bigint(20) NOT NULL,
   `sender_id` bigint(20) NOT NULL,
   `body` text NOT NULL,
-  `reply_to_message_id` bigint(20) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`message_id`),
   KEY `ix_chat_msg_thread_created` (`thread_id`,`created_at`),
   KEY `ix_chat_msg_sender` (`sender_id`),
-  KEY `idx_chat_msg_reply_to` (`reply_to_message_id`),
-  CONSTRAINT `fk_chat_msg_reply` FOREIGN KEY (`reply_to_message_id`) REFERENCES `rb_chat_message` (`message_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_chat_msg_sender` FOREIGN KEY (`sender_id`) REFERENCES `rb_user` (`user_id`),
   CONSTRAINT `fk_chat_msg_thread` FOREIGN KEY (`thread_id`) REFERENCES `rb_chat_thread` (`thread_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- ---- rb_chat_message_reaction ----
-CREATE TABLE `rb_chat_message_reaction` (
-  `reaction_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `message_id` bigint(20) NOT NULL,
-  `user_id` bigint(20) NOT NULL,
-  `emoji` varchar(32) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`reaction_id`),
-  UNIQUE KEY `uq_chat_message_reaction` (`message_id`,`user_id`),
-  KEY `ix_chat_reaction_message` (`message_id`),
-  KEY `ix_chat_reaction_user` (`user_id`),
-  CONSTRAINT `fk_chat_reaction_message` FOREIGN KEY (`message_id`) REFERENCES `rb_chat_message` (`message_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_chat_reaction_user` FOREIGN KEY (`user_id`) REFERENCES `rb_user` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 -- ---- rb_chat_thread ----
 CREATE TABLE `rb_chat_thread` (
   `thread_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `thread_type` enum('dm','group','broadcast') NOT NULL DEFAULT 'dm',
+  `thread_type` enum('dm','group') NOT NULL DEFAULT 'dm',
   `name` varchar(120) DEFAULT NULL,
   `created_by` bigint(20) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),

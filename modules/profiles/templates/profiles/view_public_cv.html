@@ -24,8 +24,12 @@
     </div>
 
     {% set token = share.token if share is defined and share.token is defined else share.share_token %}
+    {% set can_download = share.allow_download if share is defined and share.allow_download is not none else True %}
     <div class="mt-3 d-flex gap-2">
-      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('profileviewer.file', token=token) }}" target="_blank">Open CV PDF</a>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('profileviewer.file', token=token) }}" target="_blank">View CV PDF</a>
+      {% if can_download %}
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('profileviewer.file', token=token, download=1) }}" target="_blank">Download CV</a>
+      {% endif %}
       {% if c.cover_letter_name %}
       <a class="btn btn-sm btn-outline-primary" href="{{ url_for('profileviewer.cover', token=token) }}" target="_blank">Open cover letter</a>
       {% endif %}

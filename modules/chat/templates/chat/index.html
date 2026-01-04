@@ -187,6 +187,7 @@
 
   <!-- RIGHT: Main -->
   <div class="rg-card d-flex flex-column">
+    {% block chat_main %}
       <div class="rg-main-head">
     <div class="left">
       <div class="title">Select a chat</div>
@@ -211,6 +212,7 @@
     <textarea class="form-control" rows="2" disabled placeholder="Select a chat to start messaging…"></textarea>
     <button class="btn btn-primary" disabled>Send</button>
   </div>
+    {% endblock %}
   </div>
 </div>
 

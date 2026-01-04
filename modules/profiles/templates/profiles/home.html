@@ -145,6 +145,8 @@
                     <label class="btn sm primary pill mb-0" for="cv_file_{{ c.cvfile_id }}">Upload CV</label>
                   {% endif %}
 
+                  <a class="btn sm primary pill" href="{{ url_for('profiles.share_cvfile', cvfile_id=c.cvfile_id) }}">Share</a>
+
                   <form id="cv_upload_form_{{ c.cvfile_id }}" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data">
                     <input type="hidden" name="cv_name" value="{{ c.cv_name }}">
                     <input class="hidden" type="file" name="pdf" id="cv_file_{{ c.cvfile_id }}" accept="application/pdf"
@@ -253,77 +255,77 @@
   <div class="stack">
 
     <!-- CV Send -->
-    <section class="card soft-card">
-      <div class="cardHead">
-        <div>
+      <section class="card soft-card">
+        <div class="cardHead">
+          <div>
           <h2>CV Send</h2>
-          <p>Create links or share to handle/email.</p>
+            <p>Create or manage shares for your CVs.</p>
+          </div>
+          <button class="btn sm pill" type="button" onclick="toggleSendForm(true)">New Share</button>
         </div>
-        <button class="btn sm pill" type="button" onclick="toggleSendForm(true)">New Share</button>
-      </div>
 
-      <div class="cardBody">
-        <div id="sendForm" style="display:none; margin-bottom:12px;">
-          <form class="formGrid" method="post" action="{{ url_for('profiles.share_cvfile_new') }}">
+        <div class="cardBody">
+          <div id="sendForm" style="display:none; margin-bottom:12px;">
+            <form class="formGrid" method="post" action="{{ url_for('profiles.share_cvfile_new') }}">
 
-            <div>
-              <label>Select CV</label>
-              <select name="cvfile_id" required>
-                <option value="">Choose</option>
-                {% for c in cv_files %}
-                  <option value="{{ c.cvfile_id }}">{{ c.cv_name }}</option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div>
-              <label>Share option</label>
-              <div class="flex gap-3 wrap">
-                <label class="flex items-center gap-1" style="margin:0;">
-                  <input type="radio" name="share_method" value="link" checked>
-                  <span class="small">Create link</span>
-                </label>
-                <label class="flex items-center gap-1" style="margin:0;">
-                  <input type="radio" name="share_method" value="handle">
-                  <span class="small">Handle</span>
-                </label>
-                <label class="flex items-center gap-1" style="margin:0;">
-                  <input type="radio" name="share_method" value="email">
-                  <span class="small">Email</span>
-                </label>
-              </div>
-            </div>
-
-            <div id="linkFields" class="formGrid">
               <div>
-                <label>Expiry (minutes)</label>
-                <input type="number" name="expiry_minutes" min="0" max="1440" value="15">
+                <label>Select CV</label>
+                <select name="cvfile_id" required>
+                  <option value="">Choose</option>
+                  {% for c in cv_files %}
+                    <option value="{{ c.cvfile_id }}">{{ c.cv_name }}</option>
+                  {% endfor %}
+                </select>
               </div>
+
               <div>
-                <label class="mt-2">Password (optional)</label>
-                <input type="text" name="password" placeholder="Set password (optional)">
+                <label>Share option</label>
+                <div class="flex gap-3 wrap">
+                  <label class="flex items-center gap-1" style="margin:0;">
+                    <input type="radio" name="share_method" value="link" checked>
+                    <span class="small">Create link</span>
+                  </label>
+                  <label class="flex items-center gap-1" style="margin:0;">
+                    <input type="radio" name="share_method" value="handle">
+                    <span class="small">Handle</span>
+                  </label>
+                  <label class="flex items-center gap-1" style="margin:0;">
+                    <input type="radio" name="share_method" value="email">
+                    <span class="small">Email</span>
+                  </label>
+                </div>
               </div>
-            </div>
 
-            <div id="handleFields" style="display:none;">
-              <label>Handle</label>
-              <input type="text" name="handle" placeholder="e.g., user123">
-              <div class="formHelp">Must match an existing handle.</div>
-            </div>
+              <div id="linkFields" class="formGrid">
+                <div>
+                  <label>Expiry (minutes)</label>
+                  <input type="number" name="expiry_minutes" min="0" max="1440" value="15">
+                </div>
+                <div>
+                  <label class="mt-2">Password (optional)</label>
+                  <input type="text" name="password" placeholder="Set password (optional)">
+                </div>
+              </div>
 
-            <div id="emailFields" style="display:none;">
-              <label>Email</label>
-              <input type="email" name="email" placeholder="name@example.com">
-            </div>
+              <div id="handleFields" style="display:none;">
+                <label>Handle</label>
+                <input type="text" name="handle" placeholder="e.g., user123">
+                <div class="formHelp">Must match an existing handle.</div>
+              </div>
 
-            <div class="flex justify-end gap-2">
-              <button class="btn primary pill" type="submit">Save share</button>
-              <button class="btn pill" type="button" onclick="toggleSendForm()">Cancel</button>
-            </div>
+              <div id="emailFields" style="display:none;">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="name@example.com">
+              </div>
 
-          </form>
-          <hr class="my-3">
-        </div>
+              <div class="flex justify-end gap-2">
+                <button class="btn primary pill" type="submit">Save share</button>
+                <button class="btn pill" type="button" onclick="toggleSendForm()">Cancel</button>
+              </div>
+
+            </form>
+            <hr class="my-3">
+          </div>
 
         {% if my_shares or my_public_links %}
           <div class="stack" style="gap:10px;">
@@ -336,8 +338,13 @@
                       {{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}
                     </div>
                     <div class="small text-muted">Type: Link &bull; Target: &mdash;</div>
+                    <div class="small mono">
+                      <a href="{{ url_for('profileviewer.view', token=s.token, _external=True) }}" target="_blank">{{ url_for('profileviewer.view', token=s.token, _external=True) }}</a>
+                    </div>
                   </div>
-                  <a class="btn sm pill" href="{{ url_for('profileviewer.view', token=s.token, _external=True) }}" target="_blank">View</a>
+                  <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=s.link_id) }}" onsubmit="return confirm('Delete this share?');">
+                    <button class="btn sm danger pill" type="submit">Delete</button>
+                  </form>
                 </div>
               </div>
             </div>
@@ -361,8 +368,13 @@
                         {{ s.target_email }}
                       {% endif %}
                     </div>
+                    <div class="small mono">
+                      <a href="{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}" target="_blank">{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}</a>
+                    </div>
                   </div>
-                  <a class="btn sm pill" href="{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}" target="_blank">View</a>
+                  <form method="post" action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=s.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
+                    <button class="btn sm danger pill" type="submit">Delete</button>
+                  </form>
                 </div>
               </div>
             </div>

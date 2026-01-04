@@ -377,7 +377,9 @@ def save_vcard():
     vcard.skills = skills
     vcard.services = services
 
+    db.session.add(vcard)
     db.session.commit()
+    flash("vCard updated.", "success")
     return redirect(url_for("profiles.home"))
 
 
@@ -833,7 +835,7 @@ def delete_cvfile_share(cvfile_id: int, share_id: int):
     db.session.delete(share)
     db.session.commit()
     flash("Share deleted.", "info")
-    return redirect(url_for("profiles.share_cvfile", cvfile_id=cvfile_id))
+    return redirect(url_for("profiles.home"))
 
 
 @profiles_bp.get("/pair/<int:cv_id>/share")
@@ -1260,10 +1262,15 @@ def file(token: str):
     if not c.pdf_data:
         abort(404)
 
+    download_requested = (request.args.get("download") == "1")
+    if download_requested and not allow_dl:
+        _forbidden("public_link_download_not_allowed", token=token, cvfile_id=c.cvfile_id)
+    as_attachment = download_requested and allow_dl
+
     return send_file(
         BytesIO(c.pdf_data),
         mimetype=c.mime_type or "application/pdf",
-        as_attachment=allow_dl,
+        as_attachment=as_attachment,
         download_name=c.original_filename or "cv.pdf",
         conditional=True,
     )

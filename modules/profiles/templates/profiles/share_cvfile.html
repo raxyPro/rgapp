@@ -155,6 +155,65 @@
 
 <div style="height:14px;"></div>
 
+<!-- Existing private/user/email shares -->
+<section class="card">
+  <div class="cardHead">
+    <div>
+      <h2>Existing shares</h2>
+      <p>User/email shares you have created for this CV.</p>
+    </div>
+  </div>
+  <div class="cardBody">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:10%;">Type</th>
+          <th style="width:28%;">Target</th>
+          <th style="width:22%;">Created</th>
+          <th style="width:24%;">Token</th>
+          <th class="text-end" style="width:16%;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if shares %}
+          {% for s in shares %}
+            {% set kind = 'Public' if s.is_public else ('User' if s.target_user_id else 'Email') %}
+            {% set u = None %}
+            {% if s.target_user_id %}
+              {% set u = users|selectattr('user_id','equalto',s.target_user_id)|first %}
+            {% endif %}
+            <tr>
+              <td>{{ kind }}</td>
+              <td>
+                {% if s.is_public %}
+                  Anyone with link
+                {% elif s.target_user_id %}
+                  {{ u.display_label if u and u.display_label else ('User #' ~ s.target_user_id) }}
+                {% else %}
+                  {{ s.target_email }}
+                {% endif %}
+              </td>
+              <td>{{ s.created_at }}</td>
+              <td class="mono">{{ s.share_token }}</td>
+              <td class="text-end">
+                <form method="post"
+                      action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=c.cvfile_id, share_id=s.share_id) }}"
+                      onsubmit="return confirm('Delete this share?');">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr><td colspan="5" style="color:var(--muted);">No private shares yet.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div style="height:14px;"></div>
+
 <script>
   function copyLink(val){
     try{

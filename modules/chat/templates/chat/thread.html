@@ -1,5 +1,5 @@
 {# modules/chat/templates/chat/thread.html #}
-{% extends "chat/chat_reui.html" %}
+{% extends "chat/index.html" %}
 
 {% block chat_main %}
   {% set can_react = (not is_broadcast) or is_owner or is_member %}
