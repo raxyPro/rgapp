@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required
 
 from models import RBUser, RBUserProfile
+from emailer import send_services_lead_email, send_services_ack_email
 from modules.chat.permissions import module_required
 from modules.chat.util import get_current_user_id
 from modules.profiles.models import RBCVProfile
@@ -59,3 +60,44 @@ def index():
     others.sort(key=lambda p: (p.get("handle") or p.get("email") or "").lower())
 
     return render_template("services/index.html", me=mine, others=others)
+
+
+@services_bp.post("/contact")
+@login_required
+@module_required("services")
+def contact_request():
+    name = (request.form.get("name") or "").strip()
+    email = (request.form.get("email") or "").strip()
+    needs = (request.form.get("needs") or "").strip()
+
+    if not name or not email or not needs:
+        return jsonify({"ok": False, "error": "Name, email, and what you need are required."}), 400
+    if "@" not in email:
+        return jsonify({"ok": False, "error": "Enter a valid email address."}), 400
+
+    me_id = get_current_user_id()
+    try:
+        send_services_lead_email(name=name, email=email, needs=needs, user_id=me_id)
+    except Exception:
+        current_app.logger.exception("Failed to send services request email")
+        return jsonify({"ok": False, "error": "Could not send your request. Please try again."}), 500
+
+    try:
+        send_services_ack_email(to_email=email, name=name, needs=needs)
+    except Exception:
+        current_app.logger.exception("Failed to send services acknowledgement email")
+
+    return jsonify({"ok": True})
+
+
+@services_bp.get("/pman")
+@login_required
+@module_required("services")
+def pman():
+    return render_template("services/project-management.html")
+
+@services_bp.get("/conpro")
+@login_required
+@module_required("services")
+def conpro():
+    return render_template("services/consultant-profile.html")

@@ -21,6 +21,36 @@ def send_reset_email(to_email: str, reset_url: str):
     _send_email("RayGrow Bridge Password Reset", to_email, body)
 
 
+def send_services_lead_email(name: str, email: str, needs: str, user_id: int | None = None):
+    """Send a services lead to the sales inbox."""
+    lines = [
+        "A new services request was submitted.",
+        f"Name: {name}",
+        f"Email: {email}",
+    ]
+    if user_id is not None:
+        lines.append(f"User ID: {user_id}")
+    lines.append("")
+    lines.append("Needs / Requirements:")
+    lines.append(needs)
+
+    _send_email("RayGrow Services Request", "hradmin@raygrowcs.com", "\n".join(lines))
+
+
+def send_services_ack_email(to_email: str, name: str, needs: str):
+    """Send an acknowledgement back to the requester."""
+    body = (
+        f"Hi {name or 'there'},\n\n"
+        "Thanks for reaching out to RayGrow about your services needs. "
+        "We received your request and will follow up shortly.\n\n"
+        "You shared the following:\n"
+        f"{needs}\n\n"
+        "If any of this changes, just reply to this email.\n\n"
+        "— RayGrow Services Team"
+    )
+    _send_email("We received your services request", to_email, body)
+
+
 def _send_email(subject: str, to_email: str, body: str):
     """Send an email using SMTP settings from Flask config (app.ini)."""
     cfg = current_app.config

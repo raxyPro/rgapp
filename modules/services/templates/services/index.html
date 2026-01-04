@@ -53,7 +53,7 @@
           <p class="muted" style="margin:0 0 10px;">
             Agile project management, sprint planning, tracking, stakeholder updates and delivery execution.
           </p>
-          <a class="muted" style="font-weight:800; color:var(--primary-600);" href="{{ url_for('services.pman') }}>Learn more →</a>
+          <a class="muted" style="font-weight:800; color:var(--primary-600);" href="{{ url_for('services.pman') }}">Learn more →</a>
         </div>
       </div>
 
@@ -96,95 +96,7 @@
   </div>
 </section>
 
-<!-- Service Details (Accordion) -->
-<section id="details" class="section alt">
-  <div class="container">
-    <h2 class="sectionTitle" style="margin:0; font-size:18px;">Service Details</h2>
-    <p class="muted mb-4">Expandable sections for deeper information without clutter.</p>
 
-    <!-- Simple accordion without Bootstrap JS -->
-    <div class="stack" style="display:grid; gap:10px;">
-      <details class="card" open>
-        <summary class="cardHead" style="cursor:pointer; user-select:none;">
-          <div>
-            <h2 style="margin:0; font-size:14px;">Project Management (Agile)</h2>
-            <p style="margin:6px 0 0;" class="muted">Planning, governance, reporting, and delivery execution.</p>
-          </div>
-          <span class="pill">Open</span>
-        </summary>
-        <div class="cardBody">
-          <div class="grid-2">
-            <div>
-              <div style="font-weight:800; margin-bottom:6px;">What we do</div>
-              <ul class="muted mb-0" style="margin:0; padding-left:18px;">
-                <li>Agile project planning & delivery governance</li>
-                <li>Sprint planning, backlog grooming, and reporting</li>
-                <li>Risk, dependency and stakeholder management</li>
-              </ul>
-            </div>
-            <div>
-              <div style="font-weight:800; margin-bottom:6px;">Methods & tools</div>
-              <p class="muted mb-0">Scrum, Kanban, Jira, Confluence, Azure DevOps (as needed)</p>
-            </div>
-          </div>
-        </div>
-      </details>
-
-      <details class="card">
-        <summary class="cardHead" style="cursor:pointer; user-select:none;">
-          <div>
-            <h2 style="margin:0; font-size:14px;">Agile Team Coaching</h2>
-            <p style="margin:6px 0 0;" class="muted">Coaching teams and leaders to improve flow and predictability.</p>
-          </div>
-          <span class="pill">Open</span>
-        </summary>
-        <div class="cardBody">
-          <div class="grid-2">
-            <div>
-              <div style="font-weight:800; margin-bottom:6px;">What we do</div>
-              <ul class="muted mb-0" style="margin:0; padding-left:18px;">
-                <li>Coaching Scrum Masters, Product Owners & teams</li>
-                <li>Improve ceremonies, flow efficiency and team health</li>
-                <li>Support transformation, scaling and continuous improvement</li>
-              </ul>
-            </div>
-            <div>
-              <div style="font-weight:800; margin-bottom:6px;">Outcomes</div>
-              <p class="muted mb-0">Higher delivery predictability, stronger collaboration, better throughput.</p>
-            </div>
-          </div>
-        </div>
-      </details>
-
-      <details class="card">
-        <summary class="cardHead" style="cursor:pointer; user-select:none;">
-          <div>
-            <h2 style="margin:0; font-size:14px;">Application Development</h2>
-            <p style="margin:6px 0 0;" class="muted">Build new apps, modernize existing ones, and maintain reliably.</p>
-          </div>
-          <span class="pill">Open</span>
-        </summary>
-        <div class="cardBody">
-          <div class="grid-2">
-            <div>
-              <div style="font-weight:800; margin-bottom:6px;">What we do</div>
-              <ul class="muted mb-0" style="margin:0; padding-left:18px;">
-                <li>New application development (web/mobile)</li>
-                <li>Enhancements, modernization and refactoring</li>
-                <li>Managing existing development & ongoing support</li>
-              </ul>
-            </div>
-            <div>
-              <div style="font-weight:800; margin-bottom:6px;">Delivery approach</div>
-              <p class="muted mb-0">Agile delivery with milestones, QA gates, and documentation.</p>
-            </div>
-          </div>
-        </div>
-      </details>
-    </div>
-
-  </div>
-</section>
 
 <!-- Consultants -->
 <section id="consultants" class="section">
@@ -233,9 +145,9 @@
       <div class="card">
         <div class="cardBody">
           <div class="consultantRow">
-            <img class="consultantImg" src="https://via.placeholder.com/120" alt="Consultant photo">
+            <img class="consultantImg" src="{{ url_for('static', filename='consultant.png') }}" alt="Consultant photo">
             <div>
-              <div style="font-weight:800; margin-bottom:4px;">Ravi Kumar</div>
+              <div style="font-weight:800; margin-bottom:4px;">Project Manager(exp 20+) </div>
               <div class="muted mb-2">Agile Coach | Scrum Master</div>
               <div class="flex wrap gap-2">
                 <span class="tag">Scrum</span>
@@ -250,10 +162,9 @@
           <p class="mb-2"><span style="font-weight:800;">Services:</span> Agile Coaching, Scrum Team Management</p>
 
           <div class="flex gap-2 wrap">
-            <a href="#" class="btn sm outline">View CV</a>
+            
             <a href="#contact" class="btn sm primary">Contact</a>
-            <a href="consultant-detail.html?name=Ravi%20Kumar&role=Agile%20Coach%20%7C%20Scrum%20Master&cv=cv/ravi-kumar.pdf"
-               class="btn sm outline">View Profile</a>
+            <a href="{{ url_for('services.conpro') }}" class="btn sm outline">View Profile</a>
           </div>
         </div>
       </div>
@@ -262,9 +173,9 @@
       <div class="card">
         <div class="cardBody">
           <div class="consultantRow">
-            <img class="consultantImg" src="https://via.placeholder.com/120" alt="Consultant photo">
+            <img class="consultantImg" src="{{ url_for('static', filename='consultant.png') }}" alt="Consultant photo">
             <div>
-              <div style="font-weight:800; margin-bottom:4px;">Anita Sharma</div>
+              <div style="font-weight:800; margin-bottom:4px;">Sen Projet Manager(10+ exp)</div>
               <div class="muted mb-2">Agile Project Manager</div>
               <div class="flex wrap gap-2">
                 <span class="tag">Agile PM</span>
@@ -279,7 +190,7 @@
           <p class="mb-2"><span style="font-weight:800;">Services:</span> Project Management, Scrum Management</p>
 
           <div class="flex gap-2 wrap">
-            <a href="#" class="btn sm outline">View CV</a>
+            
             <a href="#contact" class="btn sm primary">Contact</a>
             <a href="consultant-detail.html?name=Anita%20Sharma&role=Agile%20Project%20Manager&cv=cv/anita-sharma.pdf"
                class="btn sm outline">View Profile</a>
@@ -291,9 +202,9 @@
       <div class="card">
         <div class="cardBody">
           <div class="consultantRow">
-            <img class="consultantImg" src="https://via.placeholder.com/120" alt="Consultant photo">
+            <img class="consultantImg" src="{{ url_for('static', filename='consultant.png') }}" alt="Consultant photo">
             <div>
-              <div style="font-weight:800; margin-bottom:4px;">Mohit Verma</div>
+              <div style="font-weight:800; margin-bottom:4px;">Dev Expert(5+ exp)</div>
               <div class="muted mb-2">Application Developer</div>
               <div class="flex wrap gap-2">
                 <span class="tag">Web Apps</span>
@@ -308,7 +219,7 @@
           <p class="mb-2"><span style="font-weight:800;">Services:</span> New Development, Existing Development</p>
 
           <div class="flex gap-2 wrap">
-            <a href="#" class="btn sm outline">View CV</a>
+            
             <a href="#contact" class="btn sm primary">Contact</a>
             <a href="consultant-detail.html?name=Mohit%20Verma&role=Application%20Developer&cv=cv/mohit-verma.pdf"
                class="btn sm outline">View Profile</a>
@@ -367,26 +278,27 @@
         </div>
 
         <div>
-          <form class="formGrid">
+          <form class="formGrid" id="servicesContactForm" method="post" action="{{ url_for('services.contact_request') }}">
             <div class="formGrid-2">
               <div>
                 <label>Your name</label>
-                <input type="text" placeholder="Your name">
+                <input type="text" name="name" placeholder="Your name" required>
               </div>
               <div>
                 <label>Email</label>
-                <input type="email" placeholder="Email">
+                <input type="email" name="email" placeholder="Email" required>
               </div>
               <div class="span-2">
                 <label>What do you need?</label>
-                <textarea rows="3" placeholder="What do you need? (service, skills, duration)"></textarea>
+                <textarea rows="3" name="needs" placeholder="What do you need? (service, skills, duration)" required></textarea>
               </div>
             </div>
 
             <div class="flex justify-end gap-2 wrap">
-              <button class="btn primary lg" type="button">Request a Consultant</button>
+              <button class="btn primary lg" type="submit" id="servicesContactSubmit">Request a Consultant</button>
             </div>
 
+            <div class="muted small" id="servicesContactStatus" aria-live="polite" style="min-height:18px;"></div>
             <div class="muted small">
               By submitting, you agree to be contacted by RayGrow.
             </div>
@@ -397,21 +309,72 @@
   </div>
 </section>
 
-<!-- Footer -->
-<footer class="section" style="padding:16px 0; border-top:1px solid var(--border); background: var(--surface);">
-  <div class="container">
-    <div class="grid-2" style="align-items:center;">
-      <div>
-        <div style="font-weight:800;">RayGrow Services</div>
-        <div class="muted small">Agile • Coaching • Development • Consulting</div>
-      </div>
-      <div class="footerLinks">
-        <a href="#services">Services</a>
-        <a href="#consultants">Consultants</a>
-        <a href="#contact">Contact</a>
-      </div>
-    </div>
-  </div>
-</footer>
+<script>
+  (function () {
+    const form = document.getElementById("servicesContactForm");
+    if (!form) return;
+
+    const statusEl = document.getElementById("servicesContactStatus");
+    const submitBtn = document.getElementById("servicesContactSubmit");
+
+    function setStatus(text, tone = "info") {
+      if (!statusEl) return;
+      statusEl.textContent = text || "";
+      statusEl.style.color = tone === "error" ? "var(--danger-700, #b91c1c)" : "var(--muted, inherit)";
+    }
+
+    function setSubmitting(state) {
+      if (!submitBtn) return;
+      submitBtn.disabled = state;
+      submitBtn.textContent = state ? "Sending..." : "Request a Consultant";
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      setStatus("");
+
+      const formData = new FormData(form);
+      const name = (formData.get("name") || "").toString().trim();
+      const email = (formData.get("email") || "").toString().trim();
+      const needs = (formData.get("needs") || "").toString().trim();
+
+      if (!name || !email || !needs) {
+        setStatus("Please fill in your name, email, and what you need.", "error");
+        return;
+      }
+
+      setSubmitting(true);
+      setStatus("Sending...");
+
+      try {
+        const resp = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+          headers: { Accept: "application/json" },
+        });
+
+        let data = {};
+        try {
+          data = await resp.json();
+        } catch (_) {
+          data = {};
+        }
+
+        if (!resp.ok || !data.ok) {
+          throw new Error(data.error || `Could not send your request (status ${resp.status}).`);
+        }
+
+        form.reset();
+        setStatus("Thanks! We received your request and will contact you soon.");
+      } catch (err) {
+        setStatus(err.message || "Something went wrong. Please try again.", "error");
+      } finally {
+        setSubmitting(false);
+      }
+    });
+  })();
+</script>
+
+
 
 {% endblock %}

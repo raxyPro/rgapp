@@ -1,0 +1,414 @@
+{% extends "app_shell.html" %}
+
+{% block content %}
+
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --surface:#fff;
+    --text:#0f172a;
+    --muted:#6b7280;
+    --border:rgba(0,0,0,.08);
+    --accent:#0d6efd;
+    --accent-600:#0b5ed7;
+    --radius:16px;
+    --shadow:0 6px 24px rgba(0,0,0,.06);
+    --shadow-sm:0 1px 0 rgba(0,0,0,.02);
+    --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+
+  body{ background:var(--bg); color:var(--text); font-family:var(--sans); }
+
+  /* Page container */
+  .wrap{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 18px 46px;
+  }
+
+  .page{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px;
+  }
+  @media (min-width: 992px){
+    .page{ padding: 32px; }
+  }
+
+  /* Header */
+  .header{
+    display:grid;
+    grid-template-columns: 1.6fr .9fr;
+    gap: 18px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .header{ grid-template-columns: 1fr; }
+  }
+
+  .badges{ display:flex; flex-wrap:wrap; gap: 8px; margin-bottom: 10px; }
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .badge.primary{
+    background: rgba(13,110,253,.12);
+    color: var(--accent-600);
+    border-color: rgba(13,110,253,.22);
+  }
+  .badge.neutral{
+    background: rgba(15,23,42,.03);
+    color: #334155;
+    border-color: rgba(0,0,0,.07);
+  }
+
+  h1{
+    margin: 0 0 8px;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  .lead{
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 14px;
+  }
+
+  /* KPIs */
+  .kpis{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  @media (max-width: 900px){
+    .kpis{ grid-template-columns: 1fr; }
+  }
+  .kpi{
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fff;
+  }
+  .kpi .num{ font-weight: 900; font-size: 18px; }
+  .kpi .lbl{ color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* Photo */
+  .photo{
+    width:100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    border: 2px dashed rgba(13,110,253,.35);
+    background: linear-gradient(180deg, rgba(13,110,253,.06), rgba(13,110,253,.02));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color: var(--accent-600);
+    font-weight: 800;
+    padding: 14px;
+  }
+  .photo small{
+    display:block;
+    margin-top: 6px;
+    font-weight: 700;
+    color: rgba(11,94,215,.9);
+  }
+  .photoTip{
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  hr{
+    border:0;
+    height:1px;
+    background: rgba(0,0,0,.08);
+    margin: 22px 0;
+  }
+
+  /* Section headings */
+  .section-title{
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 900;
+  }
+
+  /* Two-column content sections */
+  .twoCol{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .twoCol{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    border:1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    padding: 14px;
+  }
+  .card h3{
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .card p{
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 13.5px;
+  }
+
+  /* Skill pills */
+  .skills{ display:flex; flex-wrap:wrap; gap: 8px; margin-bottom: 10px; }
+  .skill{
+    display:inline-flex;
+    align-items:center;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(13,110,253,.20);
+    background: rgba(13,110,253,.10);
+    color: var(--accent-600);
+    font-weight: 900;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Lists */
+  ul{ margin: 0; padding-left: 18px; }
+  li{ margin: 0 0 8px; }
+  li:last-child{ margin-bottom: 0; }
+
+  /* Achievements grid */
+  .achGrid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 980px){
+    .achGrid{ grid-template-columns: 1fr; }
+  }
+  .ach .title{
+    font-weight: 900;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+  }
+
+  /* Button */
+  .actionsRow{
+    display:flex;
+    justify-content:flex-end;
+    margin-top: 16px;
+  }
+  .btn{
+    appearance:none;
+    border: 1px solid rgba(13,110,253,.35);
+    background: #fff;
+    color: var(--accent-600);
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 13px;
+    cursor:pointer;
+  }
+  .btn:hover{
+    background: rgba(13,110,253,.06);
+  }
+
+  .footer{
+    text-align:center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 12px;
+  }
+
+  /* Print */
+  @media print{
+    body{ background:#fff; }
+    .page{ box-shadow:none; border:none; padding: 0; }
+    .no-print{ display:none !important; }
+    .wrap{ max-width: none; padding: 0; }
+  }
+</style>
+
+<main class="wrap">
+  <!-- Back button -->
+<div style="margin-bottom: 16px;" align="right">
+  <a href="javascript:history.back()" style="display:inline-flex; align-items:center; gap:6px; color:var(--accent-600); text-decoration:none; font-weight:700; font-size:13px;">
+    ← Back
+  </a>
+</div>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <div class="badges">
+          <span class="badge primary">RayGrow Consultant</span>
+          <span class="badge neutral">Project Manager • Agile Coach • Development Lead</span>
+        </div>
+
+        <h1>Consultant Profile</h1>
+        <p class="lead">
+          Experienced delivery leader with 7+ years managing Agile &amp; waterfall programmes across banking,
+          utilities, retail analytics, and mobile platforms—focused on value delivery, continuous improvement,
+          and technology enablement.
+        </p>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="num">10+</div>
+            <div class="lbl">Teams transitioned to Scrum / SAFe</div>
+          </div>
+          <div class="kpi">
+            <div class="num">100+</div>
+            <div class="lbl">Staff trained via Agile workshops</div>
+          </div>
+          <div class="kpi">
+            <div class="num">1M+</div>
+            <div class="lbl">App downloads delivered</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photo placeholder -->
+      <div>
+        <div class="photo">
+          <div>
+            <div style="font-size:16px; margin-bottom: 4px;">Photo Placeholder</div>
+            <small>
+              Replace this block with an image<br>
+            </small><img  src="{{ url_for('static', filename='consultant.png') }}" style="width:100%;border-radius:14px;">
+            </small>
+          </div>
+        </div>
+        <div class="photoTip">Tip: Use a square headshot for best layout.</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- Core + Credentials -->
+    <div class="twoCol">
+      <div>
+        <div class="section-title">Core Capabilities</div>
+
+        <div class="skills">
+          <span class="skill">Agile Leadership</span>
+          <span class="skill">Project Delivery</span>
+          <span class="skill">Stakeholder Management</span>
+          <span class="skill">Technology Enablement</span>
+          <span class="skill">Process Transformation</span>
+          <span class="skill">Team Building &amp; Mentorship</span>
+          <span class="skill">Scaled Agile (Scrum of Scrums)</span>
+        </div>
+
+        <ul>
+          <li><strong>Agile Leadership:</strong> 7+ years managing cross-functional Scrum teams, ceremonies, Lean-Agile adoption, and coaching for continuous improvement.</li>
+          <li><strong>Project Delivery:</strong> Full life-cycle delivery across planning, risk, budgeting, reporting, implementation, and closeout.</li>
+          <li><strong>Stakeholder Management:</strong> Clear communication and alignment across all organisational levels.</li>
+          <li><strong>Technology Enablement:</strong> Azure DevOps, .NET, Java, cloud technologies; high-tech delivery and integrations.</li>
+          <li><strong>Transformation:</strong> Digitised business processes, improved operational efficiency, and increased digital channel penetration.</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="section-title">Education &amp; Credentials</div>
+
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Education</h3>
+          <ul>
+            <li>Master’s Degree in Information Systems</li>
+            <li>Bachelor’s Degree in Commerce</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-bottom:12px;">
+          <h3>Certifications</h3>
+          <div class="skills" style="margin:10px 0 0;">
+            <span class="badge neutral">SAFe Agilist</span>
+            <span class="badge neutral">PSM</span>
+            <span class="badge neutral">Agile PM</span>
+            <span class="badge neutral">COBIT Foundation</span>
+            <span class="badge neutral">PMP</span>
+            <span class="badge neutral">RMP</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Engagement Interests</h3>
+          <p>
+            Seeking roles as <strong>Project Manager</strong>, <strong>Agile Coach</strong>, or <strong>Development Lead</strong>
+            with forward-thinking organisations to drive value, adopt new tech, and build high-performing teams.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- Achievements -->
+    <div>
+      <div class="section-title">Past Work &amp; Key Achievements</div>
+
+      <div class="achGrid">
+        <div class="card ach">
+          <div class="title">Digital Transformation Programme — Major Bank (Middle East)</div>
+          <ul>
+            <li>Led end-to-end Agile transformation for 10+ teams (Scrum + SAFe).</li>
+            <li>Delivered digital banking platform: +30% customer engagement, -40% time-to-market.</li>
+            <li>Facilitated Agile training/workshops for 100+ staff.</li>
+          </ul>
+        </div>
+
+        <div class="card ach">
+          <div class="title">Utility Sector Modernisation — Large Indian Power Utility</div>
+          <ul>
+            <li>Rolled out cloud-based asset management: +25% operational efficiency.</li>
+            <li>Coordinated engineers, developers, and BAs to deliver milestones early.</li>
+          </ul>
+        </div>
+
+        <div class="card ach">
+          <div class="title">Enterprise Data Analytics Platform — European Retail Group</div>
+          <ul>
+            <li>Delivered enterprise analytics enabling real-time leadership insights.</li>
+            <li>Implemented risk management for compliance and security across phases.</li>
+          </ul>
+        </div>
+
+        <div class="card ach">
+          <div class="title">Mobile Application Development — Global Financial Services</div>
+          <ul>
+            <li>Led customer mobile app: 1M+ downloads, high user ratings.</li>
+            <li>Introduced DevOps practices to streamline deployments and improve release quality.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="actionsRow no-print">
+        <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">© RayGrow — Consultant Profile</div>
+</main>
+
+{% endblock %}

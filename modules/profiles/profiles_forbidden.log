@@ -1,0 +1,2 @@
+{"ts": "2026-01-04T10:53:18.192705Z", "kind": "ok", "reason": "cvfile_view_ok", "path": "/profiles/cvfile/1000000002/view", "method": "GET", "user_id": 3, "email": "rampal3d@gmail.com", "remote_addr": "127.0.0.1", "context": {"cvfile_id": 1000000002, "me_id": 3, "download": false}}
+{"ts": "2026-01-04T12:19:19.011628Z", "kind": "ok", "reason": "cvfile_view_ok", "path": "/profiles/cvfile/1000000002/view", "method": "GET", "user_id": 3, "email": "rampal3d@gmail.com", "remote_addr": "127.0.0.1", "context": {"cvfile_id": 1000000002, "me_id": 3, "download": false}}
