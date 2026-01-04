@@ -514,6 +514,9 @@ def thread(thread_id: int):
     is_owner = t.created_by == me_id
     if not is_broadcast:
         require_thread_member(thread_id, me_id)
+    elif not (is_owner or is_member):
+        flash("Subscribe to view this broadcast.", "warning")
+        return redirect(url_for("chat.index"))
 
     threads = _threads_for_user(me_id)
     thread_ids = [t.thread_id for t in threads]
@@ -880,6 +883,11 @@ def api_messages(thread_id: int):
     thread = ChatThread.query.get_or_404(thread_id)
     if thread.thread_type != "broadcast":
         require_thread_member(thread_id, me_id)
+    else:
+        is_owner = thread.created_by == me_id
+        is_member = _is_member(thread_id, me_id)
+        if not (is_owner or is_member):
+            return jsonify({"ok": False, "error": "Subscribe to view this broadcast."}), 403
     msgs = _visible_messages(thread, me_id)
     reaction_map = _reaction_summaries([m.message_id for m in msgs], me_id)
     return jsonify([_serialize_message(m, reaction_map.get(m.message_id, {})) for m in msgs])
@@ -932,6 +940,11 @@ def api_poll(thread_id: int):
     thread = ChatThread.query.get_or_404(thread_id)
     if thread.thread_type != "broadcast":
         require_thread_member(thread_id, me_id)
+    else:
+        is_owner = thread.created_by == me_id
+        is_member = _is_member(thread_id, me_id)
+        if not (is_owner or is_member):
+            return jsonify({"messages": [], "error": "Subscribe to view this broadcast."}), 403
     try:
         since = int(request.args.get("since", "0"))
     except ValueError:
