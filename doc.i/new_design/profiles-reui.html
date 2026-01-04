@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Profiles | RayGrow Bridge</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body { background: #f6f7fb; }
+    .app-shell { max-width: 1160px; }
+    .brand-badge {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #eaf2ff; color: #1c5cff; font-weight: 700;
+    }
+    .nav-pill .nav-link { border-radius: 999px; }
+    .soft-card { border: 1px solid rgba(0,0,0,.06); box-shadow: 0 1px 0 rgba(0,0,0,.02); }
+    .muted { color: #6c757d; }
+    .pill { border-radius: 999px; }
+    .cv-thumb {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: #f1f3f5; display:flex; align-items:center; justify-content:center;
+      font-weight: 700; color:#495057;
+    }
+    .kv dt { font-weight: 600; }
+    .kv dd { margin-bottom: .5rem; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Nav -->
+  <nav class="navbar bg-white border-bottom">
+    <div class="container app-shell">
+      <div class="d-flex align-items-center gap-2">
+        <span class="brand-badge">RG</span>
+        <div class="lh-sm">
+          <div class="fw-semibold">RayGrow Bridge</div>
+          <div class="small muted">Sat, Jan 03, 06:12 PM</div>
+        </div>
+      </div>
+
+      <ul class="nav nav-pills nav-pill gap-1">
+        <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#">Profiles</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Chat</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Social</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Services</a></li>
+      </ul>
+
+      <div class="d-flex align-items-center gap-2">
+        <div class="text-end">
+          <div class="small muted">Logged in</div>
+          <div class="fw-semibold small">iamrampal</div>
+        </div>
+        <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
+             style="width:34px;height:34px;">I</div>
+        <button class="btn btn-outline-secondary btn-sm pill">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container app-shell py-4">
+
+    <!-- Page header -->
+    <div class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-3">
+      <div>
+        <h1 class="h4 fw-bold mb-1">Profiles</h1>
+        <div class="muted small">Manage your vCard and CV files.</div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary pill" data-bs-toggle="modal" data-bs-target="#addCvModal">
+          + Add CV
+        </button>
+        <button class="btn btn-outline-primary pill" data-bs-toggle="modal" data-bs-target="#shareModal">
+          New Share
+        </button>
+      </div>
+    </div>
+
+    <!-- Layout: left content + right quick panel -->
+    <div class="row g-3">
+
+      <!-- LEFT -->
+      <div class="col-lg-8">
+
+        <!-- vCard -->
+        <div class="card soft-card mb-3">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <div>
+                <div class="fw-semibold">My vCard</div>
+                <div class="small muted">Your public profile basics (name, tagline, location).</div>
+              </div>
+              <button class="btn btn-outline-primary btn-sm pill">Edit</button>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <dl class="kv">
+                  <dt>Name</dt><dd>Rampal</dd>
+                  <dt>Email</dt><dd>rampal3d@gmail.com</dd>
+                  <dt>Phone</dt><dd class="muted">Not set</dd>
+                </dl>
+              </div>
+              <div class="col-md-6">
+                <dl class="kv">
+                  <dt>LinkedIn</dt><dd class="muted">linked.in</dd>
+                  <dt>Tagline</dt><dd>i am agile project manager</dd>
+                  <dt>Location</dt><dd>Noida</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CV Library -->
+        <div class="card soft-card mb-3">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <div>
+                <div class="fw-semibold">CV Library</div>
+                <div class="small muted">Upload or manage CVs and optional cover pages.</div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm pill">Collapse</button>
+              </div>
+            </div>
+
+            <hr class="my-3">
+
+            <!-- CV Cards -->
+            <div class="vstack gap-3">
+
+              <!-- CV Card -->
+              <div class="p-3 bg-white border rounded-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="cv-thumb">CV</div>
+                    <div>
+                      <div class="fw-semibold">Scrum master CV1</div>
+                      <div class="small muted">
+                        CV: <span class="text-success fw-semibold">Uploaded</span> •
+                        Cover: <span class="muted">Not uploaded</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-primary btn-sm pill">View</button>
+                    <label class="btn btn-outline-secondary btn-sm pill mb-0">
+                      Replace CV <input type="file" hidden>
+                    </label>
+                    <label class="btn btn-outline-secondary btn-sm pill mb-0">
+                      Upload Cover <input type="file" hidden>
+                    </label>
+                    <button class="btn btn-outline-secondary btn-sm pill">Preferences</button>
+                    <button class="btn btn-outline-danger btn-sm pill">Delete</button>
+                  </div>
+                </div>
+
+                <hr class="my-3">
+
+                <!-- Events / Tags (replaces “Events” column) -->
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div class="small muted">Events / Tags</div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge text-bg-light border">Scrum Master</span>
+                    <span class="badge text-bg-light border">Agile</span>
+                    <span class="badge text-bg-light border">Noida</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CV Card -->
+              <div class="p-3 bg-white border rounded-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="cv-thumb">CV</div>
+                    <div>
+                      <div class="fw-semibold">my CV</div>
+                      <div class="small muted">
+                        CV: <span class="muted">Not uploaded</span> •
+                        Cover: <span class="muted">Not uploaded</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-primary btn-sm pill" disabled>View</button>
+                    <label class="btn btn-primary btn-sm pill mb-0">
+                      Upload CV <input type="file" hidden>
+                    </label>
+                    <label class="btn btn-outline-secondary btn-sm pill mb-0">
+                      Upload Cover <input type="file" hidden>
+                    </label>
+                    <button class="btn btn-outline-secondary btn-sm pill">Preferences</button>
+                    <button class="btn btn-outline-danger btn-sm pill">Delete</button>
+                  </div>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div class="small muted">Events / Tags</div>
+                  <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge text-bg-light border">—</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Shared with me -->
+        <div class="card soft-card">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <div>
+                <div class="fw-semibold">CV Shared with me</div>
+                <div class="small muted">CVs shared to your account.</div>
+              </div>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>CV Name</th>
+                    <th>From</th>
+                    <th style="width: 160px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Product Master</td>
+                    <td>rcPMP</td>
+                    <td class="d-flex gap-2">
+                      <button class="btn btn-outline-primary btn-sm pill">View</button>
+                      <button class="btn btn-primary btn-sm pill">Chat</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Quick panel -->
+      <div class="col-lg-4">
+
+        <!-- Shares panel -->
+        <div class="card soft-card mb-3">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-start justify-content-between gap-2">
+              <div>
+                <div class="fw-semibold">CV Send</div>
+                <div class="small muted">Create links or share to handle/email.</div>
+              </div>
+              <button class="btn btn-outline-primary btn-sm pill" data-bs-toggle="modal" data-bs-target="#shareModal">
+                New Share
+              </button>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="vstack gap-2">
+              <div class="p-3 bg-white border rounded-4">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold small">Scrum master CV1</div>
+                    <div class="small muted">Type: Link • Target: —</div>
+                  </div>
+                  <button class="btn btn-outline-primary btn-sm pill">View</button>
+                </div>
+              </div>
+
+              <div class="p-3 bg-white border rounded-4">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold small">Scrum master CV1</div>
+                    <div class="small muted">Type: Handle • Target: james123</div>
+                  </div>
+                  <button class="btn btn-outline-primary btn-sm pill">View</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Help / Tips -->
+        <div class="card soft-card">
+          <div class="card-body p-4">
+            <div class="fw-semibold mb-1">Tips</div>
+            <div class="small muted mb-3">
+              Use Preferences to select which CV is default for sharing.
+            </div>
+            <ul class="small muted mb-0">
+              <li>Keep CV names role-based (e.g., “Scrum Master”, “PMO Lead”).</li>
+              <li>Upload a cover page only if required by clients.</li>
+              <li>Use “Share” instead of sending files over chat.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Add CV Modal -->
+  <div class="modal fade" id="addCvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add CV</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">CV Name</label>
+          <input class="form-control mb-3" placeholder="e.g., Scrum Master CV">
+
+          <label class="form-label">Upload CV file</label>
+          <input type="file" class="form-control">
+
+          <div class="form-text">You can upload cover later if needed.</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary pill" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary pill">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">New Share</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Select CV</label>
+          <select class="form-select mb-3">
+            <option>Scrum master CV1</option>
+            <option>my CV</option>
+          </select>
+
+          <label class="form-label">Share Type</label>
+          <select class="form-select mb-3">
+            <option>Link</option>
+            <option>Handle</option>
+            <option>Email</option>
+          </select>
+
+          <label class="form-label">Target (optional)</label>
+          <input class="form-control" placeholder="handle or email">
+
+          <div class="form-text">Create a share link or send access to a handle/email.</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary pill" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary pill">Create Share</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
