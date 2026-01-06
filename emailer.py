@@ -52,7 +52,7 @@ def send_services_ack_email(to_email: str, name: str, needs: str):
 
 
 def _send_email(subject: str, to_email: str, body: str):
-    """Send an email using SMTP settings from Flask config (app.ini)."""
+    """Send an email using SMTP settings from the loaded Flask config."""
     cfg = current_app.config
 
     msg = EmailMessage()

@@ -1,19 +1,30 @@
 import smtplib
 import configparser
+import os
+import platform
 from email.message import EmailMessage
 from pathlib import Path
 
 # =========================
-# LOAD app.ini
+# LOAD host-specific app config
 # =========================
-BASE_DIR = Path(__file__).resolve().parent
-INI_PATH = BASE_DIR / "app.ini"
+BASE_DIR = Path(__file__).resolve().parent.parent
+_raw_hostname = (
+    os.environ.get("COMPUTERNAME")
+    or os.environ.get("HOSTNAME")
+    or platform.node()
+    or "local"
+)
+_safe_hostname = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in _raw_hostname).strip("-_") or "local"
+_host_ini = BASE_DIR / f"app-{_safe_hostname}.in"
+_fallback_ini = BASE_DIR / "app.ini"
+INI_PATH = _host_ini if _host_ini.exists() else _fallback_ini
 
 cfg = configparser.ConfigParser()
 cfg.read(INI_PATH)
 
 if "email" not in cfg:
-    raise RuntimeError("Missing [email] section in app.ini")
+    raise RuntimeError(f"Missing [email] section in {INI_PATH.name}")
 
 SMTP_HOST = cfg.get("email", "smtp_host")
 SMTP_PORT = cfg.getint("email", "smtp_port", fallback=587)
@@ -28,10 +39,10 @@ TO_EMAIL = "james@rcpro.in"
 # BUILD MESSAGE
 # =========================
 msg = EmailMessage()
-msg["Subject"] = "SMTP TEST (from app.ini)"
+msg["Subject"] = f"SMTP TEST (from {INI_PATH.name})"
 msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
 msg["To"] = TO_EMAIL
-msg.set_content("Hello! This email was sent using SMTP settings from app.ini")
+msg.set_content(f"Hello! This email was sent using SMTP settings from {INI_PATH.name}")
 
 print("Connecting to SMTP server...")
 print("Host:", SMTP_HOST)

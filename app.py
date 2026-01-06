@@ -1,9 +1,10 @@
+import json
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
 from pathlib import Path
 import time
-from flask import Flask, redirect, request, url_for, g
+from flask import Flask, redirect, request, url_for, g, send_from_directory
 from flask_login import current_user
 
 from config import Config
@@ -193,6 +194,51 @@ def create_app():
             if request.path.startswith("/static/"):
                 return
             return redirect(f"{prefix}{request.path}", code=302)
+
+    # -------------------------------------------------
+    # Progressive Web App assets (manifest + service worker)
+    # -------------------------------------------------
+    manifest_route = f"/{subpath}/manifest.webmanifest" if subpath else "/manifest.webmanifest"
+    sw_route = f"/{subpath}/sw.js" if subpath else "/sw.js"
+
+    @app.route(manifest_route)
+    def manifest():
+        scope = f"/{subpath}/" if subpath else "/"
+        start_url = scope
+        manifest_data = {
+            "name": "RayGrow Bridge",
+            "short_name": "Bridge",
+            "scope": scope,
+            "start_url": start_url,
+            "display": "standalone",
+            "background_color": "#f6f8fc",
+            "theme_color": "#2563eb",
+            "description": "Access RayGrow Bridge on mobile with an installable experience.",
+            "icons": [
+                {
+                    "src": url_for("static", filename="icons/icon-192.png"),
+                    "sizes": "192x192",
+                    "type": "image/png",
+                    "purpose": "any maskable",
+                },
+                {
+                    "src": url_for("static", filename="icons/icon-512.png"),
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable",
+                },
+            ],
+        }
+        return app.response_class(
+            json.dumps(manifest_data, separators=(",", ":")),
+            mimetype="application/manifest+json",
+        )
+
+    @app.route(sw_route)
+    def service_worker():
+        response = send_from_directory(app.static_folder, "service-worker.js")
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     # -------------------------------------------------
     # Template globals (module access)

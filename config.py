@@ -1,10 +1,21 @@
 #
 import os
 import configparser
+import platform
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
-INI_PATH = BASE_DIR / "app.ini"
+_raw_hostname = (
+    os.environ.get("COMPUTERNAME")
+    or os.environ.get("HOSTNAME")
+    or platform.node()
+    or "local"
+)
+_safe_hostname = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in _raw_hostname).strip("-_") or "local"
+_host_ini = BASE_DIR / f"app-{_safe_hostname}.in"
+_fallback_ini = BASE_DIR / "app.ini"
+
+INI_PATH = _host_ini if _host_ini.exists() else _fallback_ini
 
 config = configparser.ConfigParser()
 
@@ -40,7 +51,7 @@ class Config:
     }
 
     if not SQLALCHEMY_DATABASE_URI:
-        raise RuntimeError("SQLALCHEMY_DATABASE_URI is required in app.ini")
+        raise RuntimeError(f"SQLALCHEMY_DATABASE_URI is required in {INI_PATH.name}")
 
     # --- Email / SMTP ---
     SMTP_HOST = config.get("email", "smtp_host", fallback="")
