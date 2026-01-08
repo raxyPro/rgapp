@@ -1,0 +1,133 @@
+Change required
+on profile home page the vcard is displayed which is not full. show an option to show full vcard and then expand.
+
+allow user to download json file of vCard.
+
+
+
+
+
+
+supporting details
+
+folder = module/profiles
+flask route =  route.py
+business logic class = service_profile.py
+
+data Structure
+
+-- ---- rb_cv_pair ----
+CREATE TABLE `rb_cv_pair` (
+  `cv_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `v_name` varchar(120) NOT NULL DEFAULT '',
+  `v_company` varchar(120) NOT NULL DEFAULT '',
+  `v_email` varchar(120) NOT NULL DEFAULT '',
+  `v_phone` varchar(50) NOT NULL DEFAULT '',
+  `v_primary_skill` varchar(120) NOT NULL DEFAULT '',
+  `v_skill_description` text NOT NULL,
+  `v_organizations` varchar(255) NOT NULL DEFAULT '',
+  `v_achievements` varchar(255) NOT NULL DEFAULT '',
+  `op_name` varchar(120) NOT NULL DEFAULT '',
+  `op_email` varchar(120) NOT NULL DEFAULT '',
+  `op_phone` varchar(50) NOT NULL DEFAULT '',
+  `op_title` varchar(150) NOT NULL DEFAULT '',
+  `op_linkedin_url` varchar(255) NOT NULL DEFAULT '',
+  `op_website_url` varchar(255) NOT NULL DEFAULT '',
+  `op_about` text NOT NULL,
+  `op_skills` text NOT NULL,
+  `op_experience` text NOT NULL,
+  `op_academic` text NOT NULL,
+  `op_achievements` text NOT NULL,
+  `op_final_remark` text NOT NULL,
+  `onepage_html` text NOT NULL,
+  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`cv_id`),
+  KEY `idx_cv_user` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+-- ---- rb_cv_profile ----
+CREATE TABLE `rb_cv_profile` (
+  `profile_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `doc_type` varchar(20) NOT NULL,
+  `details` json NOT NULL,
+  `pdf_data` longblob,
+  `pdf_name` varchar(255) DEFAULT NULL,
+  `pdf_mime` varchar(120) DEFAULT NULL,
+  `pdf_size` bigint DEFAULT NULL,
+  `cover_pdf_data` longblob,
+  `cover_pdf_name` varchar(255) DEFAULT NULL,
+  `cover_pdf_mime` varchar(120) DEFAULT NULL,
+  `cover_pdf_size` bigint DEFAULT NULL,
+  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`profile_id`),
+  KEY `idx_cv_profile_user` (`user_id`),
+  KEY `idx_cv_profile_user_type` (`user_id`,`doc_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=1000000005 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_cv_public_link ----
+CREATE TABLE `rb_cv_public_link` (
+  `link_id` bigint NOT NULL AUTO_INCREMENT,
+  `cvfile_id` bigint NOT NULL,
+  `created_by` bigint NOT NULL,
+  `share_type` enum('public','user','email') NOT NULL DEFAULT 'public',
+  `target` varchar(320) DEFAULT NULL,
+  `name` varchar(150) DEFAULT NULL,
+  `token` varchar(64) NOT NULL,
+  `allow_download` tinyint(1) NOT NULL DEFAULT '0',
+  `password_hash` varchar(255) DEFAULT NULL,
+  `status` enum('active','disabled') NOT NULL DEFAULT 'active',
+  `expires_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`link_id`),
+  UNIQUE KEY `uq_cv_public_token` (`token`),
+  KEY `idx_cv_public_cv` (`cvfile_id`),
+  KEY `idx_cv_public_creator` (`created_by`),
+  CONSTRAINT `fk_cv_public_profile` FOREIGN KEY (`cvfile_id`) REFERENCES `rb_cv_profile` (`profile_id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_cv_share ----
+CREATE TABLE `rb_cv_share` (
+  `share_id` bigint NOT NULL AUTO_INCREMENT,
+  `cv_id` bigint NOT NULL,
+  `owner_user_id` bigint NOT NULL,
+  `target_user_id` bigint DEFAULT NULL,
+  `target_email` varchar(200) DEFAULT NULL,
+  `share_token` varchar(64) NOT NULL,
+  `is_public` tinyint(1) NOT NULL DEFAULT '0',
+  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`share_id`),
+  UNIQUE KEY `uk_share_token` (`share_token`),
+  KEY `idx_share_cv` (`cv_id`),
+  KEY `idx_share_owner` (`owner_user_id`),
+  KEY `idx_share_target_user` (`target_user_id`),
+  KEY `idx_share_target_email` (`target_email`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ---- rb_cvfile_share ----
+CREATE TABLE `rb_cvfile_share` (
+  `share_id` bigint NOT NULL AUTO_INCREMENT,
+  `cvfile_id` bigint NOT NULL,
+  `owner_user_id` bigint NOT NULL,
+  `target_user_id` bigint DEFAULT NULL,
+  `target_email` varchar(200) DEFAULT NULL,
+  `share_token` varchar(64) NOT NULL,
+  `is_public` tinyint(1) NOT NULL DEFAULT '0',
+  `is_archived` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`share_id`),
+  UNIQUE KEY `uq_rb_cvfile_share_token` (`share_token`),
+  KEY `idx_rb_cvfile_share_cvfile` (`cvfile_id`),
+  KEY `idx_rb_cvfile_share_owner` (`owner_user_id`),
+  KEY `idx_rb_cvfile_share_target_user` (`target_user_id`),
+  KEY `idx_rb_cvfile_share_target_email` (`target_email`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+

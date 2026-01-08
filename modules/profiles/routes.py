@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import json
 from datetime import datetime, timedelta
+import json
 from io import BytesIO
-from pathlib import Path
 
-from flask import Blueprint, abort, current_app, redirect, render_template, request, url_for, send_file, flash
-from flask_login import login_required, current_user
+from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, flash
+from flask_login import login_required
 
 from extensions import db
 from models import RBUser, RBUserProfile
@@ -19,6 +18,22 @@ from modules.profiles.models import (
     RBCVPair,
     RBCVShare,
     RBCVPublicLink,
+)
+from modules.profiles.service_profile import (
+    _current_user_email_lower,
+    _log_event,
+    _forbidden,
+    _log_access,
+    _get_or_create_vcard,
+    _job_pref_from_vcard,
+    _vcard_items,
+    _get_cv_profile,
+    _find_user_by_handle,
+    _cv_name_exists,
+    _render_onepage_html,
+    _can_access_share_target,
+    build_vcard_export,
+    log_profile_action,
 )
 from modules.profiles.util import make_token, sanitize_filename, allowed_pdf
 from werkzeug.security import generate_password_hash
@@ -47,150 +62,6 @@ vcardviewer_bp = Blueprint(
     static_folder="static",
     url_prefix="/vcardviewer",
 )
-
-
-def _current_user_email_lower() -> str:
-    me = current_user.get_user() if hasattr(current_user, "get_user") else None
-    return (getattr(me, "email", "") or "").strip().lower()
-
-
-def _log_event(kind: str, reason: str, **context) -> None:
-    """Append a structured event to the Profiles log file."""
-    try:
-        cfg_path = current_app.config.get("CV_FORBIDDEN_LOG") if current_app else None
-        log_path = Path(cfg_path) if cfg_path else Path(__file__).resolve().parent / "profiles_forbidden.log"
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {
-            "ts": datetime.utcnow().isoformat() + "Z",
-            "kind": kind,
-            "reason": reason,
-            "path": request.path,
-            "method": request.method,
-            "user_id": get_current_user_id(),
-            "email": _current_user_email_lower(),
-            "remote_addr": request.headers.get("X-Forwarded-For", request.remote_addr),
-            "context": context,
-        }
-        with log_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(payload, default=str) + "\n")
-    except Exception:
-        # Never block the request because of logging issues
-        pass
-
-
-def _forbidden(reason: str, **context):
-    _log_event("forbidden", reason, **context)
-    abort(403)
-
-
-def _log_access(reason: str, **context):
-    """Log a successful access event (helps validate logging pipeline)."""
-    _log_event("ok", reason, **context)
-
-
-def _get_or_create_vcard(user_id: int) -> RBCVProfile:
-    v = RBCVProfile.query.filter_by(user_id=user_id, doc_type="vcard").first()
-    if not v:
-        v = RBCVProfile(
-            user_id=user_id,
-            doc_type="vcard",
-            details={
-                "name": "",
-                "email": "",
-                "phone": "",
-                "linkedin_url": "",
-                "tagline": "",
-                "location": None,
-                "work_mode": None,
-                "city": None,
-                "available_from": None,
-                "hours_per_day": None,
-                "skills": [],
-                "services": [],
-            },
-        )
-        db.session.add(v)
-        db.session.commit()
-    return v
-
-
-def _job_pref_from_vcard(v: RBCVProfile) -> str:
-    parts = []
-    if v.location:
-        parts.append(f"Location: {v.location}")
-    if v.work_mode:
-        label = "Work from office" if v.work_mode == "wfo" else ("Hybrid" if v.work_mode == "hybrid" else "Remote")
-        parts.append(f"Mode: {label}")
-    if v.city:
-        parts.append(f"City: {v.city}")
-    if v.available_from:
-        parts.append(f"Available from: {v.available_from}")
-    if v.hours_per_day:
-        parts.append(f"Hours/day: {v.hours_per_day}")
-    return "; ".join(parts)
-
-
-def _vcard_items(vcard_id: int):
-    vcard = RBCVProfile.query.filter_by(vcard_id=vcard_id, doc_type="vcard").first()
-    if not vcard:
-        return [], []
-    skills = sorted(vcard.skills or [], key=lambda i: i.get("sort_order", 0))
-    services = sorted(vcard.services or [], key=lambda i: i.get("sort_order", 0))
-    return skills, services
-
-
-def _get_cv_profile(cvfile_id: int) -> RBCVProfile:
-    c = RBCVProfile.query.get_or_404(cvfile_id)
-    if c.doc_type != "cv":
-        abort(404)
-    return c
-
-
-def _find_user_by_handle(handle: str) -> RBUser | None:
-    if not handle:
-        return None
-    h = handle.strip().lower()
-    prof = RBUserProfile.query.filter(RBUserProfile.handle == h).first()
-    if prof:
-        return RBUser.query.get(prof.user_id)
-    return None
-
-
-def _cv_name_exists(user_id: int, name: str, exclude_id: int | None = None) -> bool:
-    q = RBCVProfile.query.filter_by(user_id=user_id, doc_type="cv", is_archived=False)
-    if exclude_id:
-        q = q.filter(RBCVProfile.cvfile_id != exclude_id)
-    for cv in q.all():
-        if cv.cv_name.lower() == name.lower():
-            return True
-    return False
-
-
-def _render_onepage_html(p: RBCVPair) -> str:
-    """Generate a simple one-page HTML snippet from pair fields."""
-    sections = [
-        f"<h2>{p.op_name or p.v_name}</h2>",
-        f"<p><strong>Email:</strong> {p.op_email or p.v_email} | <strong>Phone:</strong> {p.op_phone or p.v_phone}</p>",
-        f"<p><strong>Title:</strong> {p.op_title}</p>",
-        f"<p><strong>LinkedIn:</strong> {(p.op_linkedin_url or p.v_linkedin_url or '')}</p>",
-        f"<p><strong>Website:</strong> {p.op_website_url or ''}</p>",
-        "<hr/>",
-        f"<h4>About</h4><p>{p.op_about or ''}</p>",
-        f"<h4>Skills</h4><p>{p.op_skills or ''}</p>",
-        f"<h4>Experience</h4><p>{p.op_experience or ''}</p>",
-        f"<h4>Academic</h4><p>{p.op_academic or ''}</p>",
-        f"<h4>Achievements</h4><p>{p.op_achievements or ''}</p>",
-        f"<h4>Final Remarks</h4><p>{p.op_final_remark or ''}</p>",
-    ]
-    return "\n".join(sections)
-
-
-def _can_access_share_target(target_user_id: int | None, target_email: str | None, me_id: int, me_email: str) -> bool:
-    if target_user_id is not None and target_user_id == me_id:
-        return True
-    if target_email and target_email.strip().lower() == me_email:
-        return True
-    return False
 
 
 @profiles_bp.get("/")
@@ -378,9 +249,60 @@ def save_vcard():
     vcard.services = services
 
     db.session.add(vcard)
-    db.session.commit()
+    log_profile_action(
+        "vcard_save",
+        "start",
+        vcard_id=vcard.vcard_id,
+        doc_type=vcard.doc_type,
+        fields={
+            "name": vcard.name,
+            "email": vcard.email,
+            "phone": vcard.phone,
+            "linkedin_url": vcard.linkedin_url,
+            "tagline": vcard.tagline,
+            "location": vcard.location,
+            "work_mode": vcard.work_mode,
+            "city": vcard.city,
+            "available_from": vcard.available_from,
+            "hours_per_day": vcard.hours_per_day,
+            "skills_count": len(skills),
+            "services_count": len(services),
+        },
+    )
+    try:
+        db.session.commit()
+    except Exception as exc:
+        log_profile_action(
+            "vcard_save",
+            "error",
+            vcard_id=vcard.vcard_id,
+            error=str(exc),
+        )
+        raise
+    log_profile_action(
+        "vcard_save",
+        "ok",
+        vcard_id=vcard.vcard_id,
+    )
     flash("vCard updated.", "success")
     return redirect(url_for("profiles.home"))
+
+
+@profiles_bp.get("/vcard/download")
+@login_required
+@module_required("profiles")
+def download_vcard_json():
+    me_id = get_current_user_id()
+    vcard = _get_or_create_vcard(me_id)
+    payload = build_vcard_export(vcard)
+    data = json.dumps(payload, ensure_ascii=True, indent=2)
+    filename = f"vcard_{me_id}.json"
+    return send_file(
+        BytesIO(data.encode("utf-8")),
+        mimetype="application/json",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 @profiles_bp.post("/pair/new")

@@ -6,6 +6,8 @@ from pathlib import Path
 import time
 from flask import Flask, redirect, request, url_for, g, send_from_directory
 from flask_login import current_user
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.exceptions import HTTPException
 
 from config import Config
 from extensions import db, login_manager
@@ -95,6 +97,67 @@ def create_app():
             pass
 
     # -------------------------------------------------
+    # Error logging (exceptions + request context)
+    # -------------------------------------------------
+    err_logger = None
+    if app.config.get("ERROR_LOG_ENABLED"):
+        logging.raiseExceptions = False
+        err_logger = logging.getLogger("app_errors")
+        err_logger.setLevel(logging.INFO)
+        err_logger.propagate = False
+        raw_dir = app.config.get("ERROR_LOG_DIR") or ""
+        raw_path = app.config.get("ERROR_LOG_PATH") or "error.log"
+        basename = app.config.get("ERROR_LOG_BASENAME") or Path(raw_path).name
+        if raw_dir:
+            log_path = Path(raw_dir)
+            if not log_path.is_absolute():
+                log_path = Path(app.root_path) / log_path
+            log_path.mkdir(parents=True, exist_ok=True)
+            log_path = log_path / basename
+        else:
+            log_path = Path(raw_path)
+            if not log_path.is_absolute():
+                log_path = Path(app.root_path) / raw_path
+        try:
+            has_handler = any(getattr(h, "_is_error_log_handler", False) for h in err_logger.handlers)
+            if not has_handler:
+                fh = TimedRotatingFileHandler(
+                    log_path,
+                    when="midnight",
+                    interval=1,
+                    backupCount=30,
+                    encoding="utf-8",
+                    utc=True,
+                )
+                fh.setLevel(logging.INFO)
+                fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+                fh._is_error_log_handler = True
+                err_logger.addHandler(fh)
+        except Exception:
+            err_logger = None
+
+    def _log_exception(exc: Exception):
+        if not err_logger:
+            return
+        try:
+            user_id = None
+            if current_user and current_user.is_authenticated:
+                u = current_user.get_user() if hasattr(current_user, "get_user") else None
+                user_id = getattr(u, "user_id", None)
+            err_logger.exception(
+                "EXC method=%s path=%s qs=%s user=%s remote=%s ua=%s",
+                request.method,
+                request.path,
+                request.query_string.decode(errors="ignore") if request.query_string else "",
+                user_id or "-",
+                request.headers.get("X-Forwarded-For", request.remote_addr),
+                request.headers.get("User-Agent", "-"),
+            )
+        except Exception:
+            # Never block requests because of logging failures
+            pass
+
+    # -------------------------------------------------
     # Register blueprints
     # -------------------------------------------------
     import routes_home
@@ -168,6 +231,25 @@ def create_app():
                 ctx.get("remote") or request.headers.get("X-Forwarded-For", request.remote_addr),
             )
         return response
+
+    @app.errorhandler(Exception)
+    def handle_exception(exc: Exception):
+        # Log unexpected errors (and 5xx HTTP exceptions).
+        if isinstance(exc, HTTPException):
+            if exc.code and exc.code < 500:
+                return exc
+        _log_exception(exc)
+        return exc
+
+    @app.errorhandler(SQLAlchemyError)
+    def handle_sql_exception(exc: SQLAlchemyError):
+        # Catch and log DB errors from any module.
+        _log_exception(exc)
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return exc
 
     # -------------------------------------------------
     # SUBPATH ENFORCEMENT (DISABLED FOR PASSENGER)

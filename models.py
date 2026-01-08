@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy.ext.mutable import MutableDict
 from extensions import db
 
 
@@ -39,7 +40,7 @@ class RBUserProfile(db.Model):
     display_name = db.Column(db.String(120), nullable=True)
 
     # keep JSON for later profile fields
-    rgData = db.Column(db.JSON, nullable=True)
+    rgData = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
 
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -62,8 +63,8 @@ class RBAudit(db.Model):
     actor_id = db.Column(db.BigInteger, nullable=True)
     source = db.Column(db.Enum("self", "admin", "api"), nullable=False, default="api")
 
-    prev_data = db.Column(db.JSON, nullable=True)
-    new_data = db.Column(db.JSON, nullable=True)
+    prev_data = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
+    new_data = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
 
 
 class RBInvitation(db.Model):

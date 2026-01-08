@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import synonym
 
 from extensions import db
@@ -26,7 +27,7 @@ class RBCVProfile(db.Model):
     owner_user_id = synonym("user_id")
 
     doc_type = db.Column(db.String(20), nullable=False, index=True)  # 'vcard' or 'cv'
-    details = db.Column(db.JSON, nullable=False, default=dict)
+    details = db.Column(MutableDict.as_mutable(db.JSON), nullable=False, default=dict)
 
     pdf_data = db.Column(db.LargeBinary, nullable=True)
     pdf_name = db.Column(db.String(255), nullable=True)

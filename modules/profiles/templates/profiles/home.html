@@ -63,7 +63,11 @@
           <h2>My vCard</h2>
           <p>Your public profile basics (name, tagline, location).</p>
         </div>
-        <a class="btn sm pill" href="{{ url_for('profiles.edit_vcard') }}">Edit</a>
+        <div class="actions">
+          <button class="btn sm pill" type="button" onclick="toggleVcardFull(this)">Show full vCard</button>
+          <a class="btn sm pill" href="{{ url_for('profiles.download_vcard_json') }}">Download JSON</a>
+          <a class="btn sm pill" href="{{ url_for('profiles.edit_vcard') }}">Edit</a>
+        </div>
       </div>
 
       <div class="cardBody">
@@ -79,6 +83,58 @@
             <dt>Tagline</dt><dd>{{ vcard.tagline or "Not set" }}</dd>
             <dt>Location</dt><dd>{{ vcard.location or "Not set" }}</dd>
           </dl>
+        </div>
+
+        <div id="vcardFull" style="display:none; margin-top:12px;">
+          <div class="innerCard subtle">
+            <div class="cardBody">
+              <div class="kvGrid">
+                <dl class="kv mb-0">
+                  <dt>Work mode</dt>
+                  <dd>
+                    {% if vcard.work_mode == 'wfo' %}Work from office{% elif vcard.work_mode == 'hybrid' %}Hybrid{% elif vcard.work_mode == 'remote' %}Remote{% else %}Not set{% endif %}
+                  </dd>
+                  <dt>City</dt><dd>{{ vcard.city or "Not set" }}</dd>
+                  <dt>Available from</dt><dd>{{ vcard.available_from or "Not set" }}</dd>
+                </dl>
+                <dl class="kv mb-0">
+                  <dt>Hours per day</dt><dd>{{ vcard.hours_per_day or "Not set" }}</dd>
+                  <dt>Skills</dt>
+                  <dd>
+                    {% if skills %}
+                      <div class="stack" style="gap:6px;">
+                        {% for s in skills %}
+                          <div>
+                            <div style="font-weight:800;">{{ s.title }}</div>
+                            {% if s.description %}<div class="text-muted small">{{ s.description }}</div>{% endif %}
+                            {% if s.experience %}<div class="text-muted small">Exp: {{ s.experience }}</div>{% endif %}
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <span class="text-muted">Not set</span>
+                    {% endif %}
+                  </dd>
+                  <dt>Services</dt>
+                  <dd>
+                    {% if services %}
+                      <div class="stack" style="gap:6px;">
+                        {% for s in services %}
+                          <div>
+                            <div style="font-weight:800;">{{ s.title }}</div>
+                            {% if s.description %}<div class="text-muted small">{{ s.description }}</div>{% endif %}
+                            {% if s.experience %}<div class="text-muted small">Exp: {{ s.experience }}</div>{% endif %}
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <span class="text-muted">Not set</span>
+                    {% endif %}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -496,6 +552,13 @@
     if(!el) return;
     if(forceShow){ el.style.display='block'; return; }
     el.style.display = el.style.display==='none' ? 'block' : 'none';
+  }
+  function toggleVcardFull(btn){
+    const el=document.getElementById('vcardFull');
+    if(!el) return;
+    const isHidden=getComputedStyle(el).display==='none';
+    el.style.display = isHidden ? 'block' : 'none';
+    if(btn) btn.textContent = isHidden ? 'Hide full vCard' : 'Show full vCard';
   }
   (function setupShareSwitch(){
     const radios=document.querySelectorAll('input[name="share_method"]');

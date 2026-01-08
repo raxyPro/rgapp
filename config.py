@@ -12,10 +12,17 @@ _raw_hostname = (
     or "local"
 )
 _safe_hostname = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in _raw_hostname).strip("-_") or "local"
-_host_ini = BASE_DIR / f"app-{_safe_hostname}.in"
+if "hosting.com" in _raw_hostname:
+    _safe_hostname = "prod1"
+
+_host_ini = BASE_DIR / f"app-{_safe_hostname}.ini"
 _fallback_ini = BASE_DIR / "app.ini"
 
 INI_PATH = _host_ini if _host_ini.exists() else _fallback_ini
+print(_host_ini)
+print(INI_PATH)
+
+#exit(1)
 
 config = configparser.ConfigParser()
 
@@ -72,3 +79,8 @@ class Config:
     HTTP_LOG_DIR = config.get("logging", "http_log_dir", fallback=str(BASE_DIR / "logs"))
     HTTP_LOG_BASENAME = config.get("logging", "http_log_basename", fallback="http.log")
 
+    # --- Error logging ---
+    ERROR_LOG_ENABLED = config.getboolean("logging", "error_log_enabled", fallback=True)
+    ERROR_LOG_PATH = config.get("logging", "error_log_path", fallback=str(BASE_DIR / "error.log"))
+    ERROR_LOG_DIR = config.get("logging", "error_log_dir", fallback=str(BASE_DIR / "logs"))
+    ERROR_LOG_BASENAME = config.get("logging", "error_log_basename", fallback="error.log")
