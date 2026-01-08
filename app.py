@@ -50,6 +50,7 @@ def create_app():
     # App startup logging
     # -------------------------------------------------
     app_logger = None
+    print("ERROR_LOG_ENABLED =", app.config.get("ERROR_LOG_ENABLED"))
     if app.config.get("ERROR_LOG_ENABLED"):
         logging.raiseExceptions = False
         app_logger = logging.getLogger("app_startup")
