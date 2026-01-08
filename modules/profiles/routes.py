@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 import json
+from inspect import signature
 from io import BytesIO
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, flash
@@ -62,6 +63,18 @@ vcardviewer_bp = Blueprint(
     static_folder="static",
     url_prefix="/vcardviewer",
 )
+
+
+_SEND_FILE_NAME_PARAM = (
+    "download_name"
+    if "download_name" in signature(send_file).parameters
+    else "attachment_filename"
+)
+
+
+def _send_file_named(fileobj, filename: str, **kwargs):
+    kwargs[_SEND_FILE_NAME_PARAM] = filename
+    return send_file(fileobj, **kwargs)
 
 
 @profiles_bp.get("/")
@@ -295,13 +308,13 @@ def download_vcard_json():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
     payload = build_vcard_export(vcard)
-    data = json.dumps(payload, ensure_ascii=True, indent=2)
+    data = json.dumps(payload, ensure_ascii=True, indent=2, default=str)
     filename = f"vcard_{me_id}.json"
-    return send_file(
+    return _send_file_named(
         BytesIO(data.encode("utf-8")),
+        filename,
         mimetype="application/json",
         as_attachment=True,
-        download_name=filename,
     )
 
 
@@ -673,11 +686,11 @@ def cvfile_view(cvfile_id: int):
     _log_access("cvfile_view_ok", cvfile_id=cvfile_id, me_id=me_id, download=False)
     if not c.pdf_data:
         abort(404)
-    return send_file(
+    return _send_file_named(
         BytesIO(c.pdf_data),
+        c.original_filename or "cv.pdf",
         mimetype=c.mime_type or "application/pdf",
         as_attachment=False,
-        download_name=c.original_filename or "cv.pdf",
         conditional=True,
     )
 
@@ -693,11 +706,11 @@ def cvfile_cover_view(cvfile_id: int):
     _log_access("cvfile_cover_ok", cvfile_id=cvfile_id, me_id=me_id)
     if not c.cover_pdf_data:
         abort(404)
-    return send_file(
+    return _send_file_named(
         BytesIO(c.cover_pdf_data),
+        c.cover_letter_name or "cover-letter.pdf",
         mimetype=c.cover_letter_mime or "application/pdf",
         as_attachment=False,
-        download_name=c.cover_letter_name or "cover-letter.pdf",
         conditional=True,
     )
 
@@ -1189,11 +1202,11 @@ def file(token: str):
         _forbidden("public_link_download_not_allowed", token=token, cvfile_id=c.cvfile_id)
     as_attachment = download_requested and allow_dl
 
-    return send_file(
+    return _send_file_named(
         BytesIO(c.pdf_data),
+        c.original_filename or "cv.pdf",
         mimetype=c.mime_type or "application/pdf",
         as_attachment=as_attachment,
-        download_name=c.original_filename or "cv.pdf",
         conditional=True,
     )
 
@@ -1214,11 +1227,11 @@ def cover(token: str):
     if not c.cover_pdf_data:
         abort(404)
 
-    return send_file(
+    return _send_file_named(
         BytesIO(c.cover_pdf_data),
+        c.cover_letter_name or "cover-letter.pdf",
         mimetype=c.cover_letter_mime or "application/pdf",
         as_attachment=False,
-        download_name=c.cover_letter_name or "cover-letter.pdf",
         conditional=True,
     )
 
