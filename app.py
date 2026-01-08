@@ -47,6 +47,49 @@ def create_app():
     login_manager.init_app(app)
 
     # -------------------------------------------------
+    # App startup logging
+    # -------------------------------------------------
+    app_logger = None
+    if app.config.get("ERROR_LOG_ENABLED"):
+        logging.raiseExceptions = False
+        app_logger = logging.getLogger("app_startup")
+        app_logger.setLevel(logging.INFO)
+        app_logger.propagate = False
+        raw_dir = app.config.get("ERROR_LOG_DIR") or ""
+        raw_path = app.config.get("ERROR_LOG_PATH") or "app.log"
+        basename = "app.log"
+        if raw_dir:
+            log_path = Path(raw_dir)
+            if not log_path.is_absolute():
+                log_path = Path(app.root_path) / log_path
+            log_path.mkdir(parents=True, exist_ok=True)
+            log_path = log_path / basename
+        else:
+            log_path = Path(raw_path)
+            if not log_path.is_absolute():
+                log_path = Path(app.root_path) / raw_path
+        try:
+            has_handler = any(getattr(h, "_is_app_log_handler", False) for h in app_logger.handlers)
+            if not has_handler:
+                fh = TimedRotatingFileHandler(
+                    log_path,
+                    when="midnight",
+                    interval=1,
+                    backupCount=30,
+                    encoding="utf-8",
+                    utc=True,
+                )
+                fh.setLevel(logging.INFO)
+                fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+                fh._is_app_log_handler = True
+                app_logger.addHandler(fh)
+        except Exception:
+            app_logger = None
+
+        if app_logger:
+            app_logger.info("Application startup: pid=%s", os.getpid())
+
+    # -------------------------------------------------
     # HTTP traffic logging (requests + responses)
     # -------------------------------------------------
     http_logger = None
