@@ -1,34 +1,80 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h3 class="mb-0">Assign Modules</h3>
-    <div class="text-muted">User: <b>{{ user.email }}</b> (ID: {{ user.user_id }})</div>
+<style>
+  .assign-shell {
+    max-width: 720px;
+    margin: 0 auto;
+    border: 1px solid #d9e2f1;
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(35, 60, 120, 0.14);
+    background: #f4f8ff;
+    overflow: hidden;
+  }
+  .assign-head {
+    padding: 14px 18px;
+    background: #f7f9ff;
+    border-bottom: 1px solid #dfe6f4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+  }
+  .assign-body {
+    padding: 18px;
+    background: #fff;
+  }
+  .assign-list {
+    border: 1px solid #e0e6f2;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .assign-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e9edf6;
+  }
+  .assign-item:last-child { border-bottom: none; }
+  .assign-item input { width: 18px; height: 18px; }
+  .assign-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 18px 18px;
+    background: #f7f9ff;
+    border-top: 1px solid #dfe6f4;
+  }
+</style>
+
+<div class="assign-shell">
+  <div class="assign-head">
+    <div>Assign Modules</div>
+    <a class="btn btn-sm btn-outline-secondary" href="/admin/">Back</a>
   </div>
-  <a class="btn btn-outline-secondary" href="/admin/">Back</a>
-</div>
-
-<div class="card p-4">
-  <form method="post">
-    <div class="mb-3">
-      <div class="small text-muted mb-2">
-        Check the modules this user should have access to.
-      </div>
-
-      {% for m in modules %}
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="modules" id="mod_{{ m.module_key }}" value="{{ m.module_key }}"
-                 {% if m.module_key in assigned_keys %}checked{% endif %}>
-          <label class="form-check-label" for="mod_{{ m.module_key }}">
-            <b>{{ m.name }}</b>
-            {% if m.description %}<span class="text-muted">— {{ m.description }}</span>{% endif %}
-            {% if not m.is_enabled %}<span class="badge text-bg-secondary">disabled globally</span>{% endif %}
+  <div class="assign-body">
+    <div class="text-muted small mb-3">Assign modules to <b>{{ user.email }}</b></div>
+    <form method="post">
+      <div class="assign-list">
+        {% for m in modules %}
+          <label class="assign-item">
+            <input class="form-check-input" type="checkbox" name="modules" value="{{ m.module_key }}"
+                   {% if m.module_key in assigned_keys %}checked{% endif %}>
+            <div>
+              <div><b>{{ m.name }}</b></div>
+              {% if m.description %}<div class="text-muted small">{{ m.description }}</div>{% endif %}
+            </div>
+            {% if not m.is_enabled %}
+              <span class="badge text-bg-secondary ms-auto">disabled globally</span>
+            {% endif %}
           </label>
-        </div>
-      {% endfor %}
-    </div>
-
-    <button class="btn btn-primary" type="submit">Save</button>
-  </form>
+        {% endfor %}
+      </div>
+      <div class="assign-actions">
+        <button class="btn btn-outline-secondary" type="button" onclick="window.location='/admin/'">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}
