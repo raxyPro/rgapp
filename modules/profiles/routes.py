@@ -318,12 +318,21 @@ def download_vcard_json():
         bytes=len(data),
     )
     try:
-        return _send_file_named(
+        resp = _send_file_named(
             BytesIO(data.encode("utf-8")),
             filename,
             mimetype="application/json",
             as_attachment=True,
         )
+        log_profile_action(
+            "vcard_download",
+            "ok",
+            vcard_id=vcard.vcard_id,
+            content_type=resp.headers.get("Content-Type"),
+            content_disposition=resp.headers.get("Content-Disposition"),
+            content_length=resp.calculate_content_length(),
+        )
+        return resp
     except Exception as exc:
         log_profile_action(
             "vcard_download",
