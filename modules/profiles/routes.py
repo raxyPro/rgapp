@@ -5,7 +5,7 @@ import json
 from inspect import signature
 from io import BytesIO
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, flash
+from flask import Blueprint, abort, redirect, render_template, request, url_for, send_file, flash, current_app
 from flask_login import login_required
 
 from extensions import db
@@ -309,6 +309,7 @@ def download_vcard_json():
     vcard = _get_or_create_vcard(me_id)
     payload = build_vcard_export(vcard)
     data = json.dumps(payload, ensure_ascii=True, indent=2, default=str)
+    payload_bytes = data.encode("utf-8")
     filename = f"vcard_{me_id}.json"
     log_profile_action(
         "vcard_download",
@@ -318,12 +319,9 @@ def download_vcard_json():
         bytes=len(data),
     )
     try:
-        resp = _send_file_named(
-            BytesIO(data.encode("utf-8")),
-            filename,
-            mimetype="application/json",
-            as_attachment=True,
-        )
+        resp = current_app.response_class(payload_bytes, mimetype="application/octet-stream")
+        resp.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+        resp.headers["Content-Length"] = str(len(payload_bytes))
         log_profile_action(
             "vcard_download",
             "ok",
