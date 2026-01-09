@@ -1,86 +1,284 @@
 {% extends "app_shell.html" %}
 {% block content %}
-{% include "profiles/_profile_styles.html" %}
 
-<div class="profile-header">
-  <h1 class="profile-title">Profiles</h1>
-  <p class="profile-subtitle">Manage your vCard and CVs easily.</p>
-</div>
+<style>
+  :root {
+    --p-blue: #5a7fbe;
+    --p-blue-soft: #e7f1ff;
+    --p-green: #8bb963;
+    --p-green-soft: #eef6e9;
+    --p-orange: #d89a5b;
+    --p-orange-soft: #f9efe4;
+    --p-yellow: #f0c060;
+    --p-yellow-soft: #fbf4e2;
+    --p-purple: #b69ad2;
+    --p-purple-soft: #efe9f8;
+    --p-border: #d9dee7;
+    --p-text: #24324a;
+    --p-muted: #6b7280;
+  }
 
-<div class="profile-stack">
-  <section class="card profile-card">
-    <div class="profile-card-head">
-      <div class="profile-card-title">
-        <div class="profile-icon vcard"><i class="bi bi-person-badge"></i></div>
-        <div>
-          <h2>My vCard</h2>
-          <p>Manage your public profile basics.</p>
-        </div>
+  .profiles-wrap {
+    display: grid;
+    gap: 14px;
+  }
+
+  .profile-card {
+    background: #fff;
+    border: 1px solid var(--p-border);
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(36, 50, 74, 0.06);
+    overflow: hidden;
+  }
+
+  .section-head {
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-weight: 700;
+    color: var(--p-text);
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .section-title i {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+  }
+
+  .section-body {
+    padding: 14px;
+  }
+
+  .vcard-panel {
+    display: grid;
+    grid-template-columns: 84px 1fr auto;
+    gap: 14px;
+    background: var(--p-blue-soft);
+    border-radius: 10px;
+    padding: 14px;
+    align-items: center;
+  }
+
+  .vcard-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #d8e6ff;
+    display: grid;
+    place-items: center;
+    color: #3b5ea0;
+    font-size: 30px;
+  }
+
+  .vcard-name {
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .vcard-sub {
+    color: var(--p-muted);
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  .vcard-meta {
+    display: grid;
+    gap: 4px;
+    font-size: 12.5px;
+    color: #475569;
+  }
+
+  .vcard-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .vcard-actions .btn {
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 6px 12px;
+  }
+
+  .vcard-actions .btn-primary {
+    background: #4f7dc6;
+    border-color: #4f7dc6;
+  }
+
+  .cv-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #faf7ef;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .cv-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .cv-title {
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cv-status {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .pill.green { background: #7eb156; }
+  .pill.orange { background: #e2a157; }
+
+  .cv-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 30px;
+    border: 1px solid #d5dbe6;
+    border-radius: 6px;
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #3f506e;
+  }
+
+  .icon-btn.danger { color: #c2410c; border-color: #f1c8b3; }
+
+  .section-add {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .send-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #efd9c6;
+    background: #fff8ef;
+    margin-bottom: 8px;
+  }
+
+  .tips-list {
+    display: grid;
+    gap: 8px;
+    font-size: 13px;
+    color: #5f4b2f;
+  }
+
+  .tips-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .shared-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid #d9d2e8;
+    border-radius: 8px;
+    background: #f6f3fb;
+  }
+
+  .shared-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  @media (max-width: 900px) {
+    .vcard-panel { grid-template-columns: 1fr; }
+    .vcard-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+</style>
+
+<div class="profiles-wrap">
+  <section class="profile-card">
+    <div class="section-head" style="background:#f6f8fc;">
+      <div class="section-title">
+        <i class="bi bi-person-badge" style="background: var(--p-blue);"></i>
+        My vCard
       </div>
     </div>
-    <div class="card-body">
-      <div class="d-flex gap-3 align-items-center flex-wrap">
-        <div class="profile-avatar"><i class="bi bi-person"></i></div>
+    <div class="section-body">
+      <div class="vcard-panel">
+        <div class="vcard-avatar"><i class="bi bi-person"></i></div>
         <div>
-          <div class="profile-row-title">{{ vcard.name or "Your name" }}</div>
-          <div class="text-muted small">{{ vcard.tagline or "Add a short tagline" }}</div>
-          <div class="profile-row-sub"><i class="bi bi-envelope"></i> {{ vcard.email or "Email not set" }}</div>
-          <div class="profile-row-sub"><i class="bi bi-geo-alt"></i> {{ vcard.location or "Location not set" }}</div>
+          <div class="vcard-name">{{ vcard.name or "Your name" }}</div>
+          <div class="vcard-sub">{{ vcard.tagline or "Marketing Specialist" }}</div>
+          <div class="vcard-meta">
+            <div><i class="bi bi-envelope"></i> {{ vcard.email or "email@example.com" }}</div>
+            <div><i class="bi bi-geo-alt"></i> {{ vcard.location or "New York, NY" }}</div>
+          </div>
         </div>
-      </div>
-      <div class="profile-actions mt-3">
-        <button class="btn btn-sm btn-outline-secondary profile-btn" type="button" onclick="toggleVcardFull(this)">View vCard</button>
-        <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profiles.download_vcard_json') }}">Download JSON</a>
-        <a class="btn btn-sm btn-primary profile-btn" href="{{ url_for('profiles.edit_vcard') }}">Edit</a>
+        <div class="vcard-actions">
+          <button class="btn btn-primary" type="button" onclick="toggleVcardFull(this)"><i class="bi bi-heart-fill"></i> View vCard</button>
+          <a class="btn btn-primary" href="{{ url_for('profiles.download_vcard_json') }}"><i class="bi bi-download"></i> Download JSON</a>
+          <a class="btn btn-primary" href="{{ url_for('profiles.edit_vcard') }}"><i class="bi bi-pencil"></i> Edit</a>
+        </div>
       </div>
 
       <div id="vcardFull" style="display:none; margin-top:12px;">
-        <div class="card" style="box-shadow:none; border: 1px solid var(--profile-border);">
-          <div class="card-body">
-            <div class="profile-form-grid">
-              <dl class="mb-0">
-                <dt class="small text-muted">Work mode</dt>
-                <dd class="mb-2">
+        <div class="profile-card" style="box-shadow:none; border-color:#dfe6f2;">
+          <div class="section-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="text-muted small">Work mode</div>
+                <div>
                   {% if vcard.work_mode == 'wfo' %}Work from office{% elif vcard.work_mode == 'hybrid' %}Hybrid{% elif vcard.work_mode == 'remote' %}Remote{% else %}Not set{% endif %}
-                </dd>
-                <dt class="small text-muted">City</dt><dd class="mb-2">{{ vcard.city or "Not set" }}</dd>
-                <dt class="small text-muted">Available from</dt><dd class="mb-2">{{ vcard.available_from or "Not set" }}</dd>
-              </dl>
-              <dl class="mb-0">
-                <dt class="small text-muted">Hours per day</dt><dd class="mb-2">{{ vcard.hours_per_day or "Not set" }}</dd>
-                <dt class="small text-muted">Skills</dt>
-                <dd class="mb-2">
-                  {% if skills %}
-                    <div class="profile-list" style="gap:6px;">
-                      {% for s in skills %}
-                        <div>
-                          <div class="profile-row-title">{{ s.title }}</div>
-                          {% if s.description %}<div class="text-muted small">{{ s.description }}</div>{% endif %}
-                          {% if s.experience %}<div class="text-muted small">Exp: {{ s.experience }}</div>{% endif %}
-                        </div>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <span class="text-muted small">Not set</span>
-                  {% endif %}
-                </dd>
-                <dt class="small text-muted">Services</dt>
-                <dd class="mb-0">
-                  {% if services %}
-                    <div class="profile-list" style="gap:6px;">
-                      {% for s in services %}
-                        <div>
-                          <div class="profile-row-title">{{ s.title }}</div>
-                          {% if s.description %}<div class="text-muted small">{{ s.description }}</div>{% endif %}
-                          {% if s.experience %}<div class="text-muted small">Exp: {{ s.experience }}</div>{% endif %}
-                        </div>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <span class="text-muted small">Not set</span>
-                  {% endif %}
-                </dd>
-              </dl>
+                </div>
+                <div class="text-muted small mt-2">City</div>
+                <div>{{ vcard.city or "Not set" }}</div>
+              </div>
+              <div class="col-md-6">
+                <div class="text-muted small">Available from</div>
+                <div>{{ vcard.available_from or "Not set" }}</div>
+                <div class="text-muted small mt-2">Hours per day</div>
+                <div>{{ vcard.hours_per_day or "Not set" }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -88,57 +286,54 @@
     </div>
   </section>
 
-  <section class="card profile-card">
-    <div class="profile-card-head">
-      <div class="profile-card-title">
-        <div class="profile-icon library"><i class="bi bi-folder2-open"></i></div>
-        <div>
-          <h2>CV Library</h2>
-          <p>Upload or manage CVs and optional cover pages.</p>
-        </div>
+  <section class="profile-card">
+    <div class="section-head" style="background: var(--p-green-soft);">
+      <div class="section-title">
+        <i class="bi bi-file-earmark" style="background: var(--p-green);"></i>
+        CV Library
       </div>
-      <button class="btn btn-sm btn-outline-secondary profile-btn" type="button" onclick="toggleCvFiles()">Collapse</button>
+      <button class="btn btn-success section-add" type="button" onclick="showNewCvRow()">Add New CV</button>
     </div>
-    <div class="card-body">
-      <div id="newCvRow" class="card" style="display:none; margin-bottom:12px; box-shadow:none;">
-        <div class="card-body">
-          <form class="profile-form-grid" method="post" action="{{ url_for('profiles.cvfile_new') }}" enctype="multipart/form-data">
-            <div>
+    <div class="section-body">
+      <div id="newCvRow" class="profile-card" style="display:none; margin-bottom:12px; box-shadow:none;">
+        <div class="section-body">
+          <form class="row g-2" method="post" action="{{ url_for('profiles.cvfile_new') }}" enctype="multipart/form-data">
+            <div class="col-md-8">
               <label class="form-label">CV Name</label>
               <input class="form-control" name="cv_name" placeholder="e.g., Scrum Master CV" required>
-              <div class="form-text">You can upload CV/cover after creating.</div>
             </div>
-            <div class="d-flex justify-content-end gap-2 align-items-end">
-              <button class="btn btn-primary profile-btn" type="submit">Save</button>
-              <button class="btn btn-outline-secondary profile-btn" type="button" onclick="hideNewCvRow()">Cancel</button>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+              <button class="btn btn-success w-100" type="submit">Save</button>
+              <button class="btn btn-outline-secondary w-100" type="button" onclick="hideNewCvRow()">Cancel</button>
             </div>
           </form>
         </div>
       </div>
 
-      <div id="cvFilesBody" class="profile-list">
-        {% for c in cv_files %}
-        <div class="profile-row">
+      {% for c in cv_files %}
+        <div class="cv-row">
           <div>
-            <div class="profile-row-title">{{ c.cv_name }}</div>
-            <div class="profile-row-sub">
-              <span class="profile-pill">CV: {{ 'Uploaded' if c.pdf_name else 'Not uploaded' }}</span>
-              <span class="profile-pill">Cover: {{ 'Uploaded' if c.cover_pdf_name else 'Not uploaded' }}</span>
+            <div class="cv-title"><i class="bi bi-bookmark-fill text-primary"></i> {{ c.cv_name }}</div>
+            <div class="cv-status">
+              <span class="pill green"><i class="bi bi-check"></i> CV {{ 'Uploaded' if c.pdf_name else 'Missing' }}</span>
+              {% if c.cover_pdf_name %}
+                <span class="pill orange"><i class="bi bi-check"></i> Cover Uploaded</span>
+              {% endif %}
             </div>
           </div>
-          <div class="profile-row-actions">
+          <div class="cv-actions">
             {% if c.pdf_name %}
-              <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profiles.cvfile_view', cvfile_id=c.cvfile_id) }}" target="_blank">View</a>
-              <label class="btn btn-sm btn-outline-secondary profile-btn mb-0" for="cv_file_{{ c.cvfile_id }}">Replace CV</label>
+              <a class="icon-btn" href="{{ url_for('profiles.cvfile_view', cvfile_id=c.cvfile_id) }}" title="View" aria-label="View"><i class="bi bi-eye"></i></a>
+              <label class="icon-btn" for="cv_file_{{ c.cvfile_id }}" title="Replace CV" aria-label="Replace CV"><i class="bi bi-arrow-repeat"></i></label>
             {% else %}
-              <label class="btn btn-sm btn-primary profile-btn mb-0" for="cv_file_{{ c.cvfile_id }}">Upload CV</label>
+              <label class="icon-btn" for="cv_file_{{ c.cvfile_id }}" title="Upload CV" aria-label="Upload CV"><i class="bi bi-upload"></i></label>
             {% endif %}
 
-            <label class="btn btn-sm btn-outline-secondary profile-btn mb-0" for="cover_file_{{ c.cvfile_id }}">{{ 'Replace Cover' if c.cover_pdf_name else 'Upload Cover' }}</label>
-            <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profiles.share_cvfile', cvfile_id=c.cvfile_id) }}">Share</a>
-            <button class="btn btn-sm btn-outline-secondary profile-btn" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Preferences</button>
+            <label class="icon-btn" for="cover_file_{{ c.cvfile_id }}" title="Upload Cover" aria-label="Upload Cover"><i class="bi bi-file-earmark-arrow-up"></i></label>
+            <a class="icon-btn" href="{{ url_for('profiles.share_cvfile', cvfile_id=c.cvfile_id) }}" title="Share" aria-label="Share"><i class="bi bi-share"></i></a>
+            <button class="icon-btn" type="button" onclick="togglePref('{{ c.cvfile_id }}')" title="Preferences" aria-label="Preferences"><i class="bi bi-sliders"></i></button>
             <form method="post" action="{{ url_for('profiles.cvfile_delete', cvfile_id=c.cvfile_id) }}" onsubmit="return confirm('Delete this CV?');">
-              <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Delete</button>
+              <button class="icon-btn danger" type="submit" title="Delete" aria-label="Delete"><i class="bi bi-trash"></i></button>
             </form>
 
             <form id="cv_upload_form_{{ c.cvfile_id }}" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}" enctype="multipart/form-data">
@@ -155,25 +350,22 @@
           </div>
         </div>
 
-        <div id="pref_wrap_{{ c.cvfile_id }}" style="display:none;">
-          <div class="card" style="box-shadow:none;">
-            <div class="card-body">
-              <form class="profile-form-grid" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}"
+        <div id="pref_wrap_{{ c.cvfile_id }}" style="display:none; margin-bottom:8px;">
+          <div class="profile-card" style="box-shadow:none; border-color:#e3eadb;">
+            <div class="section-body">
+              <form class="row g-2" method="post" action="{{ url_for('profiles.cvfile_edit', cvfile_id=c.cvfile_id) }}"
                     onsubmit="return buildPref('{{ c.cvfile_id }}')">
                 <input type="hidden" name="job_pref" id="job_pref_hidden_{{ c.cvfile_id }}" value="{{ c.job_pref or '' }}">
-
-                <div>
+                <div class="col-md-6">
                   <label class="form-label">CV Name</label>
                   <input class="form-control" name="cv_name" value="{{ c.cv_name }}" required>
                 </div>
-
-                <div>
+                <div class="col-md-6">
                   <label class="form-label">Preferred location</label>
                   <input class="form-control" id="pref_loc_{{ c.cvfile_id }}" placeholder="e.g., Remote"
                          value="{{ c.details.job_pref_loc if c.details and c.details.job_pref_loc else '' }}">
                 </div>
-
-                <div>
+                <div class="col-md-4">
                   <label class="form-label">Work mode</label>
                   <select class="form-select" id="pref_mode_{{ c.cvfile_id }}">
                     <option value="">Select</option>
@@ -182,56 +374,40 @@
                     <option value="remote">Remote</option>
                   </select>
                 </div>
-
-                <div>
+                <div class="col-md-4">
                   <label class="form-label">City</label>
                   <input class="form-control" id="pref_city_{{ c.cvfile_id }}" placeholder="e.g., Mumbai">
                 </div>
-
-                <div>
-                  <label class="form-label">Available from</label>
-                  <input class="form-control" type="date" id="pref_from_{{ c.cvfile_id }}">
-                </div>
-
-                <div>
+                <div class="col-md-4">
                   <label class="form-label">Hours per day</label>
                   <input class="form-control" type="number" min="1" max="24" id="pref_hours_{{ c.cvfile_id }}">
                 </div>
-
-                <div class="span-2 d-flex justify-content-end gap-2">
-                  <button class="btn btn-primary profile-btn" type="submit">Save</button>
-                  <button class="btn btn-outline-secondary profile-btn" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Cancel</button>
+                <div class="col-12 d-flex justify-content-end gap-2">
+                  <button class="btn btn-success" type="submit">Save</button>
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePref('{{ c.cvfile_id }}')">Cancel</button>
                 </div>
               </form>
             </div>
           </div>
         </div>
-        {% else %}
-          <div class="text-muted small">No CVs yet. Use "Add New CV" to create one.</div>
-        {% endfor %}
-      </div>
-
-      <div class="profile-divider"></div>
-      <button class="btn btn-outline-secondary profile-btn w-100" type="button" onclick="showNewCvRow()"><i class="bi bi-plus"></i> Add New CV</button>
+      {% else %}
+        <div class="text-muted small">No CVs yet. Use "Add New CV" to create one.</div>
+      {% endfor %}
     </div>
   </section>
 
-  <section class="card profile-card">
-    <div class="profile-card-head">
-      <div class="profile-card-title">
-        <div class="profile-icon send"><i class="bi bi-send"></i></div>
-        <div>
-          <h2>CV Send</h2>
-          <p>Create or manage shares for your CVs.</p>
-        </div>
+  <section class="profile-card">
+    <div class="section-head" style="background: var(--p-orange-soft);">
+      <div class="section-title">
+        <i class="bi bi-send" style="background: var(--p-orange);"></i>
+        CV Send
       </div>
+      <button class="btn btn-warning section-add" type="button" onclick="toggleSendForm(true)">New Share</button>
     </div>
-    <div class="card-body">
-      <button class="btn btn-outline-secondary profile-btn w-100" type="button" onclick="toggleSendForm(true)">New Share</button>
-
-      <div id="sendForm" style="display:none; margin-top:12px;">
-        <form class="profile-form-grid" method="post" action="{{ url_for('profiles.share_cvfile_new') }}">
-          <div>
+    <div class="section-body">
+      <div id="sendForm" style="display:none; margin-bottom:12px;">
+        <form class="row g-2" method="post" action="{{ url_for('profiles.share_cvfile_new') }}">
+          <div class="col-md-6">
             <label class="form-label">Select CV</label>
             <select class="form-select" name="cvfile_id" required>
               <option value="">Choose</option>
@@ -240,8 +416,7 @@
               {% endfor %}
             </select>
           </div>
-
-          <div>
+          <div class="col-md-6">
             <label class="form-label">Share option</label>
             <div class="d-flex gap-3 flex-wrap">
               <label class="d-flex align-items-center gap-1" style="margin:0;">
@@ -258,139 +433,95 @@
               </label>
             </div>
           </div>
-
-          <div id="linkFields" class="profile-form-grid span-2">
-            <div>
-              <label class="form-label">Expiry (minutes)</label>
-              <input class="form-control" type="number" name="expiry_minutes" min="0" max="1440" value="15">
-            </div>
-            <div>
-              <label class="form-label">Password (optional)</label>
-              <input class="form-control" type="text" name="password" placeholder="Set password (optional)">
-            </div>
+          <div id="linkFields" class="col-md-6">
+            <label class="form-label">Expiry (minutes)</label>
+            <input class="form-control" type="number" name="expiry_minutes" min="0" max="1440" value="15">
           </div>
-
-          <div id="handleFields" class="span-2" style="display:none;">
+          <div id="linkFields2" class="col-md-6">
+            <label class="form-label">Password (optional)</label>
+            <input class="form-control" type="text" name="password" placeholder="Set password (optional)">
+          </div>
+          <div id="handleFields" class="col-md-6" style="display:none;">
             <label class="form-label">Handle</label>
             <input class="form-control" type="text" name="handle" placeholder="e.g., user123">
-            <div class="form-text">Must match an existing handle.</div>
           </div>
-
-          <div id="emailFields" class="span-2" style="display:none;">
+          <div id="emailFields" class="col-md-6" style="display:none;">
             <label class="form-label">Email</label>
             <input class="form-control" type="email" name="email" placeholder="name@example.com">
           </div>
-
-          <div class="span-2 d-flex justify-content-end gap-2">
-            <button class="btn btn-primary profile-btn" type="submit">Save share</button>
-            <button class="btn btn-outline-secondary profile-btn" type="button" onclick="toggleSendForm()">Cancel</button>
+          <div class="col-12 d-flex justify-content-end gap-2">
+            <button class="btn btn-warning" type="submit">Save share</button>
+            <button class="btn btn-outline-secondary" type="button" onclick="toggleSendForm()">Cancel</button>
           </div>
         </form>
       </div>
 
-      <div class="profile-divider"></div>
-
       {% if my_shares or my_public_links %}
-        <div class="profile-list">
-          {% for s in my_public_links %}
-          <div class="profile-row">
-            <div>
-              <div class="profile-row-title">
-                {{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}
-              </div>
-              <div class="profile-row-sub">Link share</div>
-              <div class="small">
-                <a href="{{ url_for('profileviewer.view', token=s.token, _external=True) }}" target="_blank">{{ url_for('profileviewer.view', token=s.token, _external=True) }}</a>
-              </div>
-            </div>
-            <div class="profile-row-actions">
-              <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=s.link_id) }}" onsubmit="return confirm('Delete this share?');">
-                <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Delete</button>
-              </form>
-            </div>
+        {% for s in my_public_links %}
+          <div class="send-row">
+            <div><i class="bi bi-link-45deg"></i> Link Share</div>
+            <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=s.link_id) }}" onsubmit="return confirm('Delete this share?');">
+              <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
+            </form>
           </div>
-          {% endfor %}
+        {% endfor %}
 
-          {% for s in my_shares %}
-          <div class="profile-row">
+        {% for s in my_shares %}
+          <div class="send-row">
             <div>
-              <div class="profile-row-title">
-                {{ (cv_files|selectattr('cvfile_id','equalto', s.cvfile_id)|list|first).cv_name if cv_files else ('CV #' ~ s.cvfile_id) }}
-              </div>
-              <div class="profile-row-sub">
-                {% if s.target_user_id %}
-                  {% set u = share_users.get(s.target_user_id) %}
-                  {% set p = share_profiles.get(s.target_user_id) %}
-                  Handle share to {{ p.handle or u.email if u else ('User #' ~ s.target_user_id) }}
-                {% else %}
-                  Email share to {{ s.target_email }}
-                {% endif %}
-              </div>
-              <div class="small">
-                <a href="{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}" target="_blank">{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}</a>
-              </div>
+              {% if s.target_user_id %}
+                <i class="bi bi-person"></i> Handle Share
+              {% else %}
+                <i class="bi bi-envelope"></i> Email Share
+              {% endif %}
             </div>
-            <div class="profile-row-actions">
-              <form method="post" action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=s.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
-                <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Delete</button>
-              </form>
-            </div>
+            <form method="post" action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=s.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
+              <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
+            </form>
           </div>
-          {% endfor %}
-        </div>
+        {% endfor %}
       {% else %}
         <div class="text-muted small">No shares yet.</div>
       {% endif %}
     </div>
   </section>
 
-  <section class="card profile-card">
-    <div class="profile-card-head">
-      <div class="profile-card-title">
-        <div class="profile-icon tips"><i class="bi bi-lightbulb"></i></div>
-        <div>
-          <h2>Tips</h2>
-          <p>Make the most of your profile.</p>
-        </div>
+  <section class="profile-card">
+    <div class="section-head" style="background: var(--p-yellow-soft);">
+      <div class="section-title">
+        <i class="bi bi-lightbulb" style="background: var(--p-yellow);"></i>
+        Tips
       </div>
     </div>
-    <div class="card-body">
-      <ul class="small text-muted mb-0" style="margin:0; padding-left: 18px;">
-        <li>Keep your CV updated.</li>
-        <li>Highlight key skills and experience.</li>
-        <li>Customize your message when sharing.</li>
+    <div class="section-body">
+      <ul class="tips-list" style="padding-left:0; list-style:none;">
+        <li><i class="bi bi-check-circle-fill" style="color:#d89a5b;"></i> Keep your CV updated</li>
+        <li><i class="bi bi-check-circle-fill" style="color:#d89a5b;"></i> Customize cover letters</li>
+        <li><i class="bi bi-check-circle-fill" style="color:#d89a5b;"></i> Expand your network</li>
       </ul>
     </div>
   </section>
 
-  <section class="card profile-card">
-    <div class="profile-card-head">
-      <div class="profile-card-title">
-        <div class="profile-icon shared"><i class="bi bi-people"></i></div>
-        <div>
-          <h2>CV Shared with me</h2>
-          <p>CVs shared to your account.</p>
-        </div>
+  <section class="profile-card">
+    <div class="section-head" style="background: var(--p-purple-soft);">
+      <div class="section-title">
+        <i class="bi bi-folder-check" style="background: var(--p-purple);"></i>
+        CV Shared with Me
       </div>
     </div>
-    <div class="card-body">
+    <div class="section-body">
       {% if cvfile_shares %}
-        <div class="profile-list">
-          {% for s in cvfile_shares %}
-            {% set doc = shared_cvfiles.get(s.cvfile_id) if shared_cvfiles else None %}
-            {% set owner = owners.get(s.owner_user_id) if owners else None %}
-            <div class="profile-row">
-              <div>
-                <div class="profile-row-title">{{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</div>
-                <div class="profile-row-sub">From {{ owner.handle or owner.email if owner else ("User #" ~ s.owner_user_id) }}</div>
-              </div>
-              <div class="profile-row-actions">
-                <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank">View</a>
-                <a class="btn btn-sm btn-primary profile-btn" href="{{ url_for('chat.start_dm', user_id=s.owner_user_id) }}">Chat</a>
-              </div>
+        {% for s in cvfile_shares %}
+          {% set doc = shared_cvfiles.get(s.cvfile_id) if shared_cvfiles else None %}
+          {% set owner = owners.get(s.owner_user_id) if owners else None %}
+          <div class="shared-row">
+            <div><i class="bi bi-file-earmark"></i> {{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</div>
+            <div class="shared-actions">
+              <a class="btn btn-primary btn-sm" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank"><i class="bi bi-eye"></i> View</a>
+              <a class="btn btn-primary btn-sm" href="{{ url_for('chat.start_dm', user_id=s.owner_user_id) }}"><i class="bi bi-chat"></i> Chat</a>
             </div>
-          {% endfor %}
-        </div>
+          </div>
+        {% endfor %}
       {% else %}
         <div class="text-muted small">No CVs shared with you yet.</div>
       {% endif %}
@@ -399,12 +530,6 @@
 </div>
 
 <script>
-  function toggleCvFiles(){
-    const el=document.getElementById('cvFilesBody');
-    if(!el) return;
-    const isHidden=getComputedStyle(el).display==='none';
-    el.style.display = isHidden ? '' : 'none';
-  }
   function showNewCvRow(){
     const row=document.getElementById('newCvRow');
     if(row) row.style.display='block';
@@ -423,7 +548,6 @@
     const loc=document.getElementById('pref_loc_'+id)?.value.trim();
     const mode=document.getElementById('pref_mode_'+id)?.value;
     const city=document.getElementById('pref_city_'+id)?.value.trim();
-    const from=document.getElementById('pref_from_'+id)?.value;
     const hrs=document.getElementById('pref_hours_'+id)?.value;
     if(loc) parts.push('Location: '+loc);
     if(mode){
@@ -431,7 +555,6 @@
       parts.push('Mode: '+label);
     }
     if(city) parts.push('City: '+city);
-    if(from) parts.push('Available from: '+from);
     if(hrs) parts.push('Hours/day: '+hrs);
     const hidden=document.getElementById('job_pref_hidden_'+id);
     if(hidden) hidden.value=parts.join('; ');
@@ -453,11 +576,13 @@
   (function setupShareSwitch(){
     const radios=document.querySelectorAll('input[name="share_method"]');
     const link=document.getElementById('linkFields');
+    const link2=document.getElementById('linkFields2');
     const handle=document.getElementById('handleFields');
     const email=document.getElementById('emailFields');
     function update(){
       const val=[...radios].find(r=>r.checked)?.value;
-      if(link) link.style.display = val==='link'?'grid':'none';
+      if(link) link.style.display = val==='link'?'block':'none';
+      if(link2) link2.style.display = val==='link'?'block':'none';
       if(handle) handle.style.display = val==='handle'?'block':'none';
       if(email) email.style.display = val==='email'?'block':'none';
     }
