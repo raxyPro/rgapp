@@ -1,33 +1,158 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card p-4">
-      <h3 class="mb-3">Login</h3>
-      <form method="post">
-        <label class="form-label">Email</label>
-        <input name="email" class="form-control" required>
+<style>
+  .login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px 80px;
+    background: radial-gradient(1200px 520px at 50% 0%, #cfe6ff 0%, #e8f2ff 35%, #f7fbff 70%, #ffffff 100%);
+  }
+  .login-card {
+    width: min(520px, 100%);
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e5edf7;
+    box-shadow: 0 20px 60px rgba(31, 69, 123, 0.18);
+    overflow: hidden;
+  }
+  .login-head {
+    padding: 26px 28px 22px;
+    background: linear-gradient(180deg, #f3f8ff 0%, #ffffff 100%);
+    position: relative;
+  }
+  .login-head::after {
+    content: "";
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    bottom: -16px;
+    height: 42px;
+    background: radial-gradient(60% 100% at 50% 0%, rgba(90, 127, 190, 0.18) 0%, rgba(90, 127, 190, 0) 70%);
+  }
+  .login-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    font-weight: 700;
+    color: #1f4f91;
+    font-size: 20px;
+  }
+  .login-brand span {
+    color: #4b6fa5;
+    font-weight: 500;
+  }
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #e2eefc;
+    display: grid;
+    place-items: center;
+    color: #1f4f91;
+    font-size: 18px;
+  }
+  .login-sub {
+    text-align: center;
+    color: #5b6e88;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+  .login-body {
+    padding: 28px;
+  }
+  .login-form {
+    display: grid;
+    gap: 16px;
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid #d6dde8;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .input-row i {
+    color: #5c6e86;
+  }
+  .input-row input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 14px;
+  }
+  .login-btn {
+    background: #0d63c9;
+    border: none;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .login-link {
+    text-align: center;
+    color: #0d63c9;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .login-link:hover {
+    text-decoration: underline;
+  }
+  .login-divider {
+    height: 1px;
+    background: #e4e9f2;
+    margin: 6px 0 2px;
+  }
+  .login-foot {
+    text-align: center;
+    color: #6b7280;
+    font-size: 12.5px;
+  }
+  @media (max-width: 520px) {
+    .login-head {
+      padding: 22px 18px 18px;
+    }
+    .login-body {
+      padding: 22px 18px 24px;
+    }
+  }
+</style>
 
-        <label class="form-label mt-3">Password</label>
-        <input name="password" type="password" class="form-control" required>
-
-        <button class="btn btn-primary w-100 mt-4">Login</button>
-        <button
-          type="button"
-          class="btn btn-outline-secondary w-100 mt-2"
-          data-screenshot
-          data-screenshot-name="login-page.png"
-        >
-          Save Screenshot
-        </button>
-        <div class="mt-3">
-  <a href="/forgot" class="small">Forgot password?</a>
-</div>
-
-      </form>
-      <div class="text-muted small mt-3">
-        Invite-only system. Ask admin for an invitation.
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-head">
+      <div class="login-brand">
+        <div class="brand-icon"><i class="bi bi-diagram-3"></i></div>
+        <div>RayGrow <span>Bridge</span></div>
       </div>
+      <div class="login-sub">Collaboration that delivers: Consulting, Talent, Project Management</div>
+    </div>
+    <div class="login-body">
+      <form method="post" class="login-form">
+        <div>
+          <label class="form-label">Email</label>
+          <div class="input-row">
+            <i class="bi bi-envelope"></i>
+            <input name="email" type="email" placeholder="Email" required>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Password</label>
+          <div class="input-row">
+            <i class="bi bi-lock"></i>
+            <input name="password" type="password" placeholder="Password" required>
+          </div>
+        </div>
+        <button class="login-btn" type="submit">Log In</button>
+        <a href="/forgot" class="login-link">Forgot password?</a>
+        <div class="login-divider"></div>
+        <div class="login-foot">Invite-only system. Ask admin for an invitation.</div>
+      </form>
     </div>
   </div>
 </div>
