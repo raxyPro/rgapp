@@ -310,12 +310,28 @@ def download_vcard_json():
     payload = build_vcard_export(vcard)
     data = json.dumps(payload, ensure_ascii=True, indent=2, default=str)
     filename = f"vcard_{me_id}.json"
-    return _send_file_named(
-        BytesIO(data.encode("utf-8")),
-        filename,
-        mimetype="application/json",
-        as_attachment=True,
+    log_profile_action(
+        "vcard_download",
+        "start",
+        vcard_id=vcard.vcard_id,
+        doc_type=vcard.doc_type,
+        bytes=len(data),
     )
+    try:
+        return _send_file_named(
+            BytesIO(data.encode("utf-8")),
+            filename,
+            mimetype="application/json",
+            as_attachment=True,
+        )
+    except Exception as exc:
+        log_profile_action(
+            "vcard_download",
+            "error",
+            vcard_id=vcard.vcard_id,
+            error=str(exc),
+        )
+        raise
 
 
 @profiles_bp.post("/pair/new")
