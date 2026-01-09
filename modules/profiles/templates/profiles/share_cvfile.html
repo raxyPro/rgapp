@@ -1,200 +1,219 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+{% include "profiles/_profile_styles.html" %}
+
+<div class="profile-header d-flex align-items-center justify-content-between flex-wrap gap-2">
   <div>
-    <h1 class="h3 mb-1">Share CV</h1>
-    <p class="text-muted mb-0">Create public links or private shares with quick actions.</p>
+    <h1 class="profile-title">Share CV</h1>
+    <p class="profile-subtitle">Create public links or private shares with quick actions.</p>
   </div>
-  <a class="btn btn-outline-secondary" href="{{ url_for('profiles.home') }}">Back</a>
+  <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profiles.home') }}">Back</a>
 </div>
 
-<section class="card mb-3">
-  <div class="card-header d-flex justify-content-between align-items-center">
-    <div>
-      <h2 class="h5 mb-1">Document</h2>
-      <p class="text-muted small mb-0">Confirm you're sharing the right file.</p>
+<div class="profile-stack">
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon library"><i class="bi bi-file-earmark-text"></i></div>
+        <div>
+          <h2>Document</h2>
+          <p>Confirm you're sharing the right file.</p>
+        </div>
+      </div>
+      <span class="badge bg-secondary-subtle text-secondary-emphasis">Owner: You</span>
     </div>
-    <span class="badge bg-secondary-subtle text-secondary-emphasis">Owner: You</span>
-  </div>
-  <div class="card-body">
-    <div class="d-flex align-items-center gap-3">
-      <div class="rounded bg-light text-dark fw-bold d-flex align-items-center justify-content-center" style="width:44px;height:44px;">CV</div>
-      <div>
-        <div class="fw-semibold">{{ c.cv_name }}</div>
-        <div class="text-muted small">{{ c.original_filename }}</div>
+    <div class="card-body">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded bg-light text-dark fw-bold d-flex align-items-center justify-content-center" style="width:44px;height:44px;">CV</div>
+        <div>
+          <div class="fw-semibold">{{ c.cv_name }}</div>
+          <div class="text-muted small">{{ c.original_filename }}</div>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="card mb-3">
-  <div class="card-header">
-    <h2 class="h5 mb-1">Add new share</h2>
-    <p class="text-muted small mb-0">Create a share via public link, Raygrow ID, or email. Optional expiry/password.</p>
-  </div>
-  <div class="card-body">
-    <form class="row g-3" method="post" action="{{ url_for('profiles.create_public_link', cvfile_id=c.cvfile_id) }}">
-      <div class="col-md-4">
-        <label class="form-label">Share type</label>
-        <select class="form-select" name="share_type" id="share_type" onchange="toggleTarget()">
-          <option value="public">Public link</option>
-          <option value="user">Raygrow ID</option>
-          <option value="email">Email</option>
-        </select>
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon share"><i class="bi bi-send"></i></div>
+        <div>
+          <h2>Add new share</h2>
+          <p>Create a share via public link, Raygrow ID, or email.</p>
+        </div>
       </div>
-      <div class="col-md-4" id="target_wrap">
-        <label class="form-label" id="target_label">Target (ID or email)</label>
-        <input class="form-control" name="target" id="target" placeholder="User ID or email">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Name (optional)</label>
-        <input class="form-control" name="name" placeholder="Recruiter A">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Expiry (minutes, 0 = no expiry)</label>
-        <input class="form-control" name="expiry_minutes" type="number" min="0" max="1440" value="0" required>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Allow download</label>
-        <select class="form-select" name="allow_download">
-          <option value="false">No (view only)</option>
-          <option value="true">Yes</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Password (optional)</label>
-        <input class="form-control" name="password" type="password" placeholder="Set password">
-        <div class="form-text">Hashed server-side.</div>
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button class="btn btn-primary w-100" type="submit">Add share</button>
-      </div>
-    </form>
+    </div>
+    <div class="card-body">
+      <form class="profile-form-grid" method="post" action="{{ url_for('profiles.create_public_link', cvfile_id=c.cvfile_id) }}">
+        <div>
+          <label class="form-label">Share type</label>
+          <select class="form-select" name="share_type" id="share_type" onchange="toggleTarget()">
+            <option value="public">Public link</option>
+            <option value="user">Raygrow ID</option>
+            <option value="email">Email</option>
+          </select>
+        </div>
+        <div id="target_wrap">
+          <label class="form-label" id="target_label">Target (ID or email)</label>
+          <input class="form-control" name="target" id="target" placeholder="User ID or email">
+        </div>
+        <div>
+          <label class="form-label">Name (optional)</label>
+          <input class="form-control" name="name" placeholder="Recruiter A">
+        </div>
+        <div>
+          <label class="form-label">Expiry (minutes, 0 = no expiry)</label>
+          <input class="form-control" name="expiry_minutes" type="number" min="0" max="1440" value="0" required>
+        </div>
+        <div>
+          <label class="form-label">Allow download</label>
+          <select class="form-select" name="allow_download">
+            <option value="false">No (view only)</option>
+            <option value="true">Yes</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Password (optional)</label>
+          <input class="form-control" name="password" type="password" placeholder="Set password">
+          <div class="form-text">Hashed server-side.</div>
+        </div>
+        <div class="span-2 d-flex justify-content-end">
+          <button class="btn btn-primary profile-btn" type="submit">Add share</button>
+        </div>
+      </form>
 
-    <div class="table-responsive mt-4">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th style="width:6%;">S.No.</th>
-            <th style="width:14%;">Type</th>
-            <th style="width:24%;">Target</th>
-            <th>URL</th>
-            <th style="width:18%;">Valid Till</th>
-            <th style="width:12%;">Status</th>
-            <th class="text-end" style="width:16%;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if public_links %}
-            {% for pl in public_links %}
-              {% set obj = pl.obj %}
-              {% set status = pl.status %}
-              {% set rem = pl.rem_secs %}
-              <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ obj.share_type.title() }}</td>
-                <td>{{ obj.target or obj.name or '-' }}</td>
-                <td class="text-truncate" style="max-width:360px;">
-                  <a href="{{ url_for('profileviewer.view', token=obj.token) }}" target="_blank">{{ url_for('profileviewer.view', token=obj.token, _external=True) }}</a>
-                </td>
-                <td>
-                  {% if obj.expires_at %}
-                    {% if rem is not none and rem <= 0 %}Expired{% else %}{{ obj.expires_at }}{% endif %}
-                  {% else %}No expiry{% endif %}
-                </td>
-                <td>
-                  {% if status == "expired" %}
-                    <span class="badge text-bg-danger">Expired</span>
-                  {% elif status == "disabled" %}
-                    <span class="badge text-bg-secondary">Disabled</span>
-                  {% elif rem is not none and rem <= 300 %}
-                    <span class="badge text-bg-warning">Expiring</span>
-                  {% else %}
-                    <span class="badge text-bg-success">Active</span>
-                  {% endif %}
-                </td>
-                <td class="text-end">
-                  <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
-                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('profileviewer.view', token=obj.token) }}" target="_blank">View</a>
-                    <form method="post" action="{{ url_for('profiles.extend_public_link', link_id=obj.link_id) }}">
-                      <button class="btn btn-sm btn-outline-warning" type="submit">+10m</button>
-                    </form>
-                    {% if status != "disabled" %}
-                    <form method="post" action="{{ url_for('profiles.disable_public_link', link_id=obj.link_id) }}">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">Disable</button>
-                    </form>
+      <div class="profile-divider"></div>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="width:6%">S.No.</th>
+              <th style="width:14%">Type</th>
+              <th style="width:24%">Target</th>
+              <th>URL</th>
+              <th style="width:18%">Valid Till</th>
+              <th style="width:12%">Status</th>
+              <th class="text-end" style="width:16%">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if public_links %}
+              {% for pl in public_links %}
+                {% set obj = pl.obj %}
+                {% set status = pl.status %}
+                {% set rem = pl.rem_secs %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td>{{ obj.share_type.title() }}</td>
+                  <td>{{ obj.target or obj.name or '-' }}</td>
+                  <td class="text-truncate" style="max-width:360px;">
+                    <a href="{{ url_for('profileviewer.view', token=obj.token) }}" target="_blank">{{ url_for('profileviewer.view', token=obj.token, _external=True) }}</a>
+                  </td>
+                  <td>
+                    {% if obj.expires_at %}
+                      {% if rem is not none and rem <= 0 %}Expired{% else %}{{ obj.expires_at }}{% endif %}
+                    {% else %}No expiry{% endif %}
+                  </td>
+                  <td>
+                    {% if status == "expired" %}
+                      <span class="badge text-bg-danger">Expired</span>
+                    {% elif status == "disabled" %}
+                      <span class="badge text-bg-secondary">Disabled</span>
+                    {% elif rem is not none and rem <= 300 %}
+                      <span class="badge text-bg-warning">Expiring</span>
+                    {% else %}
+                      <span class="badge text-bg-success">Active</span>
                     {% endif %}
-                    <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=obj.link_id) }}" onsubmit="return confirm('Delete this share?');">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr><td colspan="7" class="text-muted">No shares yet.</td></tr>
-          {% endif %}
-        </tbody>
-      </table>
+                  </td>
+                  <td class="text-end">
+                    <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
+                      <a class="btn btn-sm btn-outline-primary profile-btn" href="{{ url_for('profileviewer.view', token=obj.token) }}" target="_blank">View</a>
+                      <form method="post" action="{{ url_for('profiles.extend_public_link', link_id=obj.link_id) }}">
+                        <button class="btn btn-sm btn-outline-warning profile-btn" type="submit">+10m</button>
+                      </form>
+                      {% if status != "disabled" %}
+                      <form method="post" action="{{ url_for('profiles.disable_public_link', link_id=obj.link_id) }}">
+                        <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Disable</button>
+                      </form>
+                      {% endif %}
+                      <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=obj.link_id) }}" onsubmit="return confirm('Delete this share?');">
+                        <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="7" class="text-muted">No shares yet.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="card">
-  <div class="card-header">
-    <h2 class="h5 mb-1">Existing shares</h2>
-    <p class="text-muted small mb-0">User/email shares you have created for this CV.</p>
-  </div>
-  <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th style="width:10%;">Type</th>
-            <th style="width:28%;">Target</th>
-            <th style="width:22%;">Created</th>
-            <th style="width:24%;">Token</th>
-            <th class="text-end" style="width:16%;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% if shares %}
-            {% for s in shares %}
-              {% set kind = 'Public' if s.is_public else ('User' if s.target_user_id else 'Email') %}
-              {% set u = None %}
-              {% if s.target_user_id %}
-                {% set u = users|selectattr('user_id','equalto',s.target_user_id)|first %}
-              {% endif %}
-              <tr>
-                <td>{{ kind }}</td>
-                <td>
-                  {% if s.is_public %}
-                    Anyone with link
-                  {% elif s.target_user_id %}
-                    {{ u.display_label if u and u.display_label else ('User #' ~ s.target_user_id) }}
-                  {% else %}
-                    {{ s.target_email }}
-                  {% endif %}
-                </td>
-                <td>{{ s.created_at }}</td>
-                <td class="text-muted small">{{ s.share_token }}</td>
-                <td class="text-end">
-                  <form method="post"
-                        action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=c.cvfile_id, share_id=s.share_id) }}"
-                        onsubmit="return confirm('Delete this share?');">
-                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                  </form>
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr><td colspan="5" class="text-muted">No private shares yet.</td></tr>
-          {% endif %}
-        </tbody>
-      </table>
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon public"><i class="bi bi-people"></i></div>
+        <div>
+          <h2>Existing shares</h2>
+          <p>User/email shares you have created for this CV.</p>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="width:10%">Type</th>
+              <th style="width:28%">Target</th>
+              <th style="width:22%">Created</th>
+              <th style="width:24%">Token</th>
+              <th class="text-end" style="width:16%">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if shares %}
+              {% for s in shares %}
+                {% set kind = 'Public' if s.is_public else ('User' if s.target_user_id else 'Email') %}
+                {% set u = None %}
+                {% if s.target_user_id %}
+                  {% set u = users|selectattr('user_id','equalto',s.target_user_id)|first %}
+                {% endif %}
+                <tr>
+                  <td>{{ kind }}</td>
+                  <td>
+                    {% if s.is_public %}
+                      Anyone with link
+                    {% elif s.target_user_id %}
+                      {{ u.display_label if u and u.display_label else ('User #' ~ s.target_user_id) }}
+                    {% else %}
+                      {{ s.target_email }}
+                    {% endif %}
+                  </td>
+                  <td>{{ s.created_at }}</td>
+                  <td class="text-muted small">{{ s.share_token }}</td>
+                  <td class="text-end">
+                    <form method="post"
+                          action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=c.cvfile_id, share_id=s.share_id) }}"
+                          onsubmit="return confirm('Delete this share?');">
+                      <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="text-muted">No private shares yet.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
 
 <script>
   function toggleTarget(){

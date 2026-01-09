@@ -107,9 +107,9 @@
 
     const actionBar = `
       <div class="actions">
-        ${canReply ? `<button class="btn btn-outline-primary" type="button" onclick="setReply('${m.message_id}', '${escapeHtml(senderLabel(m.sender_id))}')">Reply</button>` : ""}
-        ${canReact ? `<button class="btn btn-outline-secondary react-toggle" type="button" onclick="toggleReactions('${m.message_id}')">😊</button>` : ""}
-        ${canEdit ? `<button class="btn btn-outline-secondary" type="button" onclick="toggleEdit('${m.message_id}')">Edit</button>` : ""}
+        ${canReply ? `<button class="btn btn-outline-primary profile-btn btn-sm" type="button" onclick="setReply('${m.message_id}', '${escapeHtml(senderLabel(m.sender_id))}')" title="Reply" aria-label="Reply"><i class="bi bi-reply"></i></button>` : ""}
+        ${canReact ? `<button class="btn btn-outline-secondary profile-btn btn-sm react-toggle" type="button" onclick="toggleReactions('${m.message_id}')" title="React" aria-label="React"><i class="bi bi-emoji-smile"></i></button>` : ""}
+        ${canEdit ? `<button class="btn btn-outline-secondary profile-btn btn-sm" type="button" onclick="toggleEdit('${m.message_id}')" title="Edit" aria-label="Edit"><i class="bi bi-pencil"></i></button>` : ""}
       </div>`;
 
     div.innerHTML = `

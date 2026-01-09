@@ -1,50 +1,93 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-  <h3>{{ vcard.name or "vCard" }}</h3>
-  <div class="text-muted">Shared by {{ owner.email if owner else ("User #" ~ vcard.user_id) }}</div>
+{% include "profiles/_profile_styles.html" %}
 
-  <div class="card mt-3">
+<div class="profile-header">
+  <h1 class="profile-title">{{ vcard.name or "vCard" }}</h1>
+  <p class="profile-subtitle">Shared by {{ owner.email if owner else ("User #" ~ vcard.user_id) }}</p>
+</div>
+
+<div class="profile-stack">
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon vcard"><i class="bi bi-person-badge"></i></div>
+        <div>
+          <h2>Contact</h2>
+          <p>Public details from this vCard.</p>
+        </div>
+      </div>
+    </div>
     <div class="card-body">
-      <div><strong>Email:</strong> {{ vcard.email }}</div>
-      <div><strong>Phone:</strong> {{ vcard.phone }}</div>
-      <div><strong>LinkedIn:</strong> {% if vcard.linkedin_url %}<a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>{% else %}—{% endif %}</div>
-      <div class="mt-2"><strong>Tagline:</strong> {{ vcard.tagline }}</div>
+      <div class="profile-list" style="gap:6px;">
+        <div><strong>Email:</strong> {{ vcard.email }}</div>
+        <div><strong>Phone:</strong> {{ vcard.phone }}</div>
+        <div><strong>LinkedIn:</strong> {% if vcard.linkedin_url %}<a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>{% else %}Not set{% endif %}</div>
+        <div><strong>Tagline:</strong> {{ vcard.tagline }}</div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="row mt-3">
+  <div class="row g-3">
     <div class="col-md-6">
-      <h5>Skills</h5>
-      {% if skills %}
-        <ul class="list-group">
-          {% for s in skills %}
-          <li class="list-group-item">
-            <div class="fw-semibold">{{ s.title }}</div>
-            <div class="text-muted small">{{ s.experience }}</div>
-            <div>{{ s.description }}</div>
-          </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="text-muted">No skills.</div>
-      {% endif %}
+      <section class="card profile-card h-100">
+        <div class="profile-card-head">
+          <div class="profile-card-title">
+            <div class="profile-icon tips"><i class="bi bi-stars"></i></div>
+            <div>
+              <h2>Skills</h2>
+              <p>Highlighted skills shared here.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if skills %}
+            <div class="profile-list">
+              {% for s in skills %}
+              <div class="profile-row">
+                <div>
+                  <div class="profile-row-title">{{ s.title }}</div>
+                  <div class="text-muted small">{{ s.experience }}</div>
+                  <div>{{ s.description }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted">No skills.</div>
+          {% endif %}
+        </div>
+      </section>
     </div>
     <div class="col-md-6">
-      <h5>Services</h5>
-      {% if services %}
-        <ul class="list-group">
-          {% for s in services %}
-          <li class="list-group-item">
-            <div class="fw-semibold">{{ s.title }}</div>
-            <div class="text-muted small">{{ s.experience }}</div>
-            <div>{{ s.description }}</div>
-          </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="text-muted">No services.</div>
-      {% endif %}
+      <section class="card profile-card h-100">
+        <div class="profile-card-head">
+          <div class="profile-card-title">
+            <div class="profile-icon tips"><i class="bi bi-briefcase"></i></div>
+            <div>
+              <h2>Services</h2>
+              <p>Service highlights from the profile.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if services %}
+            <div class="profile-list">
+              {% for s in services %}
+              <div class="profile-row">
+                <div>
+                  <div class="profile-row-title">{{ s.title }}</div>
+                  <div class="text-muted small">{{ s.experience }}</div>
+                  <div>{{ s.description }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted">No services.</div>
+          {% endif %}
+        </div>
+      </section>
     </div>
   </div>
 </div>

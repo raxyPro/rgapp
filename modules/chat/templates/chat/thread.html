@@ -4,11 +4,10 @@
 {% block chat_main %}
   {% set can_react = (not is_broadcast) or is_owner or is_member %}
 
-  <!-- Header -->
-  <div class="rg-main-head">
-    <div class="left">
-      <div class="title">{{ active_thread_display_name }}</div>
-      <div class="sub">
+  <div class="rg-chat-panel-head">
+    <div>
+      <div class="rg-chat-panel-title">{{ active_thread_display_name }}</div>
+      <div class="rg-chat-panel-sub">
         {% if active_thread.thread_type == "group" %}
           Group chat
         {% elif active_thread.thread_type == "broadcast" %}
@@ -20,45 +19,39 @@
     </div>
 
     <div class="d-flex gap-2 flex-wrap align-items-center">
-      <!-- Broadcast subscribe/unsubscribe -->
       {% if is_broadcast and not is_owner %}
         <form method="post" action="{{ url_for(is_member and 'chat.unsubscribe_broadcast' or 'chat.subscribe_broadcast', thread_id=active_thread.thread_id) }}">
           {% if is_member %}
-            <button class="btn btn-sm btn-outline-danger pill" type="submit">Unsubscribe</button>
+            <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Unsubscribe</button>
           {% else %}
-            <button class="btn btn-sm btn-outline-primary pill" type="submit">Subscribe</button>
+            <button class="btn btn-sm btn-outline-primary profile-btn" type="submit">Subscribe</button>
           {% endif %}
         </form>
       {% endif %}
 
-      <!-- Delete -->
       <form method="post"
             action="{{ url_for('chat.delete_thread', thread_id=active_thread.thread_id) }}"
             onsubmit="return confirm('Delete this chat and its messages?');">
-        <button class="btn btn-sm btn-outline-danger pill" type="submit">Delete</button>
+        <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Delete</button>
       </form>
     </div>
   </div>
 
-  <!-- Members (if manage_members) -->
   {% if manage_members %}
-    <div class="rg-divider"></div>
-    <div style="padding:12px 16px;">
+    <div class="rg-chat-panel-body" style="border-bottom:1px solid var(--chat-border);">
       <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Members</div>
-
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+      <div class="d-flex flex-wrap gap-2">
         {% for m in members_by_thread.get(active_thread.thread_id, []) %}
           {% set u = users_by_id.get(m.user_id) %}
-          <div style="background:#f3f4f6; border:1px solid #eceff5; border-radius:999px; padding:6px 10px; display:flex; align-items:center; gap:8px;">
-            <span style="font-size:13px;">
+          <div class="profile-pill" style="display:flex; align-items:center; gap:8px;">
+            <span>
               {{ u.display_label if u and u.display_label else ("User " ~ m.user_id) }}
               {% if m.user_id == active_thread.created_by %}<span class="text-muted">(owner)</span>{% endif %}
             </span>
-
             {% if m.user_id != active_thread.created_by %}
               <form method="post" action="{{ url_for('chat.remove_member', thread_id=active_thread.thread_id, user_id=m.user_id) }}"
                     onsubmit="return confirm('Remove this member?');" style="margin:0;">
-                <button class="btn btn-sm btn-outline-danger pill" style="padding:2px 10px; font-size:11px;" type="submit">Remove</button>
+                <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Remove</button>
               </form>
             {% endif %}
           </div>
@@ -67,10 +60,10 @@
 
       {% if available_users %}
         <form class="mt-2" method="post" action="{{ url_for('chat.add_members', thread_id=active_thread.thread_id) }}">
-          <button class="btn btn-sm btn-outline-primary pill" type="button" onclick="toggleAddMembers()">+ Add members</button>
+          <button class="btn btn-sm btn-outline-primary profile-btn" type="button" onclick="toggleAddMembers()">+ Add members</button>
 
           <div id="addMembersList"
-               style="display:none; margin-top:10px; border:1px solid #e6e9f0; border-radius:14px; padding:12px; max-height:260px; overflow:auto; background:#fff;">
+               style="display:none; margin-top:10px; border:1px solid var(--chat-border); border-radius:12px; padding:12px; max-height:260px; overflow:auto; background:#fff;">
             {% for u in available_users %}
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="user_ids" value="{{ u.user_id }}" id="addUser{{ u.user_id }}">
@@ -79,7 +72,7 @@
                 </label>
               </div>
             {% endfor %}
-            <button class="btn btn-sm btn-primary pill mt-3" type="submit">Add selected</button>
+            <button class="btn btn-sm btn-primary profile-btn mt-3" type="submit">Add selected</button>
           </div>
         </form>
       {% else %}
@@ -88,16 +81,12 @@
     </div>
   {% endif %}
 
-  <div class="rg-divider"></div>
-
-  <!-- Messages -->
-  <div class="rg-main-body" id="chat-msgs">
-
+  <div class="rg-chat-panel-body" id="chat-msgs">
     {% if not messages %}
-      <div class="rg-empty">
+      <div class="rg-chat-empty">
         <div>
-          <div style="font-weight:800;font-size:16px;margin-bottom:6px;">No messages yet</div>
-          <div class="rg-muted">Say hello to start the conversation.</div>
+          <div style="font-weight:700;font-size:16px;margin-bottom:6px;">No messages yet</div>
+          <div class="text-muted">Say hello to start the conversation.</div>
         </div>
       </div>
     {% endif %}
@@ -110,11 +99,9 @@
       {% set sender_label = u.display_label if u and u.display_label else ("User " ~ m.sender_id) %}
 
       <div class="chat-msg {% if m.sender_id == me_id %}me{% endif %}" data-mid="{{ m.message_id }}">
-
-        <!-- meta row -->
         <div class="meta">
           <span><b>{{ sender_label }}</b></span>
-          <span>·</span>
+          <span>&middot;</span>
           <span>{{ m.created_at }}</span>
 
           {% if m.reply_to_message_id %}
@@ -124,42 +111,44 @@
             </span>
           {% endif %}
 
-          <!-- actions (right aligned) -->
           <div class="actions">
             {% if active_thread.thread_type != "broadcast" or is_owner %}
-              <button class="btn btn-outline-primary" type="button"
-                      onclick="setReply('{{ m.message_id }}', '{{ sender_label }}')">Reply</button>
+              <button class="btn btn-outline-primary btn-sm profile-btn" type="button"
+                      onclick="setReply('{{ m.message_id }}', '{{ sender_label }}')" title="Reply" aria-label="Reply">
+                <i class="bi bi-reply"></i>
+              </button>
             {% endif %}
 
             {% if can_react %}
-              <button class="btn btn-outline-secondary react-toggle" type="button"
-                      onclick="toggleReactions('{{ m.message_id }}')">😊</button>
+              <button class="btn btn-outline-secondary btn-sm profile-btn react-toggle" type="button"
+                      onclick="toggleReactions('{{ m.message_id }}')" title="React" aria-label="React">
+                <i class="bi bi-emoji-smile"></i>
+              </button>
             {% endif %}
 
             {% if m.sender_id == me_id %}
-              <button class="btn btn-outline-secondary" type="button"
-                      onclick="toggleEdit('{{ m.message_id }}')">Edit</button>
+              <button class="btn btn-outline-secondary btn-sm profile-btn" type="button"
+                      onclick="toggleEdit('{{ m.message_id }}')" title="Edit" aria-label="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
             {% endif %}
           </div>
         </div>
 
-        <!-- bubble -->
         <div class="bubble">
           <div class="body" id="body_display_{{ m.message_id }}">{{ m.body | chat_rich }}</div>
 
-          <!-- edit form (kept) -->
           <form id="edit_form_{{ m.message_id }}" class="mt-2"
                 method="post"
                 action="{{ url_for('chat.edit_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}"
                 style="display:none;">
             <textarea class="form-control" name="body" rows="2">{{ m.body }}</textarea>
             <div class="mt-2 d-flex gap-2">
-              <button class="btn btn-sm btn-primary pill" type="submit">Save</button>
-              <button class="btn btn-sm btn-outline-secondary pill" type="button" onclick="toggleEdit('{{ m.message_id }}')">Cancel</button>
+              <button class="btn btn-sm btn-primary profile-btn" type="submit">Save</button>
+              <button class="btn btn-sm btn-outline-secondary profile-btn" type="button" onclick="toggleEdit('{{ m.message_id }}')">Cancel</button>
             </div>
           </form>
 
-          <!-- reaction summary -->
           {% if counts %}
             <div class="reaction-row mt-2" style="display:flex; gap:6px; flex-wrap:wrap;">
               {% for emoji, cnt in counts.items() %}
@@ -172,7 +161,6 @@
             </div>
           {% endif %}
 
-          <!-- reaction actions -->
           {% if can_react %}
             <div class="reaction-actions mt-2" style="display:none; gap:8px; flex-wrap:wrap;">
               {% for e in reaction_choices %}
@@ -181,7 +169,7 @@
                       action="{{ url_for('chat.react_message', thread_id=active_thread.thread_id, message_id=m.message_id) }}"
                       style="margin:0;">
                   <input type="hidden" name="emoji" value="{{ '' if is_mine else e }}">
-                  <button class="btn btn-sm {% if is_mine %}btn-primary{% else %}btn-outline-primary{% endif %} pill" type="submit">
+                  <button class="btn btn-sm {% if is_mine %}btn-primary{% else %}btn-outline-primary{% endif %} profile-btn" type="submit">
                     {{ e }}
                   </button>
                 </form>
@@ -193,24 +181,19 @@
     {% endfor %}
   </div>
 
-  <div class="rg-divider"></div>
-
-  <!-- Composer -->
   <form class="rg-compose"
         method="post"
         action="{{ url_for('chat.send_message_http', thread_id=active_thread.thread_id) }}">
-
     <input type="hidden" name="reply_to" id="reply_to">
 
     <div style="display:flex; flex-direction:column; gap:8px;">
-      <!-- reply banner -->
       <div id="reply-banner"
-           style="display:none; border:1px dashed #cfd6e4; border-radius:14px; padding:10px 12px; background:#fbfcff;">
+           style="display:none; border:1px dashed #cfd6e4; border-radius:12px; padding:8px 10px; background:#fbfcff;">
         <div class="d-flex justify-content-between align-items-center gap-2">
           <div style="font-size:12px;">
             Replying to <b id="reply-target"></b>
           </div>
-          <button class="btn btn-sm btn-outline-secondary pill" type="button" onclick="clearReply()">Cancel</button>
+          <button class="btn btn-sm btn-outline-secondary profile-btn" type="button" onclick="clearReply()">Cancel</button>
         </div>
       </div>
 
@@ -222,25 +205,21 @@
                 {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}></textarea>
     </div>
 
-    <button class="btn btn-primary"
-            id="chat-send"
-            type="submit"
+    <button class="btn btn-primary" id="chat-send" type="submit"
             {% if active_thread.thread_type == 'broadcast' and not is_owner %}disabled{% endif %}>
-      Send
+      <i class="bi bi-send"></i>
     </button>
   </form>
 
-  <!-- Emoji Bar -->
   <div class="rg-emoji">
     <div class="label">Top emojis</div>
-    <div id="emoji-bar">
+    <div id="emoji-bar" class="d-flex gap-2 flex-wrap">
       {% for e in reaction_choices %}
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary profile-btn" onclick="insertEmoji('{{ e }}')">{{ e }}</button>
       {% endfor %}
     </div>
   </div>
 
-  <!-- JS Config (unchanged structure) -->
   <script>
     window.RG_CHAT = {
       threadId: {{ active_thread.thread_id }},
@@ -277,7 +256,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-database-compat.js"></script>
   <script src="{{ url_for('chat.static', filename='chat.js') }}"></script>
 
-  <!-- Local helpers (kept + improved) -->
   <script>
     function insertEmoji(e) {
       const ta = document.getElementById('chat-body');
@@ -311,7 +289,6 @@
       const area = msg.querySelector('.reaction-actions');
       if(!area) return;
 
-      // hide all others
       document.querySelectorAll('.reaction-actions').forEach(a => a.style.display = 'none');
 
       const visible = (area.style.display === 'flex');

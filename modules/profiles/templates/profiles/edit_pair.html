@@ -1,108 +1,136 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="container mt-4">
-  <h2>Edit Online CV</h2>
-  <form method="post" action="{{ url_for('profiles.pair_save', cv_id=pair.cv_id) }}">
-    <div class="row">
-      <div class="col-lg-6">
-        <div class="card mb-3">
-          <div class="card-header">Profile fields</div>
-          <div class="card-body">
-            <div class="mb-2">
+{% include "profiles/_profile_styles.html" %}
+
+<div class="profile-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h1 class="profile-title">Edit Online CV</h1>
+    <p class="profile-subtitle">Update the vCard and one-page CV fields.</p>
+  </div>
+  <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profiles.home') }}">Back</a>
+</div>
+
+<form method="post" action="{{ url_for('profiles.pair_save', cv_id=pair.cv_id) }}" class="profile-stack">
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <section class="card profile-card h-100">
+        <div class="profile-card-head">
+          <div class="profile-card-title">
+            <div class="profile-icon vcard"><i class="bi bi-person-lines-fill"></i></div>
+            <div>
+              <h2>Profile fields</h2>
+              <p>Shown on your vCard profile.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="profile-form-grid">
+            <div>
               <label class="form-label">Name</label>
               <input class="form-control" name="v_name" value="{{ pair.v_name }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Company</label>
               <input class="form-control" name="v_company" value="{{ pair.v_company }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Email</label>
               <input class="form-control" name="v_email" value="{{ pair.v_email }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Phone</label>
               <input class="form-control" name="v_phone" value="{{ pair.v_phone }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Primary Skill</label>
               <input class="form-control" name="v_primary_skill" value="{{ pair.v_primary_skill }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Skill Description</label>
               <textarea class="form-control" rows="2" name="v_skill_description">{{ pair.v_skill_description }}</textarea>
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Organizations (one line)</label>
               <input class="form-control" name="v_organizations" value="{{ pair.v_organizations }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Achievements (one line)</label>
               <input class="form-control" name="v_achievements" value="{{ pair.v_achievements }}">
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-lg-6">
-        <div class="card mb-3">
-          <div class="card-header">One-Page CV (auto-generated from fields)</div>
-          <div class="card-body">
-            <div class="mb-2">
+      </section>
+    </div>
+    <div class="col-lg-6">
+      <section class="card profile-card h-100">
+        <div class="profile-card-head">
+          <div class="profile-card-title">
+            <div class="profile-icon library"><i class="bi bi-file-earmark-text"></i></div>
+            <div>
+              <h2>One-page CV</h2>
+              <p>Auto-generated preview fields.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="profile-form-grid">
+            <div>
               <label class="form-label">Name</label>
               <input class="form-control" name="op_name" value="{{ pair.op_name }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Email</label>
               <input class="form-control" name="op_email" value="{{ pair.op_email }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Phone</label>
               <input class="form-control" name="op_phone" value="{{ pair.op_phone }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Title</label>
               <input class="form-control" name="op_title" value="{{ pair.op_title }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">LinkedIn URL</label>
               <input class="form-control" name="op_linkedin_url" value="{{ pair.op_linkedin_url }}">
             </div>
-            <div class="mb-2">
+            <div>
               <label class="form-label">Website URL</label>
               <input class="form-control" name="op_website_url" value="{{ pair.op_website_url }}">
             </div>
-            <div class="mb-2">
+            <div class="span-2">
               <label class="form-label">About</label>
               <textarea class="form-control" rows="2" name="op_about">{{ pair.op_about }}</textarea>
             </div>
-            <div class="mb-2">
+            <div class="span-2">
               <label class="form-label">Skills</label>
               <textarea class="form-control" rows="2" name="op_skills">{{ pair.op_skills }}</textarea>
             </div>
-            <div class="mb-2">
+            <div class="span-2">
               <label class="form-label">Experience</label>
               <textarea class="form-control" rows="2" name="op_experience">{{ pair.op_experience }}</textarea>
             </div>
-            <div class="mb-2">
+            <div class="span-2">
               <label class="form-label">Academic</label>
               <textarea class="form-control" rows="2" name="op_academic">{{ pair.op_academic }}</textarea>
             </div>
-            <div class="mb-2">
+            <div class="span-2">
               <label class="form-label">Achievements</label>
               <textarea class="form-control" rows="2" name="op_achievements">{{ pair.op_achievements }}</textarea>
             </div>
-            <div class="mb-2">
+            <div class="span-2">
               <label class="form-label">Final Remark</label>
               <textarea class="form-control" rows="2" name="op_final_remark">{{ pair.op_final_remark }}</textarea>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
-    <div class="d-flex justify-content-between">
-      <a class="btn btn-secondary" href="{{ url_for('profiles.home') }}">Cancel</a>
-      <button class="btn btn-primary" type="submit">Save</button>
-    </div>
-  </form>
-</div>
+  </div>
+
+  <div class="profile-actions">
+    <a class="btn btn-outline-secondary profile-btn" href="{{ url_for('profiles.home') }}">Cancel</a>
+    <button class="btn btn-primary profile-btn" type="submit">Save</button>
+  </div>
+</form>
 {% endblock %}

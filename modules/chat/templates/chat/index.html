@@ -1,83 +1,40 @@
 {# modules/chat/templates/chat/index.html #}
 {% extends "app_shell.html" %}
+{% set suppress_flash = true %}
 {% block content %}
+{% include "chat/_chat_styles.html" %}
 
-<style>
-  /* Layout */
-  .rg-chat-wrap{display:grid;grid-template-columns:360px 1fr;gap:16px;min-height:calc(100vh - 140px);}
-  .rg-card{border:1px solid #e6e9f0;border-radius:16px;background:#fff;overflow:hidden;}
-  .rg-muted{color:var(--muted,#6b7280);}
-  .rg-divider{border-top:1px solid #eef1f6;}
+<div class="rg-chat-topbar">
+  <div class="rg-chat-topbar-left">
+    <button class="rg-icon-btn" type="button" aria-label="Menu"><i class="bi bi-list"></i></button>
+    <div class="rg-chat-topbar-title">RayGrow Bridge</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <span class="rg-chat-flash">{{ msg }}</span>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+  <div class="rg-chat-topbar-right">
+    <a class="rg-icon-btn" href="{{ url_for('user.profile') }}" aria-label="Profile"><i class="bi bi-person-circle"></i></a>
+    <button class="rg-icon-btn" type="button" aria-label="Status"><i class="bi bi-circle-fill"></i></button>
+  </div>
+</div>
 
-  /* Sidebar */
-  .rg-side-head{padding:14px 14px 10px;display:flex;align-items:center;justify-content:space-between;}
-  .rg-side-head h5{margin:0;font-size:16px;}
-  .rg-side-tools{padding:0 14px 12px;display:flex;gap:8px;}
-  .rg-side-tools .form-control{border-radius:12px;}
-  .rg-side-list{padding:10px;max-height:calc(100vh - 260px);overflow:auto;}
-  .rg-chat-item{display:block;padding:12px;border-radius:14px;text-decoration:none;color:inherit;border:1px solid transparent;}
-  .rg-chat-item:hover{background:#f7f9fc;}
-  .rg-chat-item.active{background:#eef3ff;border-color:#d9e5ff;}
-  .rg-chat-item .row1{display:flex;justify-content:space-between;gap:10px;align-items:center;}
-  .rg-chat-item .title{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .rg-chat-item .meta{font-size:12px;opacity:.75;white-space:nowrap;}
-  .rg-chat-item .row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-  .rg-pill{display:inline-block;padding:3px 10px;border-radius:999px;background:#f2f4f8;font-weight:700;font-size:12px;color:#394150;}
-  .rg-pill.unread{background:#e8f0ff;color:#264a9f;}
+<div class="rg-chat-layout">
+  <aside class="rg-chat-sidebar">
+    <div class="rg-chat-sidebar-title">Chats</div>
 
-  /* Main / Thread */
-  .rg-main-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
-  .rg-main-head .left{display:flex;flex-direction:column;gap:2px;}
-  .rg-main-head .title{font-weight:800;font-size:16px;}
-  .rg-main-head .sub{font-size:12px;color:var(--muted,#6b7280);}
-  .rg-main-body{height:calc(100vh - 330px);overflow:auto;padding:14px 16px;background:#fafbff;}
-  .rg-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;color:#6b7280;}
-
-  /* Messages (keeps your current structure but makes it “chat-like”) */
-  .chat-msg{margin-bottom:12px; display:flex; flex-direction:column; gap:6px;}
-  .chat-msg .meta{font-size:12px;color:#6b7280;margin-bottom:6px;display:flex;gap:8px;align-items:center;}
-  .chat-msg .bubble{display:inline-block;max-width:min(760px, 92%);padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #eef1f6;}
-  .chat-msg.me .bubble{background:#eef3ff;border-color:#d9e5ff;}
-  .chat-msg.me .bubble{margin-left:auto;}
-  .chat-msg.me .reaction-row{justify-content:flex-end;}
-  .chat-msg .actions{margin-left:auto;display:flex;gap:6px;align-items:center;}
-  .chat-msg .actions .btn{padding:2px 8px;font-size:11px;border-radius:999px;}
-
-  /* Composer */
-  .rg-compose{padding:12px;display:grid;grid-template-columns:1fr 96px;gap:10px;background:#fff;}
-  .rg-compose textarea{border-radius:14px;resize:none;}
-  .rg-compose .btn{border-radius:14px;font-weight:700;}
-  .rg-emoji{padding:10px 12px 14px;}
-  .rg-emoji .label{font-size:12px;color:var(--muted,#6b7280);margin-bottom:8px;}
-  #emoji-bar{display:flex;gap:8px;flex-wrap:wrap;}
-  #emoji-bar .btn{border-radius:999px;padding:4px 10px;}
-
-  @media (max-width: 992px){
-    .rg-chat-wrap{grid-template-columns:1fr;min-height:auto;}
-    .rg-side-list{max-height:280px;}
-    .rg-main-body{height:55vh;}
-  }
-</style>
-
-<div class="rg-chat-wrap">
-  <!-- LEFT: Threads -->
-  <div class="rg-card">
-    <div class="rg-side-head">
-      <h5>Chat</h5>
-      <a class="btn btn-sm btn-primary" href="{{ url_for('chat.new_chat') }}">+ New</a>
+    <div class="rg-chat-search">
+      <i class="bi bi-search"></i>
+      <input id="rgChatSearch" placeholder="Search" oninput="rgFilterChats(this.value)">
+      <a class="rg-chat-plus" href="{{ url_for('chat.new_chat') }}" aria-label="New chat"><i class="bi bi-plus-lg"></i></a>
     </div>
 
-    <div class="rg-side-tools">
-      <input id="rgChatSearch" class="form-control" placeholder="Search chats…" oninput="rgFilterChats(this.value)">
-      <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('rgChatSearch').value='';rgFilterChats('')">
-        Clear
-      </button>
-    </div>
+    <button class="btn btn-primary rg-chat-new" type="button" onclick="window.location='{{ url_for('chat.new_chat') }}'">New Chat</button>
 
-    <div class="rg-divider"></div>
-
-    <div class="rg-side-list" id="rgChatList">
-      <div class="rg-muted" style="font-size:12px;padding:6px 6px 2px;">Chats</div>
+    <div class="rg-chat-list" id="rgChatList">
       {% set ns = namespace(has_chats=false) %}
       {% for t in threads if t.thread_type != "broadcast" %}
         {% set ns.has_chats = true %}
@@ -89,29 +46,25 @@
         <a class="rg-chat-item {% if active_thread and active_thread.thread_id == t.thread_id %}active{% endif %}"
            data-title="{{ title|lower }}"
            href="{{ url_for('chat.thread', thread_id=t.thread_id) }}">
-          <div class="row1">
-            <div class="title">{{ title }}</div>
-            <div class="meta">
-              {{ "Group" if t.thread_type == "group" else "Direct" }}
-            </div>
+          <div class="rg-chat-avatar"><i class="bi bi-person"></i></div>
+          <div class="rg-chat-info">
+            <div class="rg-chat-name">{{ title }}</div>
+            <div class="rg-chat-sub">{{ "Group Chat" if t.thread_type == "group" else "Direct" }}</div>
           </div>
-          <div class="row2">
-            <span class="rg-pill">{{ total }} msgs</span>
-            {% if unread %}
-              <span class="rg-pill unread">{{ unread }} unread</span>
-            {% endif %}
-          </div>
+          {% if unread %}
+            <div class="rg-chat-badge">{{ unread }}</div>
+          {% else %}
+            <div class="rg-chat-badge muted">{{ total }}</div>
+          {% endif %}
         </a>
       {% endfor %}
       {% if not ns.has_chats %}
-        <div class="p-3 rg-muted">No chats yet. Click <b>+ New</b> to start one.</div>
+        <div class="text-muted small">No chats yet. Click New Chat.</div>
       {% endif %}
 
-      <div class="rg-divider" style="margin:10px 0;"></div>
+      <div class="rg-chat-section-title">Broadcasts</div>
 
-      <div class="rg-muted" style="font-size:12px;padding:6px 6px 2px;">Broadcasts</div>
-
-      <div style="padding:4px 6px;font-size:12px;font-weight:700;">Owned</div>
+      <div class="rg-chat-subsection">Owned</div>
       {% if owned_broadcasts %}
         {% for b in owned_broadcasts %}
           {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
@@ -119,101 +72,90 @@
           <a class="rg-chat-item {% if active_thread and active_thread.thread_id == b.thread_id %}active{% endif %}"
              data-title="{{ title|lower }}"
              href="{{ url_for('chat.thread', thread_id=b.thread_id) }}">
-            <div class="row1">
-              <div class="title">{{ title }}</div>
-              <div class="meta">Broadcast</div>
+            <div class="rg-chat-avatar"><i class="bi bi-megaphone"></i></div>
+            <div class="rg-chat-info">
+              <div class="rg-chat-name">{{ title }}</div>
+              <div class="rg-chat-sub">Broadcast</div>
             </div>
-            <div class="row2">
-              <span class="rg-pill">{{ total }} msgs</span>
-              <span class="rg-pill">Owner</span>
-            </div>
+            <div class="rg-chat-badge muted">{{ total }}</div>
           </a>
         {% endfor %}
       {% else %}
-        <div class="p-3 rg-muted">No broadcasts created.</div>
+        <div class="text-muted small">No broadcasts created.</div>
       {% endif %}
 
-      <div style="padding:6px 6px 2px;font-size:12px;font-weight:700;">Subscribed</div>
+      <div class="rg-chat-subsection">Subscribed</div>
       {% if subscribed_broadcasts %}
         {% for b in subscribed_broadcasts %}
           {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
           {% set total = broadcast_counts.get(b.thread_id, 0) if broadcast_counts else 0 %}
           <div class="rg-chat-item {% if active_thread and active_thread.thread_id == b.thread_id %}active{% endif %}"
                data-title="{{ title|lower }}">
-            <a href="{{ url_for('chat.thread', thread_id=b.thread_id) }}" style="color:inherit;text-decoration:none;display:block;">
-              <div class="row1">
-                <div class="title">{{ title }}</div>
-                <div class="meta">Broadcast</div>
+            <a href="{{ url_for('chat.thread', thread_id=b.thread_id) }}" style="color:inherit;text-decoration:none;display:flex;align-items:center;gap:10px;flex:1;">
+              <div class="rg-chat-avatar"><i class="bi bi-rss"></i></div>
+              <div class="rg-chat-info">
+                <div class="rg-chat-name">{{ title }}</div>
+                <div class="rg-chat-sub">Broadcast</div>
               </div>
-              <div class="row2">
-                <span class="rg-pill">{{ total }} msgs</span>
-                <span class="rg-pill unread">Subscribed</span>
-              </div>
+              <div class="rg-chat-badge muted">{{ total }}</div>
             </a>
-            <form method="post"
-                  action="{{ url_for('chat.unsubscribe_broadcast', thread_id=b.thread_id) }}"
-                  style="margin-top:8px;">
-              <button class="btn btn-sm btn-outline-danger w-100" type="submit">Unsubscribe</button>
+            <form method="post" action="{{ url_for('chat.unsubscribe_broadcast', thread_id=b.thread_id) }}" style="margin-left:auto;">
+              <button class="btn btn-sm btn-outline-danger profile-btn" type="submit">Unsubscribe</button>
             </form>
           </div>
         {% endfor %}
       {% else %}
-        <div class="p-3 rg-muted">No subscriptions yet.</div>
+        <div class="text-muted small">No subscriptions yet.</div>
       {% endif %}
 
-      <div style="padding:6px 6px 2px;font-size:12px;font-weight:700;">Available</div>
-      {% if available_broadcasts %}
-        {% for b in available_broadcasts %}
-          {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
-          <div class="rg-chat-item" data-title="{{ title|lower }}">
-            <div class="row1">
-              <div class="title">{{ title }}</div>
-              <div class="meta">Broadcast</div>
+      <div class="rg-chat-subsection d-flex align-items-center justify-content-between">
+        <span>Available</span>
+        <button class="btn btn-sm btn-outline-secondary profile-btn" type="button" onclick="toggleAvailableBroadcasts()">+</button>
+      </div>
+      <div id="availableBroadcasts" style="display:none;">
+        {% if available_broadcasts %}
+          {% for b in available_broadcasts %}
+            {% set title = b.display_name_for(me_id, members_by_thread.get(b.thread_id, []) or [], users_by_id) %}
+            <div class="rg-chat-item" data-title="{{ title|lower }}">
+              <div class="rg-chat-avatar"><i class="bi bi-broadcast"></i></div>
+              <div class="rg-chat-info">
+                <div class="rg-chat-name">{{ title }}</div>
+                <div class="rg-chat-sub">Subscribe to view</div>
+              </div>
+              <form method="post" action="{{ url_for('chat.subscribe_broadcast', thread_id=b.thread_id) }}">
+                <button class="btn btn-sm btn-outline-primary profile-btn" type="submit">Join</button>
+              </form>
             </div>
-            <div class="row2">
-              <span class="rg-pill">Subscribe to view</span>
-            </div>
-            <form method="post"
-                  action="{{ url_for('chat.subscribe_broadcast', thread_id=b.thread_id) }}">
-              <button class="btn btn-sm btn-outline-primary w-100" type="submit">Subscribe</button>
-            </form>
-          </div>
-        {% endfor %}
-      {% else %}
-        <div class="p-3 rg-muted">No available broadcasts.</div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- RIGHT: Main -->
-  <div class="rg-card d-flex flex-column">
-    {% block chat_main %}
-      <div class="rg-main-head">
-    <div class="left">
-      <div class="title">Select a chat</div>
-      <div class="sub">Choose a chat from the left or start a new one.</div>
-    </div>
-  </div>
-
-  <div class="rg-divider"></div>
-
-  <div class="rg-main-body">
-    <div class="rg-empty">
-      <div>
-        <div style="font-weight:800;font-size:18px;margin-bottom:6px;">No chat selected</div>
-        <div class="rg-muted">Pick a conversation on the left, or click <b>+ New</b>.</div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted small">No available broadcasts.</div>
+        {% endif %}
       </div>
     </div>
-  </div>
+  </aside>
 
-  <div class="rg-divider"></div>
-
-  <div class="rg-compose" style="opacity:.55">
-    <textarea class="form-control" rows="2" disabled placeholder="Select a chat to start messaging…"></textarea>
-    <button class="btn btn-primary" disabled>Send</button>
-  </div>
+  <main class="rg-chat-panel">
+    {% block chat_main %}
+      <div class="rg-chat-panel-head">
+        <div>
+          <div class="rg-chat-panel-title">No chat selected</div>
+          <div class="rg-chat-panel-sub">Please select a chat from the list.</div>
+        </div>
+      </div>
+      <div class="rg-chat-panel-body">
+        <div class="rg-chat-empty">
+          <div>
+            <div style="font-weight:700;font-size:18px;">No chat selected</div>
+            <div class="text-muted">Pick a chat or create a new one.</div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-compose" style="opacity:.6;">
+        <textarea class="form-control" rows="2" disabled placeholder="Select a chat to start messaging"></textarea>
+        <button class="btn btn-primary" disabled><i class="bi bi-send"></i></button>
+      </div>
     {% endblock %}
-  </div>
+  </main>
 </div>
 
 <script>
@@ -226,6 +168,11 @@
       a.style.display = (!q || title.includes(q)) ? "" : "none";
     });
   }
+  function toggleAvailableBroadcasts() {
+    const box = document.getElementById('availableBroadcasts');
+    if (!box) return;
+    const visible = box.style.display === 'block';
+    box.style.display = visible ? 'none' : 'block';
+  }
 </script>
-
 {% endblock %}

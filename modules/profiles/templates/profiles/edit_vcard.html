@@ -1,125 +1,157 @@
-{% extends "base.html" %}
+{% extends "app_shell.html" %}
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h3>Edit vCard</h3>
-    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('profiles.home') }}">Back</a>
+{% include "profiles/_profile_styles.html" %}
+
+<div class="profile-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h1 class="profile-title">Edit vCard</h1>
+    <p class="profile-subtitle">Update your public profile details and skills.</p>
   </div>
-
-  <form method="post" action="{{ url_for('profiles.save_vcard') }}">
-    <div class="row mt-3">
-      <div class="col-md-6">
-        <label class="form-label">Name</label>
-        <input class="form-control" name="name" value="{{ vcard.name }}">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Email</label>
-        <input class="form-control" name="email" value="{{ vcard.email }}">
-      </div>
-      <div class="col-md-6 mt-3">
-        <label class="form-label">LinkedIn profile URL</label>
-        <input class="form-control" name="linkedin_url" value="{{ vcard.linkedin_url }}">
-      </div>
-      <div class="col-md-6 mt-3">
-        <label class="form-label">Phone</label>
-        <input class="form-control" name="phone" value="{{ vcard.phone }}">
-      </div>
-      <div class="col-md-12 mt-3">
-        <label class="form-label">Tagline</label>
-        <input class="form-control" name="tagline" value="{{ vcard.tagline }}">
-      </div>
-      <div class="col-md-6 mt-3">
-        <label class="form-label">Location</label>
-        <input class="form-control" name="location" value="{{ vcard.location or '' }}" placeholder="e.g., Remote, Onsite">
-      </div>
-      <div class="col-md-6 mt-3">
-        <label class="form-label">Work mode</label>
-        <select class="form-select" name="work_mode">
-          {% set wm = vcard.work_mode or '' %}
-          <option value="" {% if not wm %}selected{% endif %}>Select</option>
-          <option value="wfo" {% if wm == 'wfo' %}selected{% endif %}>Work from office</option>
-          <option value="hybrid" {% if wm == 'hybrid' %}selected{% endif %}>Hybrid</option>
-          <option value="remote" {% if wm == 'remote' %}selected{% endif %}>Remote</option>
-        </select>
-      </div>
-      <div class="col-md-6 mt-3">
-        <label class="form-label">City</label>
-        <input class="form-control" name="city" value="{{ vcard.city or '' }}" placeholder="City">
-      </div>
-      <div class="col-md-3 mt-3">
-        <label class="form-label">Available from</label>
-        <input class="form-control" type="date" name="available_from" value="{{ vcard.available_from }}">
-      </div>
-      <div class="col-md-3 mt-3">
-        <label class="form-label">Hours per day available</label>
-        <input class="form-control" type="number" min="1" max="24" name="hours_per_day" value="{{ vcard.hours_per_day }}">
-      </div>
-    </div>
-
-    <hr class="my-4"/>
-
-    <div class="d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Skills</h5>
-      <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRow('skillsBody','skill')">Add Skill</button>
-    </div>
-    <div class="table-responsive mt-2">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th style="width:20%">Skill</th>
-            <th>Description</th>
-            <th style="width:25%">Experience (text)</th>
-            <th style="width:1%"></th>
-          </tr>
-        </thead>
-        <tbody id="skillsBody">
-          {% for s in skills %}
-          <tr>
-            <td><input class="form-control" name="skill_title[]" value="{{ s.title }}"></td>
-            <td><input class="form-control" name="skill_desc[]" value="{{ s.description }}"></td>
-            <td><input class="form-control" name="skill_exp[]" value="{{ s.experience }}"></td>
-            <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <hr class="my-4"/>
-
-    <div class="d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Services</h5>
-      <button class="btn btn-sm btn-outline-primary" type="button" onclick="addRow('servicesBody','service')">Add Service</button>
-    </div>
-    <div class="table-responsive mt-2">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th style="width:20%">Service</th>
-            <th>Description</th>
-            <th style="width:25%">Experience (text)</th>
-            <th style="width:1%"></th>
-          </tr>
-        </thead>
-        <tbody id="servicesBody">
-          {% for s in services %}
-          <tr>
-            <td><input class="form-control" name="service_title[]" value="{{ s.title }}"></td>
-            <td><input class="form-control" name="service_desc[]" value="{{ s.description }}"></td>
-            <td><input class="form-control" name="service_exp[]" value="{{ s.experience }}"></td>
-            <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="mt-4 d-flex gap-2">
-      <button class="btn btn-primary" type="submit">Save</button>
-      <a class="btn btn-outline-secondary" href="{{ url_for('profiles.home') }}">Cancel</a>
-    </div>
-  </form>
+  <a class="btn btn-sm btn-outline-secondary profile-btn" href="{{ url_for('profiles.home') }}">Back</a>
 </div>
+
+<form method="post" action="{{ url_for('profiles.save_vcard') }}" class="profile-stack">
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon edit"><i class="bi bi-pencil-square"></i></div>
+        <div>
+          <h2>Profile details</h2>
+          <p>Basic information shown on your vCard.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="profile-form-grid">
+        <div>
+          <label class="form-label">Name</label>
+          <input class="form-control" name="name" value="{{ vcard.name }}">
+        </div>
+        <div>
+          <label class="form-label">Email</label>
+          <input class="form-control" name="email" value="{{ vcard.email }}">
+        </div>
+        <div>
+          <label class="form-label">LinkedIn profile URL</label>
+          <input class="form-control" name="linkedin_url" value="{{ vcard.linkedin_url }}">
+        </div>
+        <div>
+          <label class="form-label">Phone</label>
+          <input class="form-control" name="phone" value="{{ vcard.phone }}">
+        </div>
+        <div class="span-2">
+          <label class="form-label">Tagline</label>
+          <input class="form-control" name="tagline" value="{{ vcard.tagline }}">
+        </div>
+        <div>
+          <label class="form-label">Location</label>
+          <input class="form-control" name="location" value="{{ vcard.location or '' }}" placeholder="e.g., Remote, Onsite">
+        </div>
+        <div>
+          <label class="form-label">Work mode</label>
+          <select class="form-select" name="work_mode">
+            {% set wm = vcard.work_mode or '' %}
+            <option value="" {% if not wm %}selected{% endif %}>Select</option>
+            <option value="wfo" {% if wm == 'wfo' %}selected{% endif %}>Work from office</option>
+            <option value="hybrid" {% if wm == 'hybrid' %}selected{% endif %}>Hybrid</option>
+            <option value="remote" {% if wm == 'remote' %}selected{% endif %}>Remote</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">City</label>
+          <input class="form-control" name="city" value="{{ vcard.city or '' }}" placeholder="City">
+        </div>
+        <div>
+          <label class="form-label">Available from</label>
+          <input class="form-control" type="date" name="available_from" value="{{ vcard.available_from }}">
+        </div>
+        <div>
+          <label class="form-label">Hours per day available</label>
+          <input class="form-control" type="number" min="1" max="24" name="hours_per_day" value="{{ vcard.hours_per_day }}">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon share"><i class="bi bi-stars"></i></div>
+        <div>
+          <h2>Skills</h2>
+          <p>Add or update skill highlights.</p>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline-primary profile-btn" type="button" onclick="addRow('skillsBody','skill')">Add Skill</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="width:20%">Skill</th>
+              <th>Description</th>
+              <th style="width:25%">Experience (text)</th>
+              <th style="width:1%"></th>
+            </tr>
+          </thead>
+          <tbody id="skillsBody">
+            {% for s in skills %}
+            <tr>
+              <td><input class="form-control" name="skill_title[]" value="{{ s.title }}"></td>
+              <td><input class="form-control" name="skill_desc[]" value="{{ s.description }}"></td>
+              <td><input class="form-control" name="skill_exp[]" value="{{ s.experience }}"></td>
+              <td><button class="btn btn-sm btn-outline-danger profile-btn" type="button" onclick="this.closest('tr').remove()">X</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
+        <div class="profile-icon share"><i class="bi bi-briefcase"></i></div>
+        <div>
+          <h2>Services</h2>
+          <p>List services you provide.</p>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline-primary profile-btn" type="button" onclick="addRow('servicesBody','service')">Add Service</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="width:20%">Service</th>
+              <th>Description</th>
+              <th style="width:25%">Experience (text)</th>
+              <th style="width:1%"></th>
+            </tr>
+          </thead>
+          <tbody id="servicesBody">
+            {% for s in services %}
+            <tr>
+              <td><input class="form-control" name="service_title[]" value="{{ s.title }}"></td>
+              <td><input class="form-control" name="service_desc[]" value="{{ s.description }}"></td>
+              <td><input class="form-control" name="service_exp[]" value="{{ s.experience }}"></td>
+              <td><button class="btn btn-sm btn-outline-danger profile-btn" type="button" onclick="this.closest('tr').remove()">X</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="profile-actions">
+    <button class="btn btn-primary profile-btn" type="submit">Save</button>
+    <a class="btn btn-outline-secondary profile-btn" href="{{ url_for('profiles.home') }}">Cancel</a>
+  </div>
+</form>
 
 <script>
 function addRow(tbodyId, kind){
@@ -130,14 +162,14 @@ function addRow(tbodyId, kind){
       <td><input class="form-control" name="skill_title[]" value=""></td>
       <td><input class="form-control" name="skill_desc[]" value=""></td>
       <td><input class="form-control" name="skill_exp[]" value=""></td>
-      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+      <td><button class="btn btn-sm btn-outline-danger profile-btn" type="button" onclick="this.closest('tr').remove()">X</button></td>
     `;
   } else {
     tr.innerHTML = `
       <td><input class="form-control" name="service_title[]" value=""></td>
       <td><input class="form-control" name="service_desc[]" value=""></td>
       <td><input class="form-control" name="service_exp[]" value=""></td>
-      <td><button class="btn btn-sm btn-outline-danger" type="button" onclick="this.closest('tr').remove()">X</button></td>
+      <td><button class="btn btn-sm btn-outline-danger profile-btn" type="button" onclick="this.closest('tr').remove()">X</button></td>
     `;
   }
   tbody.appendChild(tr);

@@ -94,13 +94,15 @@
   {% endif %}
 
   <div class="container py-4">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for cat, msg in messages %}
-          <div class="alert alert-{{cat}}">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+    {% if not suppress_flash %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div class="alert alert-{{cat}}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    {% endif %}
 
     {% block content %}{% endblock %}
   </div>
