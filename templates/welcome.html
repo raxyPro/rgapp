@@ -1,23 +1,29 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="hrow">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
   <div>
-    <h1>Dashboard</h1>
-    <p>Welcome back, {{ user.email }}. Notifications, news, and blog below.</p>
+    <h1 class="h3 mb-1">Dashboard</h1>
+    <p class="text-muted mb-0">Welcome back, {{ user.email }}. Notifications, news, and blog below.</p>
   </div>
-  <div class="row" style="flex:0 0 auto;">
-    <a class="btn" href="{{ url_for('user.profile') }}">Edit Profile</a>
+  <div class="d-flex flex-wrap gap-2">
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      data-screenshot
+      data-screenshot-name="dashboard.png"
+    >
+      Save Screenshot
+    </button>
+    <a class="btn btn-outline-primary" href="{{ url_for('user.profile') }}">Edit Profile</a>
   </div>
 </div>
 
-<section class="card" style="margin-bottom:14px;">
-  <div class="cardHead">
-    <div>
-      <h2>Notifications</h2>
-      <p>Latest activity (CV shares).</p>
-    </div>
+<section class="card mb-3">
+  <div class="card-header">
+    <h2 class="h5 mb-1">Notifications</h2>
+    <p class="text-muted small mb-0">Latest activity (CV shares).</p>
   </div>
-  <div class="cardBody">
+  <div class="card-body">
     {% if notifications %}
       <div class="table-responsive">
         <table class="table table-sm mb-0">
@@ -42,15 +48,13 @@
   </div>
 </section>
 
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>Top News</h2>
-      <p>Handpicked headlines (static placeholder; wire to API if available).</p>
-    </div>
+<section class="card mb-3">
+  <div class="card-header">
+    <h2 class="h5 mb-1">Top News</h2>
+    <p class="text-muted small mb-0">Handpicked headlines (static placeholder; wire to API if available).</p>
   </div>
-  <div class="cardBody">
-    <ul style="margin:0; padding-left:18px; color:var(--muted); line-height:1.5;">
+  <div class="card-body">
+    <ul class="mb-0 text-muted">
       <li><strong>AI & ML:</strong> Transformer-based models see efficiency gains with sparse attention.</li>
       <li><strong>Cloud:</strong> Multi-cloud cost optimization tools gaining adoption across enterprises.</li>
       <li><strong>Security:</strong> Zero-trust rollouts accelerate with passwordless and hardware keys.</li>
@@ -60,17 +64,13 @@
   </div>
 </section>
 
-<div style="height:14px;"></div>
-
 <section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>Blog</h2>
-      <p>Latest updates and insights.</p>
-    </div>
+  <div class="card-header">
+    <h2 class="h5 mb-1">Blog</h2>
+    <p class="text-muted small mb-0">Latest updates and insights.</p>
   </div>
-  <div class="cardBody">
-    <ul style="margin:0; padding-left:18px; color:var(--muted); line-height:1.5;">
+  <div class="card-body">
+    <ul class="mb-0 text-muted">
       <li><strong>Product update:</strong> Multi-link CV sharing now supports expiry and passwords.</li>
       <li><strong>Security note:</strong> Use handles for chat/social to keep your identity private.</li>
       <li><strong>Tip:</strong> Collapse sections on CV page to focus on what you need.</li>

@@ -68,6 +68,16 @@ class RBAudit(db.Model):
     new_data = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
 
 
+class RBFeedback(db.Model):
+    __tablename__ = "rb_feedback"
+
+    feedback_id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("rb_user.user_id", ondelete="CASCADE"), nullable=False, index=True)
+    body = db.Column(db.Text, nullable=False)
+    meta = db.Column(MutableDict.as_mutable(db.JSON), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+
 class RBInvitation(db.Model):
     __tablename__ = "rb_invitation"
 

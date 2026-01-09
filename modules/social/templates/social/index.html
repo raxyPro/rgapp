@@ -1,57 +1,51 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="hrow">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
   <div>
-    <h1>Social</h1>
-    <p>Post updates and reply in threads. Use emojis from the bar below.</p>
+    <h1 class="h3 mb-1">Social</h1>
+    <p class="text-muted mb-0">Post updates and reply in threads. Use emojis from the bar below.</p>
   </div>
 </div>
 
-<section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>New update</h2>
-      <p>Share a message. Add emojis from the bar below.</p>
-    </div>
+<section class="card mb-3">
+  <div class="card-header">
+    <h2 class="h5 mb-1">New update</h2>
+    <p class="text-muted small mb-0">Share a message. Add emojis from the bar below.</p>
   </div>
-  <div class="cardBody">
+  <div class="card-body">
     <form method="post" action="{{ url_for('social.new_post') }}" enctype="multipart/form-data">
-      <label>Message</label>
-      <textarea name="body" id="new-body" required placeholder="Type your update..."></textarea>
-      <div style="padding:6px 0; display:flex; gap:6px; flex-wrap:wrap;">
-        {% set emojis = ['😀','👍','🎉','🙏','💡','🔥','✅','🚀','❤️','😂'] %}
+      <label class="form-label">Message</label>
+      <textarea name="body" id="new-body" class="form-control" rows="3" required placeholder="Type your update..."></textarea>
+      <div class="d-flex flex-wrap gap-2 py-2">
+        {% set emojis = [":)", ":D", ";)", "<3", ":P", ":-(", ":-)", ":O", ":|", ":/"] %}
         {% for e in emojis %}
-        <button class="btn btn-sm" type="button" onclick="insertEmoji('new-body','{{ e }}')">{{ e }}</button>
+        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="insertEmoji('new-body','{{ e }}')">{{ e }}</button>
         {% endfor %}
       </div>
-      <div style="margin-top:10px;">
-        <button class="btn primary" type="submit">Post</button>
+      <div class="mt-2">
+        <button class="btn btn-primary" type="submit">Post</button>
       </div>
     </form>
   </div>
 </section>
 
-<div style="height:14px;"></div>
-
 <section class="card">
-  <div class="cardHead">
-    <div>
-      <h2>Feed</h2>
-      <p>Two-level threads (root + replies).</p>
-    </div>
+  <div class="card-header">
+    <h2 class="h5 mb-1">Feed</h2>
+    <p class="text-muted small mb-0">Two-level threads (root + replies).</p>
   </div>
-  <div class="cardBody" style="display:grid; gap:14px;">
+  <div class="card-body d-grid gap-3">
     {% for r in roots %}
-      <div style="border:1px solid var(--border); border-radius: var(--radius); padding:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+      <div class="border rounded p-3">
+        <div class="d-flex justify-content-between align-items-start gap-2">
           <div>
             {% set su = users.get(r.user_id) %}
-            <div style="font-weight:700;">{{ su.handle or su.email if su else "User " ~ r.user_id }}</div>
-            <div style="color:var(--muted); font-size:12px;">{{ r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else "" }}</div>
+            <div class="fw-semibold">{{ su.handle or su.email if su else "User " ~ r.user_id }}</div>
+            <div class="text-muted small">{{ r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else "" }}</div>
           </div>
-          <div style="display:flex; gap:8px; align-items:center;">
+          <div class="d-flex gap-2 align-items-center">
             <form method="post" action="{{ url_for('social.toggle_like', post_id=r.post_id) }}">
-              <button class="btn btn-sm {{ 'primary' if r.post_id in user_likes else '' }}" type="submit">
+              <button class="btn btn-sm {{ 'btn-primary' if r.post_id in user_likes else 'btn-outline-primary' }}" type="submit">
                 {{ 'Unlike' if r.post_id in user_likes else 'Like' }} ({{ likes_count.get(r.post_id, 0) }})
               </button>
             </form>
@@ -60,49 +54,49 @@
             </form>
           </div>
         </div>
-        <div style="margin-top:8px;">{{ r.body }}</div>
+        <div class="mt-2">{{ r.body }}</div>
         {% if r.image_path %}
-        <div style="margin-top:8px;">
-          <img src="{{ r.image_path }}" alt="attachment" style="max-width:100%; border-radius:10px;">
+        <div class="mt-2">
+          <img src="{{ r.image_path }}" alt="attachment" class="img-fluid rounded">
         </div>
         {% endif %}
         {% if r.cvfile_id %}
-          <div style="margin-top:6px;">
+          <div class="mt-2">
           <a class="btn btn-sm btn-outline-primary" href="{{ url_for('profiles.share_cvfile', cvfile_id=r.cvfile_id) }}">View linked profile doc</a>
           </div>
         {% endif %}
 
-        <div style="margin-top:12px; padding:10px; border:1px dashed var(--border); border-radius:10px;">
+        <div class="mt-3 p-3 border border-dashed rounded">
           <form method="post" action="{{ url_for('social.new_post') }}" enctype="multipart/form-data">
             <input type="hidden" name="parent_id" value="{{ r.post_id }}">
-            <label>Reply</label>
-            <textarea name="body" id="reply-body-{{ r.post_id }}" required placeholder="Write a reply..."></textarea>
-            <div style="padding:6px 0; display:flex; gap:6px; flex-wrap:wrap;">
-              {% set emojis = ['😀','👍','🎉','🙏','💡','🔥','✅','🚀','❤️','😂'] %}
+            <label class="form-label">Reply</label>
+            <textarea name="body" id="reply-body-{{ r.post_id }}" class="form-control" rows="2" required placeholder="Write a reply..."></textarea>
+            <div class="d-flex flex-wrap gap-2 py-2">
+        {% set emojis = [":)", ":D", ";)", "<3", ":P", ":-(", ":-)", ":O", ":|", ":/"] %}
               {% for e in emojis %}
-              <button class="btn btn-sm" type="button" onclick="insertEmoji('reply-body-{{ r.post_id }}','{{ e }}')">{{ e }}</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" onclick="insertEmoji('reply-body-{{ r.post_id }}','{{ e }}')">{{ e }}</button>
               {% endfor %}
             </div>
-            <div style="margin-top:8px;">
-              <button class="btn btn-sm primary" type="submit">Reply</button>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-primary" type="submit">Reply</button>
             </div>
           </form>
         </div>
 
         {% set reps = replies_by_parent.get(r.post_id, []) %}
         {% if reps %}
-          <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
+          <div class="mt-3 border-top pt-3">
             {% for rep in reps %}
-              <div style="padding:8px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+              <div class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between align-items-start gap-2">
                   <div>
                     {% set ru = users.get(rep.user_id) %}
-                    <div style="font-weight:700;">{{ ru.handle or ru.email if ru else "User " ~ rep.user_id }}</div>
-                    <div style="color:var(--muted); font-size:12px;">{{ rep.created_at.strftime("%Y-%m-%d %H:%M") if rep.created_at else "" }}</div>
+                    <div class="fw-semibold">{{ ru.handle or ru.email if ru else "User " ~ rep.user_id }}</div>
+                    <div class="text-muted small">{{ rep.created_at.strftime("%Y-%m-%d %H:%M") if rep.created_at else "" }}</div>
                   </div>
-                  <div style="display:flex; gap:8px; align-items:center;">
+                  <div class="d-flex gap-2 align-items-center">
                     <form method="post" action="{{ url_for('social.toggle_like', post_id=rep.post_id) }}">
-                      <button class="btn btn-sm {{ 'primary' if rep.post_id in user_likes else '' }}" type="submit">
+                      <button class="btn btn-sm {{ 'btn-primary' if rep.post_id in user_likes else 'btn-outline-primary' }}" type="submit">
                         {{ 'Unlike' if rep.post_id in user_likes else 'Like' }} ({{ likes_count.get(rep.post_id, 0) }})
                       </button>
                     </form>
@@ -111,14 +105,14 @@
                     </form>
                   </div>
                 </div>
-                <div style="margin-top:6px;">{{ rep.body }}</div>
+                <div class="mt-2">{{ rep.body }}</div>
               </div>
             {% endfor %}
           </div>
         {% endif %}
       </div>
     {% else %}
-      <div style="color:var(--muted);">No posts yet.</div>
+      <div class="text-muted">No posts yet.</div>
     {% endfor %}
   </div>
 </section>
