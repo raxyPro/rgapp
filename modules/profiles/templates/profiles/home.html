@@ -118,6 +118,59 @@
     border-color: #4f7dc6;
   }
 
+  .vcard-full {
+    margin-top: 12px;
+    border: 1px solid #dfe6f2;
+    border-radius: 10px;
+    background: #fff;
+    padding: 14px;
+  }
+
+  .vcard-full-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vcard-full-section {
+    border: 1px solid #eef1f6;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f9fbff;
+  }
+
+  .vcard-full-title {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #5a6d8a;
+    margin-bottom: 6px;
+  }
+
+  .vcard-full-list {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .vcard-item {
+    background: #fff;
+    border: 1px solid #e6ecf5;
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .vcard-item-title {
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .vcard-item-sub {
+    color: #64748b;
+    font-size: 12px;
+  }
+
   .cv-row {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -232,6 +285,7 @@
   @media (max-width: 900px) {
     .vcard-panel { grid-template-columns: 1fr; }
     .vcard-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .vcard-full-grid { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -255,30 +309,69 @@
           </div>
         </div>
         <div class="vcard-actions">
-          <button class="btn btn-primary" type="button" onclick="toggleVcardFull(this)"><i class="bi bi-heart-fill"></i> View vCard</button>
+          <button class="btn btn-primary" type="button" onclick="toggleVcardFull(this)">
+            <i class="bi bi-heart-fill"></i> <span>View vCard</span>
+          </button>
           <a class="btn btn-primary" href="{{ url_for('profiles.download_vcard_json') }}"><i class="bi bi-download"></i> Download JSON</a>
           <a class="btn btn-primary" href="{{ url_for('profiles.edit_vcard') }}"><i class="bi bi-pencil"></i> Edit</a>
         </div>
       </div>
 
-      <div id="vcardFull" style="display:none; margin-top:12px;">
-        <div class="profile-card" style="box-shadow:none; border-color:#dfe6f2;">
-          <div class="section-body">
-            <div class="row">
-              <div class="col-md-6">
-                <div class="text-muted small">Work mode</div>
-                <div>
+      <div id="vcardFull" style="display:none;">
+        <div class="vcard-full">
+          <div class="vcard-full-grid">
+            <div class="vcard-full-section">
+              <div class="vcard-full-title">Contact</div>
+              <div class="vcard-full-list">
+                <div><strong>Email:</strong> {{ vcard.email or "Not set" }}</div>
+                <div><strong>Phone:</strong> {{ vcard.phone or "Not set" }}</div>
+                <div><strong>LinkedIn:</strong>
+                  {% if vcard.linkedin_url %}
+                    <a href="{{ vcard.linkedin_url }}" target="_blank">{{ vcard.linkedin_url }}</a>
+                  {% else %}Not set{% endif %}
+                </div>
+                <div><strong>Tagline:</strong> {{ vcard.tagline or "Not set" }}</div>
+                <div><strong>Location:</strong> {{ vcard.location or "Not set" }}</div>
+                <div><strong>City:</strong> {{ vcard.city or "Not set" }}</div>
+              </div>
+            </div>
+            <div class="vcard-full-section">
+              <div class="vcard-full-title">Availability</div>
+              <div class="vcard-full-list">
+                <div><strong>Work mode:</strong>
                   {% if vcard.work_mode == 'wfo' %}Work from office{% elif vcard.work_mode == 'hybrid' %}Hybrid{% elif vcard.work_mode == 'remote' %}Remote{% else %}Not set{% endif %}
                 </div>
-                <div class="text-muted small mt-2">City</div>
-                <div>{{ vcard.city or "Not set" }}</div>
+                <div><strong>Available from:</strong> {{ vcard.available_from or "Not set" }}</div>
+                <div><strong>Hours per day:</strong> {{ vcard.hours_per_day or "Not set" }}</div>
               </div>
-              <div class="col-md-6">
-                <div class="text-muted small">Available from</div>
-                <div>{{ vcard.available_from or "Not set" }}</div>
-                <div class="text-muted small mt-2">Hours per day</div>
-                <div>{{ vcard.hours_per_day or "Not set" }}</div>
-              </div>
+            </div>
+            <div class="vcard-full-section">
+              <div class="vcard-full-title">Skills</div>
+              {% if skills %}
+                {% for s in skills %}
+                  <div class="vcard-item" style="margin-bottom:8px;">
+                    <div class="vcard-item-title">{{ s.title }}</div>
+                    {% if s.experience %}<div class="vcard-item-sub">{{ s.experience }}</div>{% endif %}
+                    {% if s.description %}<div>{{ s.description }}</div>{% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-muted small">No skills yet.</div>
+              {% endif %}
+            </div>
+            <div class="vcard-full-section">
+              <div class="vcard-full-title">Services</div>
+              {% if services %}
+                {% for s in services %}
+                  <div class="vcard-item" style="margin-bottom:8px;">
+                    <div class="vcard-item-title">{{ s.title }}</div>
+                    {% if s.experience %}<div class="vcard-item-sub">{{ s.experience }}</div>{% endif %}
+                    {% if s.description %}<div>{{ s.description }}</div>{% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="text-muted small">No services yet.</div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -571,7 +664,8 @@
     if(!el) return;
     const isHidden=getComputedStyle(el).display==='none';
     el.style.display = isHidden ? 'block' : 'none';
-    if(btn) btn.textContent = isHidden ? 'Hide vCard' : 'View vCard';
+    const label = btn ? btn.querySelector('span') : null;
+    if(label) label.textContent = isHidden ? 'Hide vCard' : 'View vCard';
   }
   (function setupShareSwitch(){
     const radios=document.querySelectorAll('input[name="share_method"]');
