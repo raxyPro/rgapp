@@ -704,7 +704,7 @@ textarea {
   .heroTitle { font-size: 22px; }
 }
 
-/* “feature box” in hero */
+/* "feature box" in hero */
 .callout {
   background: var(--surface);
   border: 1px solid var(--border);
