@@ -1,80 +1,353 @@
 {% extends "app_shell.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-  <div>
-    <h1 class="h3 mb-1">Dashboard</h1>
-    <p class="text-muted mb-0">Welcome back, {{ user.email }}. Notifications, news, and blog below.</p>
-  </div>
-  <div class="d-flex flex-wrap gap-2">
-    <button
-      type="button"
-      class="btn btn-outline-secondary"
-      data-screenshot
-      data-screenshot-name="dashboard.png"
-    >
-      Save Screenshot
-    </button>
-    <a class="btn btn-outline-primary" href="{{ url_for('user.profile') }}">Edit Profile</a>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+  .dashboard {
+    --dash-bg: #eef3fb;
+    --dash-card: #ffffff;
+    --dash-ink: #0f1f3d;
+    --dash-muted: #5c6f8d;
+    --dash-border: rgba(15, 31, 61, 0.08);
+    --dash-accent: #2f6bff;
+    --dash-accent-soft: rgba(47, 107, 255, 0.12);
+    --dash-warm: #f37321;
+    font-family: "DM Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+    color: var(--dash-ink);
+  }
+
+  .dashboard * {
+    font-family: inherit;
+  }
+
+  .dashboard-shell {
+    background:
+      radial-gradient(1200px 400px at -10% -10%, rgba(47, 107, 255, 0.16), transparent 60%),
+      radial-gradient(700px 320px at 120% -20%, rgba(243, 115, 33, 0.18), transparent 55%),
+      var(--dash-bg);
+    border-radius: 22px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 18px 40px rgba(15, 31, 61, 0.12);
+  }
+
+  .dashboard-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.88));
+    border: 1px solid var(--dash-border);
+  }
+
+  .dashboard-hero h1 {
+    margin: 0;
+    font-family: "Space Grotesk", "Trebuchet MS", "Segoe UI", sans-serif;
+    font-size: 26px;
+    letter-spacing: -0.5px;
+  }
+
+  .dashboard-hero p {
+    margin: 6px 0 0;
+    color: var(--dash-muted);
+    font-size: 14px;
+  }
+
+  .dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .dashboard-btn {
+    border-radius: 999px;
+    border: 1px solid rgba(47, 107, 255, 0.2);
+    background: #ffffff;
+    color: var(--dash-ink);
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    box-shadow: 0 6px 18px rgba(15, 31, 61, 0.08);
+  }
+
+  .dashboard-btn.primary {
+    background: var(--dash-accent);
+    color: #ffffff;
+    border-color: transparent;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+  }
+
+  .dashboard-card {
+    background: var(--dash-card);
+    border-radius: 18px;
+    border: 1px solid var(--dash-border);
+    box-shadow: 0 14px 30px rgba(15, 31, 61, 0.08);
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .dashboard-card-head {
+    padding: 16px 18px 10px;
+    border-bottom: 1px solid var(--dash-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dashboard-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    background: var(--dash-accent-soft);
+    color: var(--dash-accent);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+  }
+
+  .dashboard-card-title h2 {
+    margin: 0;
+    font-size: 17px;
+    font-family: "Space Grotesk", "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+
+  .dashboard-card-title span {
+    display: block;
+    color: var(--dash-muted);
+    font-size: 12.5px;
+    margin-top: 2px;
+  }
+
+  .dashboard-card-body {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .dashboard-empty {
+    border-radius: 12px;
+    border: 1px dashed rgba(15, 31, 61, 0.2);
+    padding: 16px;
+    text-align: center;
+    color: var(--dash-muted);
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+  }
+
+  .dashboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dashboard-list-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--dash-border);
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .dashboard-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--dash-accent-soft);
+    color: var(--dash-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .dashboard-item-title {
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+
+  .dashboard-item-meta {
+    color: var(--dash-muted);
+    font-size: 12px;
+  }
+
+  .dashboard-action {
+    border-radius: 999px;
+    border: 1px solid rgba(47, 107, 255, 0.2);
+    padding: 6px 12px;
+    color: var(--dash-accent);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .dashboard-topic {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 4px 10px;
+    background: rgba(15, 31, 61, 0.06);
+    color: var(--dash-ink);
+  }
+
+  .dashboard-topic.orange {
+    background: rgba(243, 115, 33, 0.16);
+    color: #b24c11;
+  }
+
+  .dashboard-bullets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dashboard-bullets li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    color: var(--dash-ink);
+  }
+
+  .dashboard-bullets i {
+    color: var(--dash-accent);
+    margin-top: 2px;
+  }
+
+  @media (max-width: 992px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+    .dashboard-hero {
+      grid-template-columns: 1fr;
+      align-items: flex-start;
+    }
+    .dashboard-actions {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .dashboard-shell {
+      padding: 18px;
+    }
+    .dashboard-list-item {
+      grid-template-columns: 1fr;
+      align-items: flex-start;
+    }
+  }
+</style>
+
+<div class="dashboard">
+  <div class="dashboard-shell">
+    <section class="dashboard-hero">
+      <div>
+        <h1>Welcome back, {{ user.email }}</h1>
+        <p>Here is your dashboard snapshot: recent activity, top news, and the latest blog updates.</p>
+      </div>
+      <div class="dashboard-actions">
+        <button
+          type="button"
+          class="dashboard-btn"
+          data-screenshot
+          data-screenshot-name="dashboard.png"
+        >
+          Save Screenshot
+        </button>
+        <a class="dashboard-btn primary" href="{{ url_for('user.profile') }}">Edit Profile</a>
+      </div>
+    </section>
+
+    <div class="dashboard-grid">
+      <section class="dashboard-card">
+        <div class="dashboard-card-head">
+          <div class="dashboard-icon"><i class="bi bi-bell"></i></div>
+          <div class="dashboard-card-title">
+            <h2>Notifications</h2>
+            <span>Latest activity (CV shares).</span>
+          </div>
+        </div>
+        <div class="dashboard-card-body">
+          {% if notifications %}
+            <div class="dashboard-list">
+              {% for n in notifications %}
+              <div class="dashboard-list-item">
+                <div class="dashboard-pill">{{ n.type }}</div>
+                <div>
+                  <div class="dashboard-item-title">{{ n.name }}</div>
+                  <div class="dashboard-item-meta">Shared by {{ n.from }}</div>
+                </div>
+                <a class="dashboard-action" href="{{ n.link }}" target="_blank">Open</a>
+              </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="dashboard-empty">No notifications yet. You are all caught up.</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card-head">
+          <div class="dashboard-icon"><i class="bi bi-journal-text"></i></div>
+          <div class="dashboard-card-title">
+            <h2>Top News</h2>
+            <span>Handpicked headlines from your focus areas.</span>
+          </div>
+        </div>
+        <div class="dashboard-card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <span class="dashboard-topic">AI</span>
+            <span class="dashboard-topic">ML</span>
+            <span class="dashboard-topic orange">Cloud</span>
+            <span class="dashboard-topic">Tech</span>
+          </div>
+          <ul class="dashboard-bullets">
+            <li><i class="bi bi-dot"></i>Transformer efficiency climbs with sparse attention tooling.</li>
+            <li><i class="bi bi-dot"></i>Cloud spend governance adds real-time anomaly detection.</li>
+            <li><i class="bi bi-dot"></i>Zero-trust rollouts accelerate with hardware key mandates.</li>
+            <li><i class="bi bi-dot"></i>Platform engineering pushes curated golden paths.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="dashboard-card">
+        <div class="dashboard-card-head">
+          <div class="dashboard-icon"><i class="bi bi-chat-left-text"></i></div>
+          <div class="dashboard-card-title">
+            <h2>Blog</h2>
+            <span>Latest updates and insights.</span>
+          </div>
+        </div>
+        <div class="dashboard-card-body">
+          <ul class="dashboard-bullets">
+            <li><i class="bi bi-lightning-charge"></i>Multi-link CV sharing now supports expiry and passwords.</li>
+            <li><i class="bi bi-shield-check"></i>Use handles for chat/social to keep your identity private.</li>
+            <li><i class="bi bi-star"></i>Collapse CV sections to focus on the most relevant highlights.</li>
+            <li><i class="bi bi-graph-up"></i>Project dashboards now include engagement summaries.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
   </div>
 </div>
-
-<section class="card mb-3">
-  <div class="card-header">
-    <h2 class="h5 mb-1">Notifications</h2>
-    <p class="text-muted small mb-0">Latest activity (CV shares).</p>
-  </div>
-  <div class="card-body">
-    {% if notifications %}
-      <div class="table-responsive">
-        <table class="table table-sm mb-0">
-          <thead>
-            <tr><th>Type</th><th>CV</th><th>From</th><th>View</th></tr>
-          </thead>
-          <tbody>
-            {% for n in notifications %}
-            <tr>
-              <td>{{ n.type }}</td>
-              <td>{{ n.name }}</td>
-              <td>{{ n.from }}</td>
-              <td><a class="btn btn-sm btn-outline-primary" href="{{ n.link }}" target="_blank">Open</a></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <div class="text-muted">No notifications yet.</div>
-    {% endif %}
-  </div>
-</section>
-
-<section class="card mb-3">
-  <div class="card-header">
-    <h2 class="h5 mb-1">Top News</h2>
-    <p class="text-muted small mb-0">Handpicked headlines (static placeholder; wire to API if available).</p>
-  </div>
-  <div class="card-body">
-    <ul class="mb-0 text-muted">
-      <li><strong>AI & ML:</strong> Transformer-based models see efficiency gains with sparse attention.</li>
-      <li><strong>Cloud:</strong> Multi-cloud cost optimization tools gaining adoption across enterprises.</li>
-      <li><strong>Security:</strong> Zero-trust rollouts accelerate with passwordless and hardware keys.</li>
-      <li><strong>DevEx:</strong> Platform engineering teams standardize golden paths for microservices.</li>
-      <li><strong>Data:</strong> Lakehouse architectures blend streaming + batch for real-time BI.</li>
-    </ul>
-  </div>
-</section>
-
-<section class="card">
-  <div class="card-header">
-    <h2 class="h5 mb-1">Blog</h2>
-    <p class="text-muted small mb-0">Latest updates and insights.</p>
-  </div>
-  <div class="card-body">
-    <ul class="mb-0 text-muted">
-      <li><strong>Product update:</strong> Multi-link CV sharing now supports expiry and passwords.</li>
-      <li><strong>Security note:</strong> Use handles for chat/social to keep your identity private.</li>
-      <li><strong>Tip:</strong> Collapse sections on CV page to focus on what you need.</li>
-    </ul>
-  </div>
-</section>
 {% endblock %}
