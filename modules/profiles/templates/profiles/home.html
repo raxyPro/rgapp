@@ -346,6 +346,17 @@
               </div>
             </div>
             <div class="vcard-full-section">
+              <div class="vcard-full-title">Preferences</div>
+              <div class="vcard-full-list">
+                <div><strong>Preferred location:</strong> {{ vcard.job_pref_loc or "Not set" }}</div>
+                <div><strong>Preferred work mode:</strong>
+                  {% if vcard.job_pref_mode == 'wfo' %}Work from office{% elif vcard.job_pref_mode == 'hybrid' %}Hybrid{% elif vcard.job_pref_mode == 'remote' %}Remote{% else %}Not set{% endif %}
+                </div>
+                <div><strong>Preferred city:</strong> {{ vcard.job_pref_city or "Not set" }}</div>
+                <div><strong>Preferred hours per day:</strong> {{ vcard.job_pref_hours or "Not set" }}</div>
+              </div>
+            </div>
+            <div class="vcard-full-section">
               <div class="vcard-full-title">Skills</div>
               {% if skills %}
                 {% for s in skills %}
@@ -423,7 +434,6 @@
             {% endif %}
 
             <label class="icon-btn" for="cover_file_{{ c.cvfile_id }}" title="Upload Cover" aria-label="Upload Cover"><i class="bi bi-file-earmark-arrow-up"></i></label>
-            <a class="icon-btn" href="{{ url_for('profiles.share_cvfile', cvfile_id=c.cvfile_id) }}" title="Share" aria-label="Share"><i class="bi bi-share"></i></a>
             <button class="icon-btn" type="button" onclick="togglePref('{{ c.cvfile_id }}')" title="Preferences" aria-label="Preferences"><i class="bi bi-sliders"></i></button>
             <form method="post" action="{{ url_for('profiles.cvfile_delete', cvfile_id=c.cvfile_id) }}" onsubmit="return confirm('Delete this CV?');">
               <button class="icon-btn danger" type="submit" title="Delete" aria-label="Delete"><i class="bi bi-trash"></i></button>
@@ -455,25 +465,28 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Preferred location</label>
-                  <input class="form-control" id="pref_loc_{{ c.cvfile_id }}" placeholder="e.g., Remote"
-                         value="{{ c.details.job_pref_loc if c.details and c.details.job_pref_loc else '' }}">
+                  <input class="form-control" id="pref_loc_{{ c.cvfile_id }}" name="job_pref_loc" placeholder="e.g., Remote"
+                         value="{{ c.job_pref_loc or '' }}">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Work mode</label>
-                  <select class="form-select" id="pref_mode_{{ c.cvfile_id }}">
+                  {% set pm = c.job_pref_mode or '' %}
+                  <select class="form-select" id="pref_mode_{{ c.cvfile_id }}" name="job_pref_mode">
                     <option value="">Select</option>
-                    <option value="wfo">Work from office</option>
-                    <option value="hybrid">Hybrid</option>
-                    <option value="remote">Remote</option>
+                    <option value="wfo" {% if pm == 'wfo' %}selected{% endif %}>Work from office</option>
+                    <option value="hybrid" {% if pm == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                    <option value="remote" {% if pm == 'remote' %}selected{% endif %}>Remote</option>
                   </select>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">City</label>
-                  <input class="form-control" id="pref_city_{{ c.cvfile_id }}" placeholder="e.g., Mumbai">
+                  <input class="form-control" id="pref_city_{{ c.cvfile_id }}" name="job_pref_city" placeholder="e.g., Mumbai"
+                         value="{{ c.job_pref_city or '' }}">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Hours per day</label>
-                  <input class="form-control" type="number" min="1" max="24" id="pref_hours_{{ c.cvfile_id }}">
+                  <input class="form-control" type="number" min="1" max="24" id="pref_hours_{{ c.cvfile_id }}" name="job_pref_hours"
+                         value="{{ c.job_pref_hours }}">
                 </div>
                 <div class="col-12 d-flex justify-content-end gap-2">
                   <button class="btn btn-success" type="submit">Save</button>
@@ -553,9 +566,12 @@
         {% for s in my_public_links %}
           <div class="send-row">
             <div><i class="bi bi-link-45deg"></i> Link Share</div>
-            <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=s.link_id) }}" onsubmit="return confirm('Delete this share?');">
-              <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
-            </form>
+            <div class="d-flex gap-2">
+              <a class="icon-btn" href="{{ url_for('profileviewer.view', token=s.token) }}" target="_blank" aria-label="View"><i class="bi bi-eye"></i></a>
+              <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=s.link_id) }}" onsubmit="return confirm('Delete this share?');">
+                <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
           </div>
         {% endfor %}
 
@@ -568,9 +584,12 @@
                 <i class="bi bi-envelope"></i> Email Share
               {% endif %}
             </div>
-            <form method="post" action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=s.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
-              <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
-            </form>
+            <div class="d-flex gap-2">
+              <a class="icon-btn" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank" aria-label="View"><i class="bi bi-eye"></i></a>
+              <form method="post" action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=s.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
+                <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
           </div>
         {% endfor %}
       {% else %}

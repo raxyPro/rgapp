@@ -25,6 +25,7 @@ CREATE TABLE `rb_audit` (
   `event_id` varchar(36) NOT NULL,
   `tblname` varchar(64) NOT NULL,
   `row_id` bigint NOT NULL,
+  `doc_type` varchar(20) DEFAULT NULL,
   `audit_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `action` enum('add','invite','register','login','edit','grant_module','revoke_module') NOT NULL,
   `actor_id` bigint DEFAULT NULL,

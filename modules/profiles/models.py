@@ -146,6 +146,39 @@ class RBCVProfile(db.Model):
         self._set_detail("hours_per_day", val if val is not None else None)
 
     @property
+    def job_pref_loc(self) -> Optional[str]:
+        return (self._details().get("job_pref_loc") or None) or None
+
+    @job_pref_loc.setter
+    def job_pref_loc(self, val: Optional[str]):
+        self._set_detail("job_pref_loc", (val or "").strip() or None)
+
+    @property
+    def job_pref_mode(self) -> Optional[str]:
+        return (self._details().get("job_pref_mode") or None) or None
+
+    @job_pref_mode.setter
+    def job_pref_mode(self, val: Optional[str]):
+        self._set_detail("job_pref_mode", (val or "").strip() or None)
+
+    @property
+    def job_pref_city(self) -> Optional[str]:
+        return (self._details().get("job_pref_city") or None) or None
+
+    @job_pref_city.setter
+    def job_pref_city(self, val: Optional[str]):
+        self._set_detail("job_pref_city", (val or "").strip() or None)
+
+    @property
+    def job_pref_hours(self) -> Optional[int]:
+        hrs = self._details().get("job_pref_hours")
+        return int(hrs) if hrs not in (None, "") else None
+
+    @job_pref_hours.setter
+    def job_pref_hours(self, val: Optional[int]):
+        self._set_detail("job_pref_hours", val if val is not None else None)
+
+    @property
     def skills(self) -> List[Dict[str, Any]]:
         return self._details().get("skills") or []
 

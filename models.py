@@ -54,6 +54,7 @@ class RBAudit(db.Model):
 
     tblname = db.Column(db.String(64), nullable=False)
     row_id = db.Column(db.BigInteger, nullable=False)
+    doc_type = db.Column(db.String(20), nullable=True)
 
     audit_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     action = db.Column(

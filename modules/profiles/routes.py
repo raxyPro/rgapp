@@ -27,6 +27,7 @@ from modules.profiles.service_profile import (
     _log_access,
     _get_or_create_vcard,
     _job_pref_from_vcard,
+    _job_pref_from_fields,
     _vcard_items,
     _get_cv_profile,
     _find_user_by_handle,
@@ -36,6 +37,8 @@ from modules.profiles.service_profile import (
     build_vcard_export,
     log_profile_action,
 )
+from models import RBAudit
+import uuid
 from modules.profiles.util import make_token, sanitize_filename, allowed_pdf
 from werkzeug.security import generate_password_hash
 
@@ -73,7 +76,8 @@ _SEND_FILE_NAME_PARAM = (
 
 
 def _send_file_named(fileobj, filename: str, **kwargs):
-    kwargs[_SEND_FILE_NAME_PARAM] = filename
+    safe_name = sanitize_filename(filename or "cv.pdf")
+    kwargs[_SEND_FILE_NAME_PARAM] = safe_name
     return send_file(fileobj, **kwargs)
 
 
@@ -205,6 +209,7 @@ def edit_vcard():
 def save_vcard():
     me_id = get_current_user_id()
     vcard = _get_or_create_vcard(me_id)
+    prev_details = dict(vcard.details or {})
 
     vcard.name = (request.form.get("name") or "").strip()
     vcard.email = (request.form.get("email") or "").strip()
@@ -221,6 +226,14 @@ def save_vcard():
         vcard.hours_per_day = int(hrs) if hrs else None
     except ValueError:
         vcard.hours_per_day = None
+    vcard.job_pref_loc = (request.form.get("job_pref_loc") or "").strip() or None
+    vcard.job_pref_mode = (request.form.get("job_pref_mode") or "").strip() or None
+    vcard.job_pref_city = (request.form.get("job_pref_city") or "").strip() or None
+    pref_hrs = request.form.get("job_pref_hours")
+    try:
+        vcard.job_pref_hours = int(pref_hrs) if pref_hrs else None
+    except ValueError:
+        vcard.job_pref_hours = None
     vcard.touch()
 
     skills = []
@@ -262,6 +275,19 @@ def save_vcard():
     vcard.services = services
 
     db.session.add(vcard)
+    db.session.add(
+        RBAudit(
+            event_id=str(uuid.uuid4()),
+            tblname="rb_cv_profile",
+            row_id=vcard.vcard_id,
+            doc_type="vcard",
+            action="edit",
+            actor_id=me_id,
+            source="self",
+            prev_data=prev_details,
+            new_data=vcard.details,
+        )
+    )
     log_profile_action(
         "vcard_save",
         "start",
@@ -610,6 +636,10 @@ def cvfile_new():
             "cv_name": cv_name,
             "cover_letter": (request.form.get("cover_letter") or "").strip() or None,
             "job_pref": (request.form.get("job_pref") or "").strip() or _job_pref_from_vcard(vcard) or None,
+            "job_pref_loc": vcard.job_pref_loc or vcard.location,
+            "job_pref_mode": vcard.job_pref_mode or vcard.work_mode,
+            "job_pref_city": vcard.job_pref_city or vcard.city,
+            "job_pref_hours": vcard.job_pref_hours or vcard.hours_per_day,
             "original_filename": safe,
             "cover_letter_name": cover_name,
             "cover_letter_mime": cover_mime,
@@ -674,7 +704,19 @@ def cvfile_edit(cvfile_id: int):
 
     c.cv_name = cv_name
     c.cover_letter = (request.form.get("cover_letter") or c.cover_letter or "").strip() or None
-    c.job_pref = (request.form.get("job_pref") or c.job_pref or "").strip() or None
+    pref_loc = (request.form.get("job_pref_loc") or "").strip() or None
+    pref_mode = (request.form.get("job_pref_mode") or "").strip() or None
+    pref_city = (request.form.get("job_pref_city") or "").strip() or None
+    pref_hours = (request.form.get("job_pref_hours") or "").strip() or None
+    c.job_pref_loc = pref_loc
+    c.job_pref_mode = pref_mode
+    c.job_pref_city = pref_city
+    try:
+        c.job_pref_hours = int(pref_hours) if pref_hours else None
+    except ValueError:
+        c.job_pref_hours = None
+    pref_text = _job_pref_from_fields(pref_loc, pref_mode, pref_city, pref_hours)
+    c.job_pref = pref_text or (request.form.get("job_pref") or c.job_pref or "").strip() or None
     c.touch()
     db.session.add(c)
     db.session.commit()

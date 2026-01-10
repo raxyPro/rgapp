@@ -76,6 +76,44 @@
   <section class="card profile-card">
     <div class="profile-card-head">
       <div class="profile-card-title">
+        <div class="profile-icon share"><i class="bi bi-sliders"></i></div>
+        <div>
+          <h2>Preferences</h2>
+          <p>Default preferences for new CVs.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="profile-form-grid">
+        <div>
+          <label class="form-label">Preferred location</label>
+          <input class="form-control" name="job_pref_loc" value="{{ vcard.job_pref_loc or '' }}" placeholder="e.g., Remote">
+        </div>
+        <div>
+          <label class="form-label">Preferred work mode</label>
+          {% set pm = vcard.job_pref_mode or '' %}
+          <select class="form-select" name="job_pref_mode">
+            <option value="" {% if not pm %}selected{% endif %}>Select</option>
+            <option value="wfo" {% if pm == 'wfo' %}selected{% endif %}>Work from office</option>
+            <option value="hybrid" {% if pm == 'hybrid' %}selected{% endif %}>Hybrid</option>
+            <option value="remote" {% if pm == 'remote' %}selected{% endif %}>Remote</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Preferred city</label>
+          <input class="form-control" name="job_pref_city" value="{{ vcard.job_pref_city or '' }}" placeholder="e.g., Mumbai">
+        </div>
+        <div>
+          <label class="form-label">Preferred hours per day</label>
+          <input class="form-control" type="number" min="1" max="24" name="job_pref_hours" value="{{ vcard.job_pref_hours }}">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card profile-card">
+    <div class="profile-card-head">
+      <div class="profile-card-title">
         <div class="profile-icon share"><i class="bi bi-stars"></i></div>
         <div>
           <h2>Skills</h2>

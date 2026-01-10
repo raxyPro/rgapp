@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+import uuid
 from pathlib import Path
 
 from flask import abort, current_app, request
@@ -11,6 +12,7 @@ from extensions import db
 from models import RBUser, RBUserProfile
 from modules.chat.util import get_current_user_id
 from modules.profiles.models import RBCVPair, RBCVProfile
+from models import RBAudit
 
 # Service layer for profile business logic and data access.
 
@@ -71,28 +73,64 @@ def _get_or_create_vcard(user_id: int) -> RBCVProfile:
                 "city": None,
                 "available_from": None,
                 "hours_per_day": None,
+                "job_pref_loc": None,
+                "job_pref_mode": None,
+                "job_pref_city": None,
+                "job_pref_hours": None,
                 "skills": [],
                 "services": [],
             },
         )
         db.session.add(v)
+        db.session.flush()
+        db.session.add(
+            RBAudit(
+                event_id=str(uuid.uuid4()),
+                tblname="rb_cv_profile",
+                row_id=v.vcard_id,
+                doc_type="vcard",
+                action="add",
+                actor_id=get_current_user_id(),
+                source="self",
+                prev_data=None,
+                new_data=v.details,
+            )
+        )
         db.session.commit()
     return v
 
 
 def _job_pref_from_vcard(v: RBCVProfile) -> str:
     parts = []
-    if v.location:
-        parts.append(f"Location: {v.location}")
-    if v.work_mode:
-        label = "Work from office" if v.work_mode == "wfo" else ("Hybrid" if v.work_mode == "hybrid" else "Remote")
+    loc = v.job_pref_loc or v.location
+    mode = v.job_pref_mode or v.work_mode
+    city = v.job_pref_city or v.city
+    hours = v.job_pref_hours or v.hours_per_day
+    if loc:
+        parts.append(f"Location: {loc}")
+    if mode:
+        label = "Work from office" if mode == "wfo" else ("Hybrid" if mode == "hybrid" else "Remote")
         parts.append(f"Mode: {label}")
-    if v.city:
-        parts.append(f"City: {v.city}")
+    if city:
+        parts.append(f"City: {city}")
     if v.available_from:
         parts.append(f"Available from: {v.available_from}")
-    if v.hours_per_day:
-        parts.append(f"Hours/day: {v.hours_per_day}")
+    if hours:
+        parts.append(f"Hours/day: {hours}")
+    return "; ".join(parts)
+
+
+def _job_pref_from_fields(loc: str | None, mode: str | None, city: str | None, hours: str | None) -> str:
+    parts = []
+    if loc:
+        parts.append(f"Location: {loc}")
+    if mode:
+        label = "Work from office" if mode == "wfo" else ("Hybrid" if mode == "hybrid" else "Remote")
+        parts.append(f"Mode: {label}")
+    if city:
+        parts.append(f"City: {city}")
+    if hours:
+        parts.append(f"Hours/day: {hours}")
     return "; ".join(parts)
 
 
