@@ -330,7 +330,7 @@ def create_app():
     @app.route(manifest_route)
     def manifest():
         scope = f"/{subpath}/" if subpath else "/"
-        start_url = scope
+        start_url = f"/{subpath}/login" if subpath else "/login"
         manifest_data = {
             "name": "RayGrow Bridge",
             "short_name": "Bridge",

@@ -33,7 +33,7 @@
   </div>
 
   {% set token = share.token if share is defined and share.token is defined else share.share_token %}
-  {% set can_download = share.allow_download if share is defined and share.allow_download is not none else True %}
+  {% set can_download = share.allow_download if share is defined and share.allow_download is defined else True %}
   <section class="card profile-card">
     <div class="profile-card-head">
       <div class="profile-card-title">
