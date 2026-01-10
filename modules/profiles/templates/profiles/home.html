@@ -562,9 +562,11 @@
       {% if my_shares or my_public_links %}
         {% for s in my_public_links %}
           <div class="send-row">
+            {% set doc = cv_files_map.get(s.cvfile_id) if cv_files_map else None %}
             <div>
               <i class="bi bi-link-45deg"></i>
-              <a href="{{ url_for('profileviewer.view', token=s.token) }}" target="_blank">Link Share</a>
+              <a href="{{ url_for('profileviewer.view', token=s.token) }}" target="_blank">{{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</a>
+              Shared via link
             </div>
             <div class="d-flex gap-2">
               <a class="icon-btn" href="{{ url_for('profileviewer.view', token=s.token) }}" target="_blank" aria-label="Open"><i class="bi bi-box-arrow-up-right"></i></a>
@@ -585,11 +587,18 @@
 
         {% for s in my_shares %}
           <div class="send-row">
+            {% set doc = cv_files_map.get(s.cvfile_id) if cv_files_map else None %}
+            {% set target_user = share_users.get(s.target_user_id) if s.target_user_id else None %}
+            {% set target_profile = share_profiles.get(s.target_user_id) if s.target_user_id else None %}
             <div>
               {% if s.target_user_id %}
-                <i class="bi bi-person"></i> Handle Share
+                <i class="bi bi-person"></i>
+                <a href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank">{{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</a>
+                Shared via {{ target_profile.handle if target_profile and target_profile.handle else (target_user.email if target_user else ("User #" ~ s.target_user_id)) }}
               {% else %}
-                <i class="bi bi-envelope"></i> Email Share
+                <i class="bi bi-envelope"></i>
+                <a href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank">{{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</a>
+                Shared via {{ s.target_email or "Unknown" }}
               {% endif %}
             </div>
             <div class="d-flex gap-2">
@@ -631,7 +640,10 @@
           {% set doc = shared_cvfiles.get(s.cvfile_id) if shared_cvfiles else None %}
           {% set owner = owners.get(s.owner_user_id) if owners else None %}
           <div class="shared-row">
-            <div><i class="bi bi-file-earmark"></i> {{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }}</div>
+            <div>
+              <i class="bi bi-file-earmark"></i>
+              {{ doc.cv_name if doc else ("CV #" ~ s.cvfile_id) }} shared from {{ owner.handle if owner and owner.handle else (owner.email if owner else ("User #" ~ s.owner_user_id)) }}
+            </div>
             <div class="shared-actions">
               <a class="btn btn-primary btn-sm" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank"><i class="bi bi-eye"></i> View</a>
               <a class="btn btn-primary btn-sm" href="{{ url_for('chat.start_dm', user_id=s.owner_user_id) }}"><i class="bi bi-chat"></i> Chat</a>

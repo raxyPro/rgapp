@@ -107,6 +107,7 @@ def home():
         .order_by(RBCVProfile.updated_at.desc())
         .all()
     )
+    cv_files_map = {c.cvfile_id: c for c in cv_files} if cv_files else {}
 
     # Shares received
     vcard_shares = (
@@ -196,6 +197,7 @@ def home():
         my_public_links=my_public_links,
         share_users=share_users,
         share_profiles=share_profiles,
+        cv_files_map=cv_files_map,
     )
 
 
@@ -1014,6 +1016,7 @@ def share_cvfile_user(cvfile_id: int):
     if not target_user_id or not str(target_user_id).isdigit():
         abort(400, "Select a user")
     target_user_id = int(target_user_id)
+    target_user = RBUser.query.get(target_user_id)
 
     exists = RBCVFileShare.query.filter_by(cvfile_id=cvfile_id, owner_user_id=me_id, target_user_id=target_user_id).first()
     if exists:
@@ -1023,7 +1026,7 @@ def share_cvfile_user(cvfile_id: int):
         cvfile_id=cvfile_id,
         owner_user_id=me_id,
         target_user_id=target_user_id,
-        target_email=None,
+        target_email=target_user.email if target_user else None,
         share_token=make_token(),
         is_public=False,
     )
@@ -1146,7 +1149,7 @@ def share_cvfile_new():
             cvfile_id=cvfile_id,
             owner_user_id=me_id,
             target_user_id=target_user.user_id,
-            target_email=None,
+            target_email=target_user.email,
             share_token=make_token(),
             is_public=False,
         )
