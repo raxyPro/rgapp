@@ -254,19 +254,6 @@
     margin-bottom: 8px;
   }
 
-  .tips-list {
-    display: grid;
-    gap: 8px;
-    font-size: 13px;
-    color: #5f4b2f;
-  }
-
-  .tips-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
   .shared-row {
     display: flex;
     align-items: center;
@@ -280,6 +267,16 @@
   .shared-actions {
     display: flex;
     gap: 8px;
+  }
+
+  .share-details {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px dashed #d6deea;
+    background: #f8fafc;
+    font-size: 12.5px;
+    color: #445268;
   }
 
   @media (max-width: 900px) {
@@ -567,11 +564,18 @@
           <div class="send-row">
             <div><i class="bi bi-link-45deg"></i> Link Share</div>
             <div class="d-flex gap-2">
-              <a class="icon-btn" href="{{ url_for('profileviewer.view', token=s.token) }}" target="_blank" aria-label="View"><i class="bi bi-eye"></i></a>
+              <button class="icon-btn" type="button" onclick="toggleShareDetails('pl_{{ s.link_id }}')" aria-label="View details"><i class="bi bi-eye"></i></button>
               <form method="post" action="{{ url_for('profiles.delete_public_link', link_id=s.link_id) }}" onsubmit="return confirm('Delete this share?');">
                 <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
               </form>
             </div>
+          </div>
+          <div id="share_details_pl_{{ s.link_id }}" class="share-details" style="display:none;">
+            <div><strong>Link:</strong> <a href="{{ url_for('profileviewer.view', token=s.token) }}" target="_blank">{{ url_for('profileviewer.view', token=s.token, _external=True) }}</a></div>
+            <div><strong>Status:</strong> {{ s.status }}</div>
+            <div><strong>Expires:</strong> {{ s.expires_at or "Never" }}</div>
+            <div><strong>Download allowed:</strong> {{ "Yes" if s.allow_download else "No" }}</div>
+            {% if s.name %}<div><strong>Label:</strong> {{ s.name }}</div>{% endif %}
           </div>
         {% endfor %}
 
@@ -585,32 +589,27 @@
               {% endif %}
             </div>
             <div class="d-flex gap-2">
-              <a class="icon-btn" href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank" aria-label="View"><i class="bi bi-eye"></i></a>
+              <button class="icon-btn" type="button" onclick="toggleShareDetails('s_{{ s.share_id }}')" aria-label="View details"><i class="bi bi-eye"></i></button>
               <form method="post" action="{{ url_for('profiles.delete_cvfile_share', cvfile_id=s.cvfile_id, share_id=s.share_id) }}" onsubmit="return confirm('Delete this share?');">
                 <button class="icon-btn danger" type="submit" aria-label="Delete"><i class="bi bi-trash"></i></button>
               </form>
             </div>
           </div>
+          <div id="share_details_s_{{ s.share_id }}" class="share-details" style="display:none;">
+            {% set target_user = share_users.get(s.target_user_id) if s.target_user_id else None %}
+            {% set target_profile = share_profiles.get(s.target_user_id) if s.target_user_id else None %}
+            <div><strong>Share link:</strong> <a href="{{ url_for('profileviewer.view', token=s.share_token) }}" target="_blank">{{ url_for('profileviewer.view', token=s.share_token, _external=True) }}</a></div>
+            {% if s.target_user_id %}
+              <div><strong>Shared with:</strong> {{ target_profile.handle if target_profile and target_profile.handle else (target_user.email if target_user else ("User #" ~ s.target_user_id)) }}</div>
+            {% else %}
+              <div><strong>Shared with:</strong> {{ s.target_email or "Unknown" }}</div>
+            {% endif %}
+            <div><strong>Created:</strong> {{ s.created_at }}</div>
+          </div>
         {% endfor %}
       {% else %}
         <div class="text-muted small">No shares yet.</div>
       {% endif %}
-    </div>
-  </section>
-
-  <section class="profile-card">
-    <div class="section-head" style="background: var(--p-yellow-soft);">
-      <div class="section-title">
-        <i class="bi bi-lightbulb" style="background: var(--p-yellow);"></i>
-        Tips
-      </div>
-    </div>
-    <div class="section-body">
-      <ul class="tips-list" style="padding-left:0; list-style:none;">
-        <li><i class="bi bi-check-circle-fill" style="color:#d89a5b;"></i> Keep your CV updated</li>
-        <li><i class="bi bi-check-circle-fill" style="color:#d89a5b;"></i> Customize cover letters</li>
-        <li><i class="bi bi-check-circle-fill" style="color:#d89a5b;"></i> Expand your network</li>
-      </ul>
     </div>
   </section>
 
@@ -685,6 +684,11 @@
     el.style.display = isHidden ? 'block' : 'none';
     const label = btn ? btn.querySelector('span') : null;
     if(label) label.textContent = isHidden ? 'Hide vCard' : 'View vCard';
+  }
+  function toggleShareDetails(id){
+    const el=document.getElementById('share_details_'+id);
+    if(!el) return;
+    el.style.display = el.style.display==='none' ? 'block' : 'none';
   }
   (function setupShareSwitch(){
     const radios=document.querySelectorAll('input[name="share_method"]');

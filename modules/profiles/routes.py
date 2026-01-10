@@ -81,6 +81,15 @@ def _send_file_named(fileobj, filename: str, **kwargs):
     return send_file(fileobj, **kwargs)
 
 
+def _send_bytes(data: bytes, filename: str, mimetype: str, as_attachment: bool):
+    safe_name = sanitize_filename(filename or "cv.pdf")
+    resp = current_app.response_class(data, mimetype=mimetype)
+    disp = "attachment" if as_attachment else "inline"
+    resp.headers["Content-Disposition"] = f'{disp}; filename="{safe_name}"'
+    resp.headers["Content-Length"] = str(len(data))
+    return resp
+
+
 @profiles_bp.get("/")
 @login_required
 @module_required("profiles")
@@ -751,12 +760,11 @@ def cvfile_view(cvfile_id: int):
     _log_access("cvfile_view_ok", cvfile_id=cvfile_id, me_id=me_id, download=False)
     if not c.pdf_data:
         abort(404)
-    return _send_file_named(
-        BytesIO(c.pdf_data),
+    return _send_bytes(
+        c.pdf_data,
         c.original_filename or "cv.pdf",
-        mimetype=c.mime_type or "application/pdf",
+        c.mime_type or "application/pdf",
         as_attachment=False,
-        conditional=True,
     )
 
 
@@ -771,12 +779,11 @@ def cvfile_cover_view(cvfile_id: int):
     _log_access("cvfile_cover_ok", cvfile_id=cvfile_id, me_id=me_id)
     if not c.cover_pdf_data:
         abort(404)
-    return _send_file_named(
-        BytesIO(c.cover_pdf_data),
+    return _send_bytes(
+        c.cover_pdf_data,
         c.cover_letter_name or "cover-letter.pdf",
-        mimetype=c.cover_letter_mime or "application/pdf",
+        c.cover_letter_mime or "application/pdf",
         as_attachment=False,
-        conditional=True,
     )
 
 
@@ -1267,12 +1274,11 @@ def file(token: str):
         _forbidden("public_link_download_not_allowed", token=token, cvfile_id=c.cvfile_id)
     as_attachment = download_requested and allow_dl
 
-    return _send_file_named(
-        BytesIO(c.pdf_data),
+    return _send_bytes(
+        c.pdf_data,
         c.original_filename or "cv.pdf",
-        mimetype=c.mime_type or "application/pdf",
+        c.mime_type or "application/pdf",
         as_attachment=as_attachment,
-        conditional=True,
     )
 
 
@@ -1292,12 +1298,11 @@ def cover(token: str):
     if not c.cover_pdf_data:
         abort(404)
 
-    return _send_file_named(
-        BytesIO(c.cover_pdf_data),
+    return _send_bytes(
+        c.cover_pdf_data,
         c.cover_letter_name or "cover-letter.pdf",
-        mimetype=c.cover_letter_mime or "application/pdf",
+        c.cover_letter_mime or "application/pdf",
         as_attachment=False,
-        conditional=True,
     )
 
 
